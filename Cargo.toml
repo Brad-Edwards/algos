@@ -1,9 +1,9 @@
 [package]
 name = "algos"
-version = "0.4.0"
-authors = ["GrayJack <gr41.j4ck@gmail.com>"]
+version = "0.5.0"
+authors = ["GrayJack <gr41.j4ck@gmail.com>", "Brad-Edwards <j.bradley.edwards@gmail.com>"]
 description = "A collection of algorithms in Rust"
-repository = "https://github.com/GrayJack/algos"
+repository = "https://github.com/Brad-Edwards/algos"
 homepage = "https://crates.io/crates/algos"
 documentation = "https://docs.rs/algos"
 license-file = "LICENSE"

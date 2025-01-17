@@ -8,6 +8,7 @@
 
 
 ## ** Jan 16, 2025 - ADVISORY - This crate has changed hands and is will be maintained by [@Brad-Edwards](https://github.com/Brad-Edwards) - Expect breaking changes. **
+## ** The repo has been moved to [a new repo](https://github.com/Brad-Edwards/algos). **
 
 A Rust library with a collection of algorithms. Mostly intended as learning exercises for Rust.
 
@@ -20,7 +21,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-algos = "0.3"
+algos = "0.5"
 ```
 
 and this to your crate root if on 2015 edition:
