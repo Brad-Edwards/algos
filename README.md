@@ -7,7 +7,7 @@
 [![GitHub license](https://img.shields.io/github/license/GrayJack/algos.svg)](https://github.com/GrayJack/algos/blob/master/LICENSE)
 
 
-*** Jan 16, 2025ADVISORY - This crate has changed hands and is will be maintained by [@Brad-Edwards](https://github.com/Brad-Edwards) - Expect breaking changes. ***
+## ** Jan 16, 2025 - ADVISORY - This crate has changed hands and is will be maintained by [@Brad-Edwards](https://github.com/Brad-Edwards) - Expect breaking changes. **
 
 A Rust library with a collection of algorithms. Mostly intended as learning exercises for Rust.
 
