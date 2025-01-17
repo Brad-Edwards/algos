@@ -1,0 +1,23 @@
+[package]
+name = "algos"
+version = "0.4.0"
+authors = ["GrayJack <gr41.j4ck@gmail.com>"]
+description = "A collection of algorithms in Rust"
+repository = "https://github.com/GrayJack/algos"
+homepage = "https://crates.io/crates/algos"
+documentation = "https://docs.rs/algos"
+license-file = "LICENSE"
+readme = "README.md"
+keywords = ["algorithm", "sort", "search", "pattern", "series"]
+exclude = ["/.travis.yml", "/.github/*"]
+edition = "2018"
+
+
+[dependencies]
+const_fn = "0.4.3"
+rand = "0.8.3"
+num = { version="0.4.0", optional=true }
+
+[features]
+default = ["big_num"]
+big_num = ["num"]
