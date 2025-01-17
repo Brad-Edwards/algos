@@ -21,7 +21,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-algos = "0.5"
+algos = "0.5.1"
 ```
 
 and this to your crate root if on 2015 edition:
