@@ -23,42 +23,42 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 #### Sorting Algorithms
 
-- [x] QuickSort
-- [x] MergeSort
-- [x] HeapSort
-- [x] BubbleSort
-- [x] InsertionSort
-- [x] SelectionSort
-- [x] ShellSort
-- [x] CountingSort
-- [x] RadixSort
-- [x] BucketSort
+✅ QuickSort
+✅ MergeSort
+✅ HeapSort
+✅ BubbleSort
+✅ InsertionSort
+✅ SelectionSort
+✅ ShellSort
+✅ CountingSort
+✅ RadixSort
+✅ BucketSort
 
 #### Searching Algorithms
 
-- [X] Linear Search
-- [X] Binary Search
-- [X] Ternary Search
-- [X] Interpolation Search
-- [X] Jump Search
-- [X] Exponential Search
-- [X] Fibonacci Search
-- [X] Sublist Search
-- [X] Depth-First Search
-- [X] Breadth-First Search
+✅ Linear Search
+✅ Binary Search
+✅ Ternary Search
+✅ Interpolation Search
+✅ Jump Search
+✅ Exponential Search
+✅ Fibonacci Search
+✅ Sublist Search
+✅ Depth-First Search
+✅ Breadth-First Search
 
 #### String Algorithms
 
-- [X] Knuth-Morris-Pratt (KMP)
-- [X] Rabin-Karp
-- [X] Boyer-Moore
-- [X] Z-Algorithm
-- [X] Aho-Corasick
-- [X] Suffix Array Construction
-- [X] Suffix Automaton
-- [X] Suffix Tree
-- [X] Rolling Hash
-- [X] Manacher's Algorithm
+✅ Knuth-Morris-Pratt (KMP)
+✅ Rabin-Karp
+✅ Boyer-Moore
+✅ Z-Algorithm
+✅ Aho-Corasick
+✅ Suffix Array Construction
+✅ Suffix Automaton
+✅ Suffix Tree
+✅ Rolling Hash
+✅ Manacher's Algorithm
 
 ### 🚧 Planned Implementation
 
