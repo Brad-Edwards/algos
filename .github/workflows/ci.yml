@@ -60,5 +60,15 @@ jobs:
     needs: [test, security-audit]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: softprops/action-gh-release@v1 
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
