@@ -43,6 +43,10 @@ pub enum Error {
     /// Invalid input
     #[error("Invalid input: {0}")]
     InvalidInput(String),
+
+    /// Vertex not found
+    #[error("vertex not found")]
+    VertexNotFound,
 }
 
 /// Result type for algorithm operations

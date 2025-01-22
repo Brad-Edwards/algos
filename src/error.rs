@@ -8,10 +8,12 @@ pub use crate::cs::error::{Error, Result};
 pub type SortError = Error;
 pub type SearchError = Error;
 pub type StringError = Error;
+pub type GraphError = Error;
 
 pub type SortResult<T> = Result<T>;
 pub type SearchResult<T> = Result<T>;
 pub type StringResult<T> = Result<T>;
+pub type GraphResult<T> = Result<T>;
 
 // Module-specific re-exports for backward compatibility
 pub mod sort {
@@ -26,5 +28,10 @@ pub mod search {
 
 pub mod string {
     pub use super::Error as StringError;
+    pub type Result<T> = super::Result<T>;
+}
+
+pub mod graph {
+    pub use super::Error as GraphError;
     pub type Result<T> = super::Result<T>;
 }
