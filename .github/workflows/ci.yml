@@ -3,8 +3,12 @@ name: CI
 on:
   push:
     branches: [ "main" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
+
+permissions:
+  contents: write
 
 env:
   CARGO_TERM_COLOR: always
@@ -49,4 +53,12 @@ jobs:
         run: cargo install cargo-audit
       
       - name: Run security audit
-        run: cargo audit 
+        run: cargo audit
+
+  release:
+    name: Create Release
+    needs: [test, security-audit]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: softprops/action-gh-release@v1 
