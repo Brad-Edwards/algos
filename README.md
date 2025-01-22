@@ -2,9 +2,9 @@
 
 [![Crates.io](https://img.shields.io/crates/v/algos.svg)](https://crates.io/crates/algos)
 [![Documentation](https://docs.rs/algos/badge.svg)](https://docs.rs/algos)
-[![Build Status](https://github.com/GrayJack/algos/workflows/Build/badge.svg)](https://github.com/GrayJack/algos/actions)
-[![dependency status](https://deps.rs/repo/github/GrayJack/algos/status.svg)](https://deps.rs/repo/github/GrayJack/algos)
-[![GitHub license](https://img.shields.io/github/license/GrayJack/algos.svg)](https://github.com/GrayJack/algos/blob/master/LICENSE)
+[![Build Status](https://github.com/Brad-Edwards/algos/workflows/Build/badge.svg)](https://github.com/Brad-Edwards/algos/actions)
+[![dependency status](https://deps.rs/repo/github/Brad-Edwards/algos/status.svg)](https://deps.rs/repo/github/Brad-Edwards/algos)
+[![GitHub license](https://img.shields.io/github/license/Brad-Edwards/algos.svg)](https://github.com/Brad-Edwards/algos/blob/master/LICENSE)
 
 ## 🚧 Work in Progress 🚧
 
@@ -14,7 +14,7 @@ This crate is undergoing significant development. It aims to be a comprehensive 
 
 **Jan 16, 2025 - ADVISORY**: This crate has changed hands and will be maintained by [@Brad-Edwards](https://github.com/Brad-Edwards). The repository has been moved to [a new location](https://github.com/Brad-Edwards/algos).
 
-## Overview
+## Overvi
 
 A Rust library implementing a wide range of algorithms, from fundamental computer science concepts to advanced machine learning techniques. While currently focused on sorting, searching, and string pattern matching, the project has an extensive roadmap covering many algorithm categories.
 
