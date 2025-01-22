@@ -13,7 +13,7 @@ This crate is undergoing significant development. It aims to be a comprehensive 
 
 **Jan 16, 2025 - ADVISORY**: This crate has changed hands and will be maintained by [@Brad-Edwards](https://github.com/Brad-Edwards). The repository has been moved to [a new location](https://github.com/Brad-Edwards/algos).
 
-## Overvi
+## Overview
 
 A Rust library implementing a wide range of algorithms, from fundamental computer science concepts to advanced machine learning techniques. While currently focused on sorting, searching, and string pattern matching, the project has an extensive roadmap covering many algorithm categories.
 
@@ -23,42 +23,42 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 #### Sorting Algorithms
 
-- [x] QuickSort
-- [x] MergeSort
-- [x] HeapSort
-- [x] BubbleSort
-- [x] InsertionSort
-- [x] SelectionSort
-- [x] ShellSort
-- [x] CountingSort
-- [x] RadixSort
-- [x] BucketSort
+- [X] QuickSort
+- [X] MergeSort
+- [X] HeapSort
+- [X] BubbleSort
+- [X] InsertionSort
+- [X] SelectionSort
+- [X] ShellSort
+- [X] CountingSort
+- [X] RadixSort
+- [X] BucketSort
 
 #### Searching Algorithms
 
-- [x] Linear Search
-- [x] Binary Search
-- [x] Ternary Search
-- [x] Interpolation Search
-- [x] Jump Search
-- [x] Exponential Search
-- [x] Fibonacci Search
-- [x] Sublist Search
-- [x] Depth-First Search
-- [x] Breadth-First Search
+- [X] Linear Search
+- [X] Binary Search
+- [X] Ternary Search
+- [X] Interpolation Search
+- [X] Jump Search
+- [X] Exponential Search
+- [X] Fibonacci Search
+- [X] Sublist Search
+- [X] Depth-First Search
+- [X] Breadth-First Search
 
 #### String Algorithms
 
-- [x] Knuth-Morris-Pratt (KMP)
-- [x] Rabin-Karp
-- [x] Boyer-Moore
-- [x] Z-Algorithm
-- [x] Aho-Corasick
-- [x] Suffix Array Construction
-- [x] Suffix Automaton
-- [x] Suffix Tree
-- [x] Rolling Hash
-- [x] Manacher's Algorithm
+- [X] Knuth-Morris-Pratt (KMP)
+- [X] Rabin-Karp
+- [X] Boyer-Moore
+- [X] Z-Algorithm
+- [X] Aho-Corasick
+- [X] Suffix Array Construction
+- [X] Suffix Automaton
+- [X] Suffix Tree
+- [X] Rolling Hash
+- [X] Manacher's Algorithm
 
 ### 🚧 Planned Implementation
 
