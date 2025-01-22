@@ -23,16 +23,16 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 #### Sorting Algorithms
 
-- [X] QuickSort
-- [X] MergeSort
-- [X] HeapSort
-- [X] BubbleSort
-- [X] InsertionSort
-- [X] SelectionSort
-- [X] ShellSort
-- [X] CountingSort
-- [X] RadixSort
-- [X] BucketSort
+- [x] QuickSort
+- [x] MergeSort
+- [x] HeapSort
+- [x] BubbleSort
+- [x] InsertionSort
+- [x] SelectionSort
+- [x] ShellSort
+- [x] CountingSort
+- [x] RadixSort
+- [x] BucketSort
 
 #### Searching Algorithms
 
