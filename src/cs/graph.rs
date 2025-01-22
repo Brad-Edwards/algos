@@ -1,9 +1,33 @@
+pub mod bellman_ford;
+pub mod dijkstra;
+pub mod floyd_warshall;
+pub mod johnson;
+pub mod kadane;
+pub mod kosaraju;
+pub mod kruskal;
+pub mod prim;
+pub mod tarjan;
+pub mod topological_sort;
+pub mod warshall;
+
 use num_traits::{Float, Zero};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::cs::error::{Error, Result};
+
+pub use bellman_ford::shortest_paths as bellman_ford_shortest_paths;
+pub use dijkstra::shortest_paths as dijkstra_shortest_paths;
+pub use floyd_warshall::all_pairs_shortest_paths as floyd_warshall_all_pairs_shortest_paths;
+pub use johnson::all_pairs_shortest_paths as johnson_all_pairs_shortest_paths;
+pub use kadane::kadane as kadane_maximum_subarray;
+pub use kosaraju::kosaraju as kosaraju_strongly_connected_components;
+pub use kruskal::kruskal as kruskal_minimum_spanning_tree;
+pub use prim::minimum_spanning_tree as prim_minimum_spanning_tree;
+pub use tarjan::strongly_connected_components as tarjan_strongly_connected_components;
+pub use topological_sort::sort as topological_sort;
+pub use warshall::transitive_closure as warshall_transitive_closure;
 
 /// A weighted graph implementation supporting both directed and undirected graphs.
 #[derive(Debug, Clone)]

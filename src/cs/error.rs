@@ -47,6 +47,10 @@ pub enum Error {
     /// Vertex not found
     #[error("vertex not found")]
     VertexNotFound,
+
+    /// A negative cycle was detected in the graph
+    #[error("negative cycle detected in graph")]
+    NegativeCycle,
 }
 
 /// Result type for algorithm operations

@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::fmt::Debug;
 use num_traits::{Float, Zero};
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::hash::Hash;
 
 use crate::error::{GraphError, Result};
 use crate::graph::Graph;
@@ -74,7 +74,8 @@ where
     for k in &vertices {
         for i in &vertices {
             for j in &vertices {
-                if let (Some(dist_ik), Some(dist_kj)) = (distances[&(*i, *k)], distances[&(*k, *j)]) {
+                if let (Some(dist_ik), Some(dist_kj)) = (distances[&(*i, *k)], distances[&(*k, *j)])
+                {
                     let new_dist = dist_ik + dist_kj;
                     let better = match distances[&(*i, *j)] {
                         None => true,
@@ -106,7 +107,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_simple_path() {
+    fn test_floyd_warshall_simple_path() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -124,7 +125,7 @@ mod tests {
     }
 
     #[test]
-    fn test_negative_weights() {
+    fn test_floyd_warshall_negative_weights() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -144,7 +145,7 @@ mod tests {
     }
 
     #[test]
-    fn test_negative_cycle() {
+    fn test_floyd_warshall_negative_cycle() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -162,7 +163,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unreachable_vertices() {
+    fn test_floyd_warshall_unreachable_vertices() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -178,7 +179,7 @@ mod tests {
     }
 
     #[test]
-    fn test_undirected_graph() {
+    fn test_floyd_warshall_undirected_graph() {
         let mut graph: Graph<i32, f64> = Graph::new_undirected();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -192,7 +193,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cycle() {
+    fn test_floyd_warshall_cycle() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -209,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn test_self_loop() {
+    fn test_floyd_warshall_self_loop() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -222,7 +223,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parallel_edges() {
+    fn test_floyd_warshall_parallel_edges() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -236,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    fn test_large_graph() {
+    fn test_floyd_warshall_large_graph() {
         let mut graph: Graph<i32, f64> = Graph::new();
         // Create a line graph with 100 vertices
         for i in 0..100 {

@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::fmt::Debug;
 use num_traits::{Float, Zero};
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::hash::Hash;
 
 use crate::error::{GraphError, Result};
 use crate::graph::Graph;
@@ -108,7 +108,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_simple_path() {
+    fn test_bellman_ford_simple_path() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -124,7 +124,7 @@ mod tests {
     }
 
     #[test]
-    fn test_negative_weights() {
+    fn test_bellman_ford_negative_weights() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[test]
-    fn test_negative_cycle() {
+    fn test_bellman_ford_negative_cycle() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, -1.0);
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vertex_not_found() {
+    fn test_bellman_ford_vertex_not_found() {
         let graph: Graph<i32, f64> = Graph::new();
         assert!(matches!(
             shortest_paths(&graph, &0),
@@ -167,7 +167,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unreachable_vertices() {
+    fn test_bellman_ford_unreachable_vertices() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_edge(0, 1, 1.0);
         graph.add_vertex(2);
@@ -179,7 +179,7 @@ mod tests {
     }
 
     #[test]
-    fn test_undirected_graph() {
+    fn test_bellman_ford_undirected_graph() {
         let mut graph: Graph<i32, f64> = Graph::new_undirected();
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, 2.0);
@@ -197,7 +197,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cycle() {
+    fn test_bellman_ford_cycle() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, 2.0);
@@ -210,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn test_self_loop() {
+    fn test_bellman_ford_self_loop() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -223,7 +223,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parallel_edges() {
+    fn test_bellman_ford_parallel_edges() {
         let mut graph: Graph<i32, f64> = Graph::new();
         graph.add_vertex(0);
         graph.add_vertex(1);
@@ -237,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    fn test_large_graph() {
+    fn test_bellman_ford_large_graph() {
         let mut graph: Graph<i32, f64> = Graph::new();
         // Create a line graph with 1000 vertices
         for i in 0..999 {

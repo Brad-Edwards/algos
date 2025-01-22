@@ -1,8 +1,8 @@
+use num_traits::{Float, Zero};
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
-use std::hash::Hash;
 use std::fmt::Debug;
-use num_traits::{Float, Zero};
+use std::hash::Hash;
 
 use crate::error::{GraphError, Result};
 use crate::graph::Graph;
@@ -84,7 +84,10 @@ where
     }
 
     let mut heap = BinaryHeap::new();
-    heap.push(State { vertex: *source, cost: W::zero() });
+    heap.push(State {
+        vertex: *source,
+        cost: W::zero(),
+    });
 
     while let Some(State { vertex, cost }) = heap.pop() {
         // Skip if we've found a better path
@@ -100,7 +103,7 @@ where
                 // Validate non-negative weights
                 if edge_cost < W::zero() {
                     return Err(GraphError::invalid_input(
-                        "Dijkstra's algorithm requires non-negative weights"
+                        "Dijkstra's algorithm requires non-negative weights",
                     ));
                 }
 
@@ -132,7 +135,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_simple_path() {
+    fn test_dijkstra_simple_path() {
         let mut graph = Graph::new();
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, 2.0);
@@ -145,7 +148,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unreachable_vertices() {
+    fn test_dijkstra_unreachable_vertices() {
         let mut graph = Graph::new();
         graph.add_edge(0, 1, 1.0);
         graph.add_vertex(2);
@@ -157,7 +160,7 @@ mod tests {
     }
 
     #[test]
-    fn test_negative_weights() {
+    fn test_dijkstra_negative_weights() {
         let mut graph = Graph::new();
         graph.add_edge(0, 1, -1.0);
 
@@ -168,7 +171,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vertex_not_found() {
+    fn test_dijkstra_vertex_not_found() {
         let graph: Graph<i32, f64> = Graph::new();
         assert!(matches!(
             shortest_paths(&graph, &0),
@@ -177,7 +180,7 @@ mod tests {
     }
 
     #[test]
-    fn test_multiple_paths() {
+    fn test_dijkstra_multiple_paths() {
         let mut graph = Graph::new();
         graph.add_edge(0, 1, 4.0);
         graph.add_edge(0, 2, 2.0);
@@ -193,7 +196,7 @@ mod tests {
     }
 
     #[test]
-    fn test_undirected_graph() {
+    fn test_dijkstra_undirected_graph() {
         let mut graph = Graph::new_undirected();
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, 2.0);
@@ -211,7 +214,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cycle() {
+    fn test_dijkstra_cycle() {
         let mut graph = Graph::new();
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, 2.0);
@@ -224,7 +227,7 @@ mod tests {
     }
 
     #[test]
-    fn test_self_loop() {
+    fn test_dijkstra_self_loop() {
         let mut graph = Graph::new();
         graph.add_edge(0, 0, 1.0);
         graph.add_edge(0, 1, 2.0);
@@ -235,7 +238,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parallel_edges() {
+    fn test_dijkstra_parallel_edges() {
         let mut graph = Graph::new();
         // Add two edges between same vertices
         graph.add_edge(0, 1, 2.0);
@@ -247,7 +250,7 @@ mod tests {
     }
 
     #[test]
-    fn test_large_graph() {
+    fn test_dijkstra_large_graph() {
         let mut graph = Graph::new();
         // Create a line graph with 1000 vertices
         for i in 0..999 {

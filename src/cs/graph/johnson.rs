@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::fmt::Debug;
 use num_traits::{Float, Zero};
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::hash::Hash;
 
+use super::floyd_warshall;
 use crate::error::{GraphError, Result};
 use crate::graph::Graph;
-use super::floyd_warshall;
 
 /// Computes all-pairs shortest paths using Floyd-Warshall's algorithm.
 ///
@@ -36,7 +36,9 @@ use super::floyd_warshall;
 /// # Complexity
 /// * Time: O(V²E) where V is the number of vertices and E is the number of edges
 /// * Space: O(V²)
-pub fn all_pairs_shortest_paths<V, W>(graph: &Graph<V, W>) -> Result<HashMap<V, HashMap<V, Option<W>>>>
+pub fn all_pairs_shortest_paths<V, W>(
+    graph: &Graph<V, W>,
+) -> Result<HashMap<V, HashMap<V, Option<W>>>>
 where
     V: Hash + Eq + Copy + Debug,
     W: Float + Zero + Copy + Debug,
@@ -85,7 +87,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_simple_graph() {
+    fn test_johnson_simple_graph() {
         let mut graph = Graph::new();
         graph.add_edge(0, 1, -2.0);
         graph.add_edge(1, 2, 3.0);
@@ -104,7 +106,7 @@ mod tests {
     }
 
     #[test]
-    fn test_negative_cycle() {
+    fn test_johnson_negative_cycle() {
         let mut graph = Graph::new();
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, -3.0);
@@ -117,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn test_disconnected_graph() {
+    fn test_johnson_disconnected_graph() {
         let mut graph = Graph::new();
         graph.add_edge(0, 1, 1.0);
         graph.add_vertex(2);
@@ -130,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_vertex() {
+    fn test_johnson_single_vertex() {
         let mut graph = Graph::new();
         graph.add_vertex(0);
 
@@ -139,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn test_empty_graph() {
+    fn test_johnson_empty_graph() {
         let graph: Graph<i32, f64> = Graph::new();
         let distances = all_pairs_shortest_paths(&graph).unwrap();
         assert!(distances.is_empty());
