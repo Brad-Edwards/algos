@@ -37,13 +37,11 @@ impl UnionFind {
         let ry = self.find(y);
 
         if rx != ry {
-            if self.rank[rx] > self.rank[ry] {
+            // Always make the lower-numbered vertex the root
+            if rx < ry {
                 self.parent[ry] = rx;
-            } else if self.rank[rx] < self.rank[ry] {
-                self.parent[rx] = ry;
             } else {
-                self.parent[ry] = rx;
-                self.rank[rx] += 1;
+                self.parent[rx] = ry;
             }
             true
         } else {
@@ -60,30 +58,43 @@ impl UnionFind {
 /// Returns the edges that form the MST.  
 /// If the graph is disconnected, this will return a spanning forest of all connected components.
 pub fn kruskal(num_nodes: usize, edges: &mut [Edge]) -> Vec<Edge> {
-    // Sort edges by non-decreasing weight
+    // Sort edges by weight
     edges.sort_by_key(|e| e.weight);
-
+    
+    println!("\nInitial edges:");
+    for e in edges.iter() {
+        println!("  ({}, {}) = {}", e.src, e.dst, e.weight);
+    }
+    
     let mut uf = UnionFind::new(num_nodes);
-    let mut mst = Vec::new();
+    let mut mst = Vec::with_capacity(num_nodes.saturating_sub(1));
 
-    // Keep track of number of edges in MST
-    let mut edges_in_mst = 0;
-    let target_edges = num_nodes.saturating_sub(1);
-
-    for edge in edges {
-        // Check if adding this edge would create a cycle
+    for edge in edges.iter() {
         if uf.find(edge.src) != uf.find(edge.dst) {
-            // Add edge to MST and merge components
+            println!("\nAdding edge ({}, {}) = {}", edge.src, edge.dst, edge.weight);
+            println!("  Before union: {} and {} in different components", edge.src, edge.dst);
+            
             mst.push(edge.clone());
             uf.union(edge.src, edge.dst);
-            edges_in_mst += 1;
-
-            // Early exit if we have enough edges
-            if edges_in_mst == target_edges {
+            
+            println!("  After union: {} and {} now in same component", edge.src, edge.dst);
+            println!("  Current MST weight: {}", mst.iter().map(|e| e.weight).sum::<i32>());
+            
+            if mst.len() == num_nodes.saturating_sub(1) {
                 break;
             }
+        } else {
+            println!("\nSkipping edge ({}, {}) = {}", edge.src, edge.dst, edge.weight);
+            println!("  Already in same component (root {})", uf.find(edge.src));
         }
     }
+    
+    println!("\nFinal MST:");
+    for e in mst.iter() {
+        println!("  ({}, {}) = {}", e.src, e.dst, e.weight);
+    }
+    println!("Total weight: {}", mst.iter().map(|e| e.weight).sum::<i32>());
+    
     mst
 }
 
@@ -165,9 +176,9 @@ mod tests {
     fn test_standard_graph() {
         // A small graph with 4 vertices
         // (0)---10---(1)
-        //  | \       /
-        //  6  5    15
-        //  |   \   /
+        //  | \       /  
+        //  6  5    15   
+        //  |   \   /    
         // (2)---4---(3)
         let mut edges = vec![
             Edge {
@@ -198,21 +209,37 @@ mod tests {
         ];
         let mst = kruskal(4, &mut edges);
 
-        // MST should be edges: (2-3, 0-3, 0-2) or (2-3, 0-2, 0-1) depending on sorting, etc.
-        // In either case, it will have 3 edges.
+        // MST should be edges: (2-3=4), (0-3=5), (0-1=10)
         assert_eq!(mst.len(), 3);
 
-        // Check minimal total weight or check known edges:
+        // Check minimal total weight:
         let total_weight: i32 = mst.iter().map(|e| e.weight).sum();
-        // The MST includes edges with weights 4,5,6 or 4,5,10 or 4,6,10.
-        // Sorted edges are (2-3=4), (0-3=5), (0-2=6), (0-1=10), (1-3=15).
-        // Typical pick is 4 + 5 + 6 = 15.
-        // It's also possible 4 + 5 + 10 = 19 if the union-find picks incorrectly,
-        // but given standard logic, it should always pick the smaller edges first.
+        // The MST must include:
+        // 1. (2-3) = 4 (lowest weight edge)
+        // 2. (0-3) = 5 (next lowest, connects 0)
+        // 3. (0-1) = 10 (connects last vertex 1)
+        // Total = 4 + 5 + 10 = 19
         assert_eq!(
-            total_weight, 15,
-            "Kruskal's MST should have a total weight of 15"
+            total_weight, 19,
+            "Kruskal's MST should have a total weight of 19"
         );
+
+        // Verify specific edges
+        assert!(mst.contains(&Edge {
+            src: 2,
+            dst: 3,
+            weight: 4
+        }));
+        assert!(mst.contains(&Edge {
+            src: 0,
+            dst: 3,
+            weight: 5
+        }));
+        assert!(mst.contains(&Edge {
+            src: 0,
+            dst: 1,
+            weight: 10
+        }));
     }
 
     #[test]
