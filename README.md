@@ -2,8 +2,8 @@
 
 [![Crates.io](https://img.shields.io/crates/v/algos.svg)](https://crates.io/crates/algos)
 [![Documentation](https://docs.rs/algos/badge.svg)](https://docs.rs/algos)
-[![Build Status](https://github.com/Brad-Edwards/algos/workflows/Build/badge.svg)](https://github.com/Brad-Edwards/algos/actions)
-[![dependency status](https://deps.rs/repo/github/Brad-Edwards/algos/status.svg)](https://deps.rs/repo/github/Brad-Edwards/algos)
+[![Tests](https://github.com/Brad-Edwards/algos/actions/workflows/ci.yml/badge.svg?job=test)](https://github.com/Brad-Edwards/algos/actions/workflows/ci.yml)
+[![Security Audit](https://github.com/Brad-Edwards/algos/actions/workflows/ci.yml/badge.svg?job=security-audit)](https://github.com/Brad-Edwards/algos/actions/workflows/ci.yml)
 [![GitHub license](https://img.shields.io/github/license/Brad-Edwards/algos.svg)](https://github.com/Brad-Edwards/algos/blob/master/LICENSE)
 
 ## 🚧 Work in Progress 🚧
