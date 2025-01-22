@@ -21,3 +21,5 @@ target/
 .vscode/
 .DS_Store
 .VSCodeCounter
+
+notes/
