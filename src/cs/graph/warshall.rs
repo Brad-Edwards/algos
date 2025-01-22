@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::error::{GraphError, Result};
-use crate::graph::Graph;
+use crate::cs::error::{Error, Result};
+use crate::cs::graph::Graph;
 
 /// Computes the transitive closure of a directed graph using Warshall's algorithm.
 ///
@@ -16,7 +16,7 @@ use crate::graph::Graph;
 ///
 /// # Returns
 /// * `Ok(reachability)` - A map from (source, target) pairs to a boolean indicating if target is reachable from source
-/// * `Err(GraphError)` - If the graph is undirected
+/// * `Err(Error)` - If the graph is undirected
 ///
 /// # Examples
 /// ```
@@ -41,27 +41,29 @@ where
 {
     // Validate graph is directed
     if !graph.is_directed() {
-        return Err(GraphError::invalid_input(
-            "Warshall's algorithm requires a directed graph",
-        ));
+        return Err(Error::invalid_input("Warshall's algorithm requires a directed graph"));
     }
 
     let vertices: Vec<_> = graph.vertices().copied().collect();
     let mut reachability = HashMap::new();
 
-    // Initialize reachability matrix with direct edges
+    // Initialize reachability matrix
     for &i in &vertices {
         for &j in &vertices {
-            reachability.insert((i, j), graph.has_edge(&i, &j));
+            // A vertex can always reach itself
+            let reachable = i == j || graph.has_edge(&i, &j);
+            reachability.insert((i, j), reachable);
         }
     }
 
-    // Warshall's algorithm
+    // Warshall's algorithm: if i->k and k->j then i->j
     for &k in &vertices {
         for &i in &vertices {
             for &j in &vertices {
-                if reachability[&(i, k)] && reachability[&(k, j)] {
-                    reachability.insert((i, j), true);
+                if let (Some(&ik), Some(&kj)) = (reachability.get(&(i, k)), reachability.get(&(k, j))) {
+                    if ik && kj {
+                        reachability.insert((i, j), true);
+                    }
                 }
             }
         }
@@ -77,55 +79,76 @@ mod tests {
     #[test]
     fn test_warshall_simple_path() {
         let mut graph: Graph<i32, f64> = Graph::new();
+        graph.add_vertex(0);
+        graph.add_vertex(1);
+        graph.add_vertex(2);
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, 1.0);
 
         let closure = transitive_closure(&graph).unwrap();
-        assert!(closure[&(0, 1)]);
-        assert!(closure[&(1, 2)]);
-        assert!(closure[&(0, 2)]);
-        assert!(!closure[&(2, 1)]);
+        assert!(closure[&(0, 0)], "vertex should reach itself");
+        assert!(closure[&(1, 1)], "vertex should reach itself");
+        assert!(closure[&(2, 2)], "vertex should reach itself");
+        assert!(closure[&(0, 1)], "direct edge");
+        assert!(closure[&(1, 2)], "direct edge");
+        assert!(closure[&(0, 2)], "transitive path");
+        assert!(!closure[&(2, 1)], "no backward path");
+        assert!(!closure[&(2, 0)], "no backward path");
+        assert!(!closure[&(1, 0)], "no backward path");
     }
 
     #[test]
     fn test_warshall_cycle() {
         let mut graph: Graph<i32, f64> = Graph::new();
+        for i in 0..3 {
+            graph.add_vertex(i);
+        }
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, 1.0);
         graph.add_edge(2, 0, 1.0);
 
         let closure = transitive_closure(&graph).unwrap();
-        assert!(closure[&(0, 1)]);
-        assert!(closure[&(1, 2)]);
-        assert!(closure[&(2, 0)]);
-        assert!(closure[&(0, 2)]);
-        assert!(closure[&(1, 0)]);
-        assert!(closure[&(2, 1)]);
+        // Every vertex can reach every other vertex in a cycle
+        for i in 0..3 {
+            for j in 0..3 {
+                assert!(closure[&(i, j)], "vertex {i} should reach {j} in cycle");
+            }
+        }
     }
 
     #[test]
     fn test_warshall_disconnected() {
         let mut graph: Graph<i32, f64> = Graph::new();
+        for i in 0..3 {
+            graph.add_vertex(i);
+        }
         graph.add_edge(0, 1, 1.0);
-        graph.add_vertex(2);
 
         let closure = transitive_closure(&graph).unwrap();
-        assert!(closure[&(0, 1)]);
-        assert!(!closure[&(0, 2)]);
-        assert!(!closure[&(1, 2)]);
-        assert!(!closure[&(2, 0)]);
+        assert!(closure[&(0, 0)], "vertex should reach itself");
+        assert!(closure[&(1, 1)], "vertex should reach itself");
+        assert!(closure[&(2, 2)], "vertex should reach itself");
+        assert!(closure[&(0, 1)], "direct edge");
+        assert!(!closure[&(0, 2)], "no path to isolated vertex");
+        assert!(!closure[&(1, 2)], "no path to isolated vertex");
+        assert!(!closure[&(2, 0)], "no path from isolated vertex");
+        assert!(!closure[&(2, 1)], "no path from isolated vertex");
     }
 
     #[test]
     fn test_warshall_self_loop() {
         let mut graph: Graph<i32, f64> = Graph::new();
+        for i in 0..2 {
+            graph.add_vertex(i);
+        }
         graph.add_edge(0, 0, 1.0);
         graph.add_edge(0, 1, 1.0);
 
         let closure = transitive_closure(&graph).unwrap();
-        assert!(closure[&(0, 0)]);
-        assert!(closure[&(0, 1)]);
-        assert!(!closure[&(1, 0)]);
+        assert!(closure[&(0, 0)], "vertex should reach itself + self loop");
+        assert!(closure[&(1, 1)], "vertex should reach itself");
+        assert!(closure[&(0, 1)], "direct edge");
+        assert!(!closure[&(1, 0)], "no backward path");
     }
 
     #[test]
@@ -135,7 +158,7 @@ mod tests {
 
         assert!(matches!(
             transitive_closure(&graph),
-            Err(GraphError::InvalidInput(_))
+            Err(Error::InvalidInput(_))
         ));
     }
 
@@ -152,13 +175,16 @@ mod tests {
         graph.add_vertex(0);
 
         let closure = transitive_closure(&graph).unwrap();
-        assert!(!closure[&(0, 0)]);
+        assert!(closure[&(0, 0)], "vertex should reach itself");
     }
 
     #[test]
     fn test_warshall_complex_graph() {
         let mut graph: Graph<i32, f64> = Graph::new();
         // Create a more complex graph structure
+        for i in 0..6 {
+            graph.add_vertex(i);
+        }
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, 1.0);
         graph.add_edge(2, 3, 1.0);
@@ -167,25 +193,41 @@ mod tests {
         graph.add_edge(4, 5, 1.0);
 
         let closure = transitive_closure(&graph).unwrap();
+        // Check self-reachability
+        for i in 0..6 {
+            assert!(closure[&(i, i)], "vertex {i} should reach itself");
+        }
         // Check cycle reachability
-        assert!(closure[&(1, 1)]); // Can reach self through cycle
-        assert!(closure[&(2, 2)]);
-        assert!(closure[&(3, 3)]);
+        for i in 1..=3 {
+            for j in 1..=3 {
+                assert!(closure[&(i, j)], "vertex {i} should reach {j} in cycle");
+            }
+        }
         // Check path reachability
-        assert!(closure[&(0, 5)]); // Can reach 5 through 4
-        assert!(!closure[&(5, 0)]); // Cannot reach 0 from 5
-        assert!(closure[&(0, 3)]); // Can reach 3 through path 0->1->2->3
+        assert!(closure[&(0, 5)], "should reach 5 through 4");
+        assert!(!closure[&(5, 0)], "cannot reach 0 from 5");
+        assert!(closure[&(0, 3)], "should reach 3 through path 0->1->2->3");
     }
 
     #[test]
     fn test_warshall_parallel_paths() {
         let mut graph: Graph<i32, f64> = Graph::new();
+        for i in 0..3 {
+            graph.add_vertex(i);
+        }
         // Two paths from 0 to 2: 0->1->2 and 0->2
         graph.add_edge(0, 1, 1.0);
         graph.add_edge(1, 2, 1.0);
         graph.add_edge(0, 2, 1.0);
 
         let closure = transitive_closure(&graph).unwrap();
-        assert!(closure[&(0, 2)]); // Should be reachable regardless of path
+        for i in 0..3 {
+            assert!(closure[&(i, i)], "vertex {i} should reach itself");
+        }
+        assert!(closure[&(0, 1)], "direct edge");
+        assert!(closure[&(1, 2)], "direct edge");
+        assert!(closure[&(0, 2)], "should be reachable through either path");
+        assert!(!closure[&(2, 0)], "no backward path");
+        assert!(!closure[&(2, 1)], "no backward path");
     }
 }
