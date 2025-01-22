@@ -1,117 +1,109 @@
-# **Algos**
+# Algos
 
 [![Crates.io](https://img.shields.io/crates/v/algos.svg)](https://crates.io/crates/algos)
 [![Documentation](https://docs.rs/algos/badge.svg)](https://docs.rs/algos)
-[![Build Status](https://github.com/GrayJack/algos/workflows/Build/badge.svg)](https://github.com/GrayJack/algos/actions)
-[![dependency status](https://deps.rs/repo/github/GrayJack/algos/status.svg)](https://deps.rs/repo/github/GrayJack/algos)
-[![GitHub license](https://img.shields.io/github/license/GrayJack/algos.svg)](https://github.com/GrayJack/algos/blob/master/LICENSE)
+[![CI](https://github.com/Brad-Edwards/algos/actions/workflows/ci.yml/badge.svg?branch=main&label=tests)](https://github.com/Brad-Edwards/algos/actions/workflows/ci.yml)
+[![GitHub license](https://img.shields.io/github/license/Brad-Edwards/algos.svg)](https://github.com/Brad-Edwards/algos/blob/master/LICENSE)
 
+## 🚧 Work in Progress 🚧
 
-## ** Jan 16, 2025 - ADVISORY - This crate has changed hands and will be maintained by [@Brad-Edwards](https://github.com/Brad-Edwards) - Expect breaking changes. **
-## ** The repo has been moved to [a new repo](https://github.com/Brad-Edwards/algos). **
+This crate is undergoing significant development. It aims to be a comprehensive collection of algorithms implemented in Rust, serving both as a learning resource and a practical library.
 
-A Rust library with a collection of algorithms. Mostly intended as learning exercises for Rust.
+## Recent Changes
 
-Only sort, search and pattern matching algorithms for now.
-It is planned to add graph algorithms as well.
+**Jan 16, 2025 - ADVISORY**: This crate has changed hands and will be maintained by [@Brad-Edwards](https://github.com/Brad-Edwards). The repository has been moved to [a new location](https://github.com/Brad-Edwards/algos).
 
-## **Usage**
+## Overvi
 
-Add this to your `Cargo.toml`:
+A Rust library implementing a wide range of algorithms, from fundamental computer science concepts to advanced machine learning techniques. While currently focused on sorting, searching, and string pattern matching, the project has an extensive roadmap covering many algorithm categories.
 
-```toml
-[dependencies]
-algos = "0.5.1"
-```
+## Implementation Status
 
-and this to your crate root if on 2015 edition:
+### ✅ Currently Implemented
 
-```rust
-extern crate algos;
-```
+#### Sorting Algorithms
 
-### Sorts Algorithms
-Add this to your crate root:
+- [x] QuickSort
+- [x] MergeSort
+- [x] HeapSort
+- [x] BubbleSort
+- [x] InsertionSort
+- [x] SelectionSort
+- [x] ShellSort
+- [x] CountingSort
+- [x] RadixSort
+- [x] BucketSort
 
-```rust
-use algos::sort;
-```
+#### Searching Algorithms
 
-and create an array and use like this:
+- [x] Linear Search
+- [x] Binary Search
+- [x] Ternary Search
+- [x] Interpolation Search
+- [x] Jump Search
+- [x] Exponential Search
+- [x] Fibonacci Search
+- [x] Sublist Search
+- [x] Depth-First Search
+- [x] Breadth-First Search
 
-```rust
-fn fn main() {
-    let mut v = [2, 3, 1, 9, 8, 4];
-    // Crescent sorting
-    sort::heap(&mut v, &|a,b| a<b);
-    // For decreasing sorting, change the signal in &|a,b| a>b.
-}
-```
+#### String Algorithms
 
-It can also work in an array of Strings, sorting by the length of the string:
+- [x] Knuth-Morris-Pratt (KMP)
+- [x] Rabin-Karp
+- [x] Boyer-Moore
+- [x] Z-Algorithm
+- [x] Aho-Corasick
+- [x] Suffix Array Construction
+- [x] Suffix Automaton
+- [x] Suffix Tree
+- [x] Rolling Hash
+- [x] Manacher's Algorithm
 
-```rust
-fn main() {
-    let mut v = ["bc", "a", "def", "klmno", "ghij", "pqrstu"];
-    // Crescent sorting
-    sort::merge(&mut v, &|a,b| a.len()<b.len())
-}
-```
+### 🚧 Planned Implementation
 
-### Search Algorithms
-Add this to your crate root:
+#### Graph Algorithms
 
-```rust
-use algos::search;
-```
+- [ ] Dijkstra's Algorithm
+- [ ] Bellman-Ford Algorithm
+- [ ] Floyd-Warshall Algorithm
+- [ ] Prim's Algorithm
+- [ ] Kruskal's Algorithm
+- [ ] Tarjan's Algorithm (SCC)
+- [ ] Kosaraju's Algorithm
+- [ ] Johnson's Algorithm
+- [ ] Warshall's Algorithm
+- [ ] Topological Sort
 
-and create an array and use like this:
+#### Dynamic Programming
 
-```rust
-fn fn main() {
-    // Remember that your array must be crescent sorted.
-    let mut v = [1, 2, 3, 4, 5, 7, 9];
+- [ ] Kadane's Algorithm
+- [ ] Matrix Chain Multiplication
+- [ ] Edit Distance
+- [ ] Coin Change
+- [ ] Longest Common Subsequence
+- [ ] Longest Increasing Subsequence
+- [ ] Weighted Interval Scheduling
+- [ ] Viterbi Algorithm
+- [ ] Bellman Equation-based DP
+- [ ] Knuth Optimization
 
-    let find = search::binary(&v, &5);
-}
-```
+See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
-### Pattern Matching algorithms
-Add this to your crate root:
+- Graph Algorithms (Part 2)
+- Cryptographic & Security Algorithms
+- Hashing & Hash Tables
+- Machine Learning Algorithms
+- Deep Learning & Neural Networks
+- Reinforcement Learning
+- Approximation Algorithms
+- Linear & Nonlinear Optimization
+- And many more...
 
-```rust
-use algos::pattern;
-```
+## Contributing
 
-and use like this:
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
-```rust
-fn fn main() {
-    let p = "ATCGGATTTCAGAAGCT".as_bytes();
-    let find = karp_rabin(&p, &"TTT".as_bytes()); // Type Return<usize, usize>
-}
-```
+## License
 
-## **Implemented**
-### Sorts
-- [X] Selection Sort
-- [X] Bubble Sort
-- [X] Cocktail Sort
-- [X] Insertion Sort
-- [X] Merge Sort
-- [X] Quick Sort
-- [X] Heap Sort
-
-### Searches
-- [X] Linear Search
-- [X] Binary Search
-- [X] Exponential Search
-- [X] Fibonacci Search
-
-### String Matching
-- [X] Bruteforce
-- [X] Karp-Rabin
-- [ ] Boyer-Moore
-- [X] Horspool
-- [X] Quick
-- [ ] Two-Way
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

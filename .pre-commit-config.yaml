@@ -1,0 +1,49 @@
+repos:
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+        name: rustfmt
+        args: ['--all']
+        pass_filenames: false
+      - id: clippy
+        name: clippy
+        args: ['--all-features', '--', '-D', 'warnings']
+
+  - repo: local
+    hooks:
+      - id: cargo-audit
+        name: security audit
+        description: Check dependencies for security vulnerabilities
+        entry: cargo audit
+        language: system
+        pass_filenames: false
+        types: [file, rust]
+        stages: [pre-commit]
+
+      - id: cargo-deny
+        name: dependency check
+        description: Check dependencies for security, license compliance, etc.
+        entry: cargo deny check
+        language: system
+        pass_filenames: false
+        types: [file, rust]
+        stages: [pre-commit]
+
+      - id: cargo-test
+        name: run tests
+        description: Run all tests
+        entry: cargo test --all-features
+        language: system
+        pass_filenames: false
+        types: [file, rust]
+        stages: [pre-commit]
+
+      - id: cargo-tarpaulin
+        name: test coverage
+        description: Check test coverage
+        entry: cargo tarpaulin --ignore-tests
+        language: system
+        pass_filenames: false
+        types: [file, rust]
+        stages: [pre-commit]

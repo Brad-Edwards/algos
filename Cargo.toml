@@ -1,6 +1,6 @@
 [package]
 name = "algos"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["GrayJack <gr41.j4ck@gmail.com>", "Brad-Edwards <j.bradley.edwards@gmail.com>"]
 description = "A collection of algorithms in Rust"
 repository = "https://github.com/Brad-Edwards/algos"
@@ -10,14 +10,55 @@ license-file = "LICENSE"
 readme = "README.md"
 keywords = ["algorithm", "sort", "search", "pattern", "series"]
 exclude = ["/.travis.yml", "/.github/*"]
-edition = "2018"
+edition = "2021"
 
 
 [dependencies]
-const_fn = "0.4.3"
-rand = "0.8.3"
-num = { version="0.4.0", optional=true }
+thiserror = "1.0.57"
+num-traits = "0.2.17"
+rayon = "1.8.1"
+
+[dev-dependencies]
+criterion = "0.5.1"
+rand = "0.8.5"
+cargo-tarpaulin = "0.27.3"
+
+[[bench]]
+name = "suffix_array"
+path = "benches/cs/string/suffix_array.rs"
+harness = false
+
+[[bench]]
+name = "heapsort"
+path = "benches/cs/sort/heapsort_benchmarks.rs"
+harness = false
+
+[[bench]]
+name = "quicksort"
+path = "benches/cs/sort/quicksort_benchmarks.rs"
+harness = false
+
+[[bench]]
+name = "sorting"
+path = "benches/cs/sort/sorting_benchmarks.rs"
+harness = false
+
+[[bench]]
+name = "std_sort"
+path = "benches/cs/sort/std_sort_benchmarks.rs"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = 'abort'
+
+[profile.dev]
+opt-level = 0
+debug = true
 
 [features]
-default = ["big_num"]
-big_num = ["num"]
+default = []
+parallel = []
+simd = []
