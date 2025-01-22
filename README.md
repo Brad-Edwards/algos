@@ -64,29 +64,29 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 #### Graph Algorithms
 
-- [ ] Dijkstra's Algorithm
-- [ ] Bellman-Ford Algorithm
-- [ ] Floyd-Warshall Algorithm
-- [ ] Prim's Algorithm
-- [ ] Kruskal's Algorithm
-- [ ] Tarjan's Algorithm (SCC)
-- [ ] Kosaraju's Algorithm
-- [ ] Johnson's Algorithm
-- [ ] Warshall's Algorithm
-- [ ] Topological Sort
+✅ Dijkstra's Algorithm  
+✅ Bellman-Ford Algorithm  
+✅ Floyd-Warshall Algorithm  
+[ ] Prim's Algorithm  
+[ ] Kruskal's Algorithm  
+[ ] Tarjan's Algorithm (SCC)  
+[ ] Kosaraju's Algorithm  
+✅ Johnson's Algorithm  
+[ ] Warshall's Algorithm  
+[ ] Topological Sort  
 
 #### Dynamic Programming
 
-- [ ] Kadane's Algorithm
-- [ ] Matrix Chain Multiplication
-- [ ] Edit Distance
-- [ ] Coin Change
-- [ ] Longest Common Subsequence
-- [ ] Longest Increasing Subsequence
-- [ ] Weighted Interval Scheduling
-- [ ] Viterbi Algorithm
-- [ ] Bellman Equation-based DP
-- [ ] Knuth Optimization
+[ ] Kadane's Algorithm  
+[ ] Matrix Chain Multiplication  
+[ ] Edit Distance  
+[ ] Coin Change  
+[ ] Longest Common Subsequence  
+[ ] Longest Increasing Subsequence  
+[ ] Weighted Interval Scheduling  
+[ ] Viterbi Algorithm  
+[ ] Bellman Equation-based DP  
+[ ] Knuth Optimization  
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
