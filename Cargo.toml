@@ -8,7 +8,7 @@ homepage = "https://crates.io/crates/algos"
 documentation = "https://docs.rs/algos"
 license-file = "LICENSE"
 readme = "README.md"
-keywords = ["algorithm", "sort", "search", "pattern", "series", "graph"]
+keywords = ["algorithm", "sort", "search", "graph", "string"]
 exclude = ["/.travis.yml", "/.github/*"]
 edition = "2021"
 
