@@ -51,6 +51,10 @@ pub enum Error {
     /// A negative cycle was detected in the graph
     #[error("negative cycle detected in graph")]
     NegativeCycle,
+
+    /// Invalid vertex
+    #[error("invalid vertex")]
+    InvalidVertex,
 }
 
 /// Result type for algorithm operations
