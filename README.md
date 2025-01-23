@@ -15,7 +15,7 @@ This crate is undergoing significant development. It aims to be a comprehensive 
 
 ## Overview
 
-A Rust library implementing a wide range of algorithms, from fundamental computer science concepts to advanced machine learning techniques. While currently focused on sorting, searching, and string pattern matching, the project has an extensive roadmap covering many algorithm categories.
+A Rust library implementing a wide range of algorithms, from fundamental computer science concepts to advanced machine learning techniques.
 
 ## Implementation Status
 
@@ -60,9 +60,7 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Rolling Hash  
 ✅ Manacher's Algorithm  
 
-### 🚧 Planned Implementation
-
-#### Graph Algorithms
+#### Graph Algorithms (Part 1)
 
 ✅ Dijkstra's Algorithm  
 ✅ Bellman-Ford Algorithm  
@@ -70,14 +68,16 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Prim's Algorithm  
 ✅ Kruskal's Algorithm  
 ✅ Tarjan's Algorithm (SCC)  
-[ ] Kosaraju's Algorithm  
+✅ Kosaraju's Algorithm  
 ✅ Johnson's Algorithm  
 ✅ Warshall's Algorithm  
 ✅ Topological Sort  
 
+### 🚧 Planned Implementation
+
 #### Dynamic Programming
 
-✅ Kadane's Algorithm  
+[ ] Kadane's Algorithm  
 [ ] Matrix Chain Multiplication  
 [ ] Edit Distance  
 [ ] Coin Change  
@@ -106,4 +106,4 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for details.
