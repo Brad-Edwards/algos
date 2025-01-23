@@ -33,7 +33,7 @@ pub use edmond_karp::edmond_karp as edmond_karp_max_flow;
 pub use euler_tour::euler_tour;
 pub use floyd_cycle::has_cycle as floyd_cycle_detection;
 pub use floyd_warshall::all_pairs_shortest_paths as floyd_warshall_all_pairs_shortest_paths;
-pub use ford_fulkerson::max_flow as ford_fulkerson_max_flow;
+pub use ford_fulkerson::ford_fulkerson as ford_fulkerson_max_flow;
 pub use hopcroft_karp::HopcroftKarp;
 pub use hungarian::hungarian_method;
 pub use johnson::all_pairs_shortest_paths as johnson_all_pairs_shortest_paths;
