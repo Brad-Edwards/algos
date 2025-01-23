@@ -1,5 +1,5 @@
 use num_traits::{Float, Zero};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -21,7 +21,7 @@ use crate::graph::Graph;
 ///
 /// # Examples
 /// ```
-/// use blocks_cs_graph::{Graph, algorithms::topological_sort};
+/// use algos::cs::graph::{Graph, topological_sort};
 ///
 /// let mut graph = Graph::new();
 /// graph.add_edge(0, 1, 1.0); // Task 0 must be done before Task 1

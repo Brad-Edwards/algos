@@ -17,7 +17,7 @@ use crate::graph::Graph;
 ///
 /// # Examples
 /// ```
-/// use blocks_cs_graph::{Graph, algorithms::floyd_warshall};
+/// use algos::cs::graph::{Graph, floyd_warshall};
 ///
 /// let mut graph = Graph::new();
 /// graph.add_vertex(0);

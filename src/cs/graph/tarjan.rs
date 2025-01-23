@@ -20,7 +20,7 @@ use crate::graph::Graph;
 ///
 /// # Examples
 /// ```
-/// use blocks_cs_graph::{Graph, algorithms::tarjan};
+/// use algos::cs::graph::{Graph, tarjan};
 ///
 /// let mut graph = Graph::new();
 /// graph.add_edge(0, 1, 1.0);

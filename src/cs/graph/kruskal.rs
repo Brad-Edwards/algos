@@ -60,41 +60,59 @@ impl UnionFind {
 pub fn kruskal(num_nodes: usize, edges: &mut [Edge]) -> Vec<Edge> {
     // Sort edges by weight
     edges.sort_by_key(|e| e.weight);
-    
+
     println!("\nInitial edges:");
     for e in edges.iter() {
         println!("  ({}, {}) = {}", e.src, e.dst, e.weight);
     }
-    
+
     let mut uf = UnionFind::new(num_nodes);
     let mut mst = Vec::with_capacity(num_nodes.saturating_sub(1));
 
     for edge in edges.iter() {
         if uf.find(edge.src) != uf.find(edge.dst) {
-            println!("\nAdding edge ({}, {}) = {}", edge.src, edge.dst, edge.weight);
-            println!("  Before union: {} and {} in different components", edge.src, edge.dst);
-            
+            println!(
+                "\nAdding edge ({}, {}) = {}",
+                edge.src, edge.dst, edge.weight
+            );
+            println!(
+                "  Before union: {} and {} in different components",
+                edge.src, edge.dst
+            );
+
             mst.push(edge.clone());
             uf.union(edge.src, edge.dst);
-            
-            println!("  After union: {} and {} now in same component", edge.src, edge.dst);
-            println!("  Current MST weight: {}", mst.iter().map(|e| e.weight).sum::<i32>());
-            
+
+            println!(
+                "  After union: {} and {} now in same component",
+                edge.src, edge.dst
+            );
+            println!(
+                "  Current MST weight: {}",
+                mst.iter().map(|e| e.weight).sum::<i32>()
+            );
+
             if mst.len() == num_nodes.saturating_sub(1) {
                 break;
             }
         } else {
-            println!("\nSkipping edge ({}, {}) = {}", edge.src, edge.dst, edge.weight);
+            println!(
+                "\nSkipping edge ({}, {}) = {}",
+                edge.src, edge.dst, edge.weight
+            );
             println!("  Already in same component (root {})", uf.find(edge.src));
         }
     }
-    
+
     println!("\nFinal MST:");
     for e in mst.iter() {
         println!("  ({}, {}) = {}", e.src, e.dst, e.weight);
     }
-    println!("Total weight: {}", mst.iter().map(|e| e.weight).sum::<i32>());
-    
+    println!(
+        "Total weight: {}",
+        mst.iter().map(|e| e.weight).sum::<i32>()
+    );
+
     mst
 }
 
@@ -176,9 +194,9 @@ mod tests {
     fn test_standard_graph() {
         // A small graph with 4 vertices
         // (0)---10---(1)
-        //  | \       /  
-        //  6  5    15   
-        //  |   \   /    
+        //  | \       /
+        //  6  5    15
+        //  |   \   /
         // (2)---4---(3)
         let mut edges = vec![
             Edge {

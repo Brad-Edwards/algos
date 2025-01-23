@@ -18,7 +18,7 @@ use crate::graph::Graph;
 ///
 /// # Examples
 /// ```
-/// use blocks_cs_graph::{Graph, algorithms::bellman_ford};
+/// use algos::cs::graph::{Graph, bellman_ford};
 ///
 /// let mut graph = Graph::new();
 /// graph.add_vertex(0);

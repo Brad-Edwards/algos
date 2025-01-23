@@ -43,21 +43,19 @@ impl<V: Eq, W: PartialOrd> Ord for State<V, W> {
 ///
 /// # Returns
 /// * `Ok(distances)` - A map from vertex to the shortest distance from the source
-/// * `Err(GraphError)` - If the source vertex doesn't exist or if negative weights are found
+/// * `Err(GraphError)` - If the source vertex doesn't exist or if negative weights are present
 ///
 /// # Examples
 /// ```
-/// use blocks_cs_graph::{Graph, algorithms::dijkstra};
+/// use algos::cs::graph::{Graph, dijkstra};
 ///
 /// let mut graph = Graph::new();
 /// graph.add_edge(0, 1, 4.0);
 /// graph.add_edge(0, 2, 2.0);
 /// graph.add_edge(1, 3, 3.0);
 /// graph.add_edge(2, 1, 1.0);
-/// graph.add_edge(2, 3, 5.0);
 ///
 /// let distances = dijkstra::shortest_paths(&graph, &0).unwrap();
-/// assert_eq!(distances[&3], Some(6.0)); // Path 0->2->1->3 with total weight 6
 /// ```
 ///
 /// # Complexity

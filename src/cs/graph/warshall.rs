@@ -20,9 +20,12 @@ use crate::cs::graph::Graph;
 ///
 /// # Examples
 /// ```
-/// use blocks_cs_graph::{Graph, algorithms::warshall};
+/// use algos::cs::graph::{Graph, warshall};
 ///
 /// let mut graph = Graph::new();
+/// graph.add_vertex(0);
+/// graph.add_vertex(1);
+/// graph.add_vertex(2);
 /// graph.add_edge(0, 1, 1.0);
 /// graph.add_edge(1, 2, 1.0);
 /// // Note: No direct edge from 0 to 2, but there is a path
@@ -41,7 +44,9 @@ where
 {
     // Validate graph is directed
     if !graph.is_directed() {
-        return Err(Error::invalid_input("Warshall's algorithm requires a directed graph"));
+        return Err(Error::invalid_input(
+            "Warshall's algorithm requires a directed graph",
+        ));
     }
 
     let vertices: Vec<_> = graph.vertices().copied().collect();
@@ -60,7 +65,9 @@ where
     for &k in &vertices {
         for &i in &vertices {
             for &j in &vertices {
-                if let (Some(&ik), Some(&kj)) = (reachability.get(&(i, k)), reachability.get(&(k, j))) {
+                if let (Some(&ik), Some(&kj)) =
+                    (reachability.get(&(i, k)), reachability.get(&(k, j)))
+                {
                     if ik && kj {
                         reachability.insert((i, j), true);
                     }

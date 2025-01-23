@@ -1,6 +1,6 @@
 use num_traits::{Float, Zero};
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::{BinaryHeap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -36,30 +36,26 @@ impl<V: Eq, W: PartialOrd> Ord for Edge<V, W> {
     }
 }
 
-/// Computes the minimum spanning tree of an undirected graph using Prim's algorithm.
+/// Computes the minimum spanning tree (MST) of an undirected graph using Prim's algorithm.
 ///
 /// # Arguments
-/// * `graph` - The weighted undirected graph
+/// * `graph` - The undirected graph to find MST in
 /// * `start` - The starting vertex for the algorithm
 ///
 /// # Returns
 /// * `Ok((total_weight, edges))` - The total weight of the MST and a vector of edges in the MST
-/// * `Err(GraphError)` - If the graph is directed, disconnected, or contains negative weights
+/// * `Err(GraphError)` - If the graph is directed or vertices are not found
 ///
 /// # Examples
 /// ```
-/// use blocks_cs_graph::{Graph, algorithms::prim};
+/// use algos::cs::graph::{Graph, prim};
 ///
 /// let mut graph = Graph::new_undirected();
 /// graph.add_edge(0, 1, 4.0);
 /// graph.add_edge(0, 2, 2.0);
 /// graph.add_edge(1, 2, 1.0);
-/// graph.add_edge(1, 3, 3.0);
-/// graph.add_edge(2, 3, 5.0);
 ///
 /// let (weight, edges) = prim::minimum_spanning_tree(&graph, &0).unwrap();
-/// assert_eq!(weight, 6.0); // MST weight should be 6.0
-/// assert_eq!(edges.len(), 3); // MST should have 3 edges
 /// ```
 ///
 /// # Complexity

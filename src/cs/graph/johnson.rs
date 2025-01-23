@@ -1,11 +1,11 @@
 use crate::cs::error::{Error, Result};
-use crate::cs::graph::Graph;
 use crate::cs::graph::bellman_ford;
 use crate::cs::graph::dijkstra;
+use crate::cs::graph::Graph;
+use num_traits::{Float, Zero};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
-use num_traits::{Float, Zero};
 
 /// Computes all-pairs shortest paths using Johnson's algorithm.
 /// Returns a map of (source, target) pairs to their shortest path distances.
@@ -22,9 +22,7 @@ use num_traits::{Float, Zero};
 /// # Complexity
 /// * Time: O(VE log V) where V is the number of vertices and E is the number of edges
 /// * Space: O(V²)
-pub fn all_pairs_shortest_paths<V, W>(
-    graph: &Graph<V, W>,
-) -> Result<HashMap<(V, V), Option<W>>>
+pub fn all_pairs_shortest_paths<V, W>(graph: &Graph<V, W>) -> Result<HashMap<(V, V), Option<W>>>
 where
     V: Hash + Eq + Copy + Debug + Ord,
     W: Float + Zero + Copy + Debug,
@@ -54,10 +52,7 @@ where
         Err(_) => return Err(Error::NegativeCycle),
     };
 
-    // Remove vertex q and its edges
-    g = graph.clone();
-
-    // Reweight edges using potentials
+    // Create reweighted graph
     let mut reweighted_graph = Graph::new();
     for &v in &vertices {
         reweighted_graph.add_vertex(v);
@@ -77,15 +72,15 @@ where
             Ok(paths) => paths,
             Err(_) => continue,
         };
-    
+
         for &target in &vertices {
             let dist = if source == target {
                 Some(W::zero())
             } else {
                 match (
-                    shortest_paths.get(&target),  // Option<&Option<W>>
-                    potentials.get(&source),      // Option<&Option<W>>
-                    potentials.get(&target),      // Option<&Option<W>>
+                    shortest_paths.get(&target), // Option<&Option<W>>
+                    potentials.get(&source),     // Option<&Option<W>>
+                    potentials.get(&target),     // Option<&Option<W>>
                 ) {
                     (Some(Some(d)), Some(Some(h_source)), Some(Some(h_target))) => {
                         let potential_diff = *h_target - *h_source;
@@ -112,17 +107,17 @@ mod tests {
         }
         graph.add_edge(0, 1, -2.0);
         graph.add_edge(1, 2, 3.0);
-        graph.add_edge(2, 0, -2.0);
+        graph.add_edge(2, 0, 2.0);
 
         let distances = all_pairs_shortest_paths(&graph).unwrap();
         assert_eq!(distances[&(0, 0)], Some(0.0));
         assert_eq!(distances[&(0, 1)], Some(-2.0));
         assert_eq!(distances[&(0, 2)], Some(1.0));
-        assert_eq!(distances[&(1, 0)], Some(-2.0));
+        assert_eq!(distances[&(1, 0)], Some(5.0));
         assert_eq!(distances[&(1, 1)], Some(0.0));
         assert_eq!(distances[&(1, 2)], Some(3.0));
-        assert_eq!(distances[&(2, 0)], Some(-2.0));
-        assert_eq!(distances[&(2, 1)], Some(-4.0));
+        assert_eq!(distances[&(2, 0)], Some(2.0));
+        assert_eq!(distances[&(2, 1)], Some(0.0));
         assert_eq!(distances[&(2, 2)], Some(0.0));
     }
 
