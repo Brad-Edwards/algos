@@ -6,6 +6,81 @@ use std::hash::Hash;
 use crate::error::{GraphError, Result};
 use crate::graph::Graph;
 
+/// State for Tarjan's algorithm
+struct TarjanState<V> {
+    index: usize,
+    indices: HashMap<V, usize>,
+    lowlinks: HashMap<V, usize>,
+    stack: VecDeque<V>,
+    on_stack: HashSet<V>,
+    components: Vec<Vec<V>>,
+}
+
+impl<V: Hash + Eq + Copy> TarjanState<V> {
+    fn new() -> Self {
+        Self {
+            index: 0,
+            indices: HashMap::new(),
+            lowlinks: HashMap::new(),
+            stack: VecDeque::new(),
+            on_stack: HashSet::new(),
+            components: Vec::new(),
+        }
+    }
+
+    fn strong_connect<W>(&mut self, v: V, graph: &Graph<V, W>) -> Result<()>
+    where
+        V: Debug,
+        W: Float + Zero + Copy + Debug,
+    {
+        // Set depth index for v
+        self.indices.insert(v, self.index);
+        self.lowlinks.insert(v, self.index);
+        self.index += 1;
+        self.stack.push_back(v);
+        self.on_stack.insert(v);
+
+        // Consider successors of v
+        if let Ok(neighbors) = graph.neighbors(&v) {
+            for (w, _) in neighbors {
+                if !self.indices.contains_key(w) {
+                    // Successor w has not yet been visited; recurse on it
+                    self.strong_connect(*w, graph)?;
+                    if let (Some(&v_lowlink), Some(&w_lowlink)) =
+                        (self.lowlinks.get(&v), self.lowlinks.get(w))
+                    {
+                        self.lowlinks.insert(v, v_lowlink.min(w_lowlink));
+                    }
+                } else if self.on_stack.contains(w) {
+                    // Successor w is in stack and hence in the current SCC
+                    if let (Some(&v_lowlink), Some(&w_index)) =
+                        (self.lowlinks.get(&v), self.indices.get(w))
+                    {
+                        self.lowlinks.insert(v, v_lowlink.min(w_index));
+                    }
+                }
+            }
+        }
+
+        // If v is a root node, pop the stack and generate an SCC
+        if let (Some(&v_lowlink), Some(&v_index)) = (self.lowlinks.get(&v), self.indices.get(&v)) {
+            if v_lowlink == v_index {
+                let mut component = Vec::new();
+                while let Some(w) = self.stack.pop_back() {
+                    self.on_stack.remove(&w);
+                    component.push(w);
+                    if w == v {
+                        break;
+                    }
+                }
+                self.components.push(component);
+            }
+        }
+
+        Ok(())
+    }
+}
+
 /// Computes strongly connected components (SCCs) using Tarjan's algorithm.
 ///
 /// A strongly connected component is a maximal subset of vertices in a directed graph
@@ -49,85 +124,16 @@ where
         ));
     }
 
-    let mut index = 0;
-    let mut stack = VecDeque::new();
-    let mut indices = HashMap::new();
-    let mut lowlinks = HashMap::new();
-    let mut on_stack = HashSet::new();
-    let mut components = Vec::new();
+    let mut state = TarjanState::new();
 
     // Process each vertex
     for &v in graph.vertices() {
-        if !indices.contains_key(&v) {
-            strong_connect(
-                v,
-                &mut index,
-                &mut indices,
-                &mut lowlinks,
-                &mut stack,
-                &mut on_stack,
-                &mut components,
-                graph,
-            )?;
+        if !state.indices.contains_key(&v) {
+            state.strong_connect(v, graph)?;
         }
     }
 
-    Ok(components)
-}
-
-/// Helper function for Tarjan's algorithm that processes a single vertex.
-fn strong_connect<V, W>(
-    v: V,
-    index: &mut usize,
-    indices: &mut HashMap<V, usize>,
-    lowlinks: &mut HashMap<V, usize>,
-    stack: &mut VecDeque<V>,
-    on_stack: &mut HashSet<V>,
-    components: &mut Vec<Vec<V>>,
-    graph: &Graph<V, W>,
-) -> Result<()>
-where
-    V: Hash + Eq + Copy + Debug,
-    W: Float + Zero + Copy + Debug,
-{
-    // Set depth index for v
-    indices.insert(v, *index);
-    lowlinks.insert(v, *index);
-    *index += 1;
-    stack.push_back(v);
-    on_stack.insert(v);
-
-    // Consider successors of v
-    if let Ok(neighbors) = graph.neighbors(&v) {
-        for (w, _) in neighbors {
-            if !indices.contains_key(w) {
-                // Successor w has not yet been visited; recurse on it
-                strong_connect(
-                    *w, index, indices, lowlinks, stack, on_stack, components, graph,
-                )?;
-                lowlinks.insert(v, std::cmp::min(lowlinks[&v], lowlinks[w]));
-            } else if on_stack.contains(w) {
-                // Successor w is in stack and hence in the current SCC
-                lowlinks.insert(v, std::cmp::min(lowlinks[&v], indices[w]));
-            }
-        }
-    }
-
-    // If v is a root node, pop the stack and generate an SCC
-    if lowlinks[&v] == indices[&v] {
-        let mut component = Vec::new();
-        loop {
-            let w = stack.pop_back().unwrap();
-            on_stack.remove(&w);
-            component.push(w);
-            if w == v {
-                break;
-            }
-        }
-        components.push(component);
-    }
-
-    Ok(())
+    Ok(state.components)
 }
 
 #[cfg(test)]

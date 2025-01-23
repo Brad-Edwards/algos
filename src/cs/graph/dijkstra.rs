@@ -24,14 +24,17 @@ impl<V: Eq, W: PartialOrd> PartialEq for State<V, W> {
 
 impl<V: Eq, W: PartialOrd> PartialOrd for State<V, W> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        // Reverse ordering for min-heap
-        other.cost.partial_cmp(&self.cost)
+        Some(self.cmp(other))
     }
 }
 
 impl<V: Eq, W: PartialOrd> Ord for State<V, W> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap_or(Ordering::Equal)
+        // Reverse ordering for min-heap
+        other
+            .cost
+            .partial_cmp(&self.cost)
+            .unwrap_or(Ordering::Equal)
     }
 }
 

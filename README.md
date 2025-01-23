@@ -67,17 +67,17 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Dijkstra's Algorithm  
 ✅ Bellman-Ford Algorithm  
 ✅ Floyd-Warshall Algorithm  
-[ ] Prim's Algorithm  
-[ ] Kruskal's Algorithm  
-[ ] Tarjan's Algorithm (SCC)  
+✅ Prim's Algorithm  
+✅ Kruskal's Algorithm  
+✅ Tarjan's Algorithm (SCC)  
 [ ] Kosaraju's Algorithm  
 ✅ Johnson's Algorithm  
-[ ] Warshall's Algorithm  
-[ ] Topological Sort  
+✅ Warshall's Algorithm  
+✅ Topological Sort  
 
 #### Dynamic Programming
 
-[ ] Kadane's Algorithm  
+✅ Kadane's Algorithm  
 [ ] Matrix Chain Multiplication  
 [ ] Edit Distance  
 [ ] Coin Change  

@@ -25,16 +25,22 @@ impl<V: Eq, W: PartialOrd> PartialEq for Edge<V, W> {
 
 impl<V: Eq, W: PartialOrd> PartialOrd for Edge<V, W> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        // Reverse ordering for min-heap
-        other.cost.partial_cmp(&self.cost)
+        Some(self.cmp(other))
     }
 }
 
 impl<V: Eq, W: PartialOrd> Ord for Edge<V, W> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap_or(Ordering::Equal)
+        // Reverse ordering for min-heap
+        other
+            .cost
+            .partial_cmp(&self.cost)
+            .unwrap_or(Ordering::Equal)
     }
 }
+
+/// Type alias for MST result containing total weight and list of edges
+pub type MstResult<V, W> = Result<(W, Vec<(V, V, W)>)>;
 
 /// Computes the minimum spanning tree (MST) of an undirected graph using Prim's algorithm.
 ///
@@ -66,7 +72,7 @@ impl<V: Eq, W: PartialOrd> Ord for Edge<V, W> {
 /// * `InvalidInput` if the graph is directed or contains negative weights
 /// * `VertexNotFound` if the start vertex doesn't exist
 /// * `InvalidInput` if the graph is not connected
-pub fn minimum_spanning_tree<V, W>(graph: &Graph<V, W>, start: &V) -> Result<(W, Vec<(V, V, W)>)>
+pub fn minimum_spanning_tree<V, W>(graph: &Graph<V, W>, start: &V) -> MstResult<V, W>
 where
     V: Hash + Eq + Copy + Debug,
     W: Float + Zero + Copy + Debug,

@@ -9,6 +9,7 @@ pub struct Edge {
 /// Disjoint-set (union-find) for cycle detection in Kruskal's algorithm.
 pub struct UnionFind {
     parent: Vec<usize>,
+    #[allow(dead_code)]
     rank: Vec<usize>,
 }
 
