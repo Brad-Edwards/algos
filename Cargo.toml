@@ -1,14 +1,14 @@
 [package]
 name = "algos"
-version = "0.6.0"
-authors = ["GrayJack <gr41.j4ck@gmail.com>", "Brad-Edwards <j.bradley.edwards@gmail.com>"]
+version = "0.6.4"
+authors = ["Brad-Edwards <j.bradley.edwards@gmail.com>"]
 description = "A collection of algorithms in Rust"
 repository = "https://github.com/Brad-Edwards/algos"
 homepage = "https://crates.io/crates/algos"
 documentation = "https://docs.rs/algos"
 license-file = "LICENSE"
 readme = "README.md"
-keywords = ["algorithm", "sort", "search", "pattern", "series"]
+keywords = ["algorithm", "sort", "search", "pattern", "series", "graph"]
 exclude = ["/.travis.yml", "/.github/*"]
 edition = "2021"
 

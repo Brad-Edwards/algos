@@ -43,6 +43,14 @@ pub enum Error {
     /// Invalid input
     #[error("Invalid input: {0}")]
     InvalidInput(String),
+
+    /// Vertex not found
+    #[error("vertex not found")]
+    VertexNotFound,
+
+    /// A negative cycle was detected in the graph
+    #[error("negative cycle detected in graph")]
+    NegativeCycle,
 }
 
 /// Result type for algorithm operations
