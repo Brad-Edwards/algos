@@ -73,12 +73,12 @@ mod tests {
     #[test]
     fn test_ford_fulkerson() {
         let graph = vec![
-            vec![0, 16, 13,  0,  0,  0],
-            vec![0,  0, 10, 12,  0,  0],
-            vec![0,  4,  0,  0, 14,  0],
-            vec![0,  0,  9,  0,  0, 20],
-            vec![0,  0,  0,  7,  0,  4],
-            vec![0,  0,  0,  0,  0,  0],
+            vec![0, 16, 13, 0, 0, 0],
+            vec![0, 0, 10, 12, 0, 0],
+            vec![0, 4, 0, 0, 14, 0],
+            vec![0, 0, 9, 0, 0, 20],
+            vec![0, 0, 0, 7, 0, 4],
+            vec![0, 0, 0, 0, 0, 0],
         ];
 
         // From the example, max flow from 0 to 5 should be 23.
@@ -88,21 +88,13 @@ mod tests {
 
     #[test]
     fn test_simple_path() {
-        let graph = vec![
-            vec![0, 10, 0],
-            vec![0, 0, 10],
-            vec![0, 0, 0],
-        ];
+        let graph = vec![vec![0, 10, 0], vec![0, 0, 10], vec![0, 0, 0]];
         assert_eq!(ford_fulkerson(&graph, 0, 2), 10);
     }
 
     #[test]
     fn test_no_path() {
-        let graph = vec![
-            vec![0, 0, 0],
-            vec![10, 0, 10],
-            vec![0, 0, 0],
-        ];
+        let graph = vec![vec![0, 0, 0], vec![10, 0, 10], vec![0, 0, 0]];
         assert_eq!(ford_fulkerson(&graph, 0, 2), 0);
     }
 
@@ -134,11 +126,11 @@ mod tests {
     fn test_backward_flow() {
         // Tests if the algorithm correctly handles backward flow
         let graph = vec![
-            vec![0, 5, 5, 0],
-            vec![0, 0, 3, 5],
-            vec![0, 0, 0, 5],
-            vec![0, 0, 0, 0],
+            vec![0, 5, 5, 0], // Source can send 5 to A and 5 to B
+            vec![0, 0, 3, 5], // A can send 3 to B and 5 to Sink
+            vec![0, 0, 0, 5], // B can send 5 to Sink
+            vec![0, 0, 0, 0], // Sink
         ];
-        assert_eq!(ford_fulkerson(&graph, 0, 3), 8);
+        assert_eq!(ford_fulkerson(&graph, 0, 3), 10); // Changed from 8 to 10
     }
 }
