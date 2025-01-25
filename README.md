@@ -86,7 +86,18 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 [ ] Weighted Interval Scheduling  
 [ ] Viterbi Algorithm  
 [ ] Bellman Equation-based DP  
-[ ] Knuth Optimization  
+[ ] Knuth Optimization
+
+🚧 k-Means Clustering
+🚧 k-Nearest Neighbors (k-NN)
+🚧 Linear Regression (OLS)
+🚧 Logistic Regression
+🚧 Decision Tree Learning (ID3, C4.5)
+🚧 Random Forest
+🚧 Support Vector Machine (SVM)
+🚧 Naive Bayes
+🚧 Gradient Boosting (GBM family)
+🚧 XGBoost
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
