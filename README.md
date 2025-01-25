@@ -77,16 +77,16 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 #### Dynamic Programming
 
-[ ] Kadane's Algorithm  
-[ ] Matrix Chain Multiplication  
-[ ] Edit Distance  
-[ ] Coin Change  
-[ ] Longest Common Subsequence  
-[ ] Longest Increasing Subsequence  
-[ ] Weighted Interval Scheduling  
-[ ] Viterbi Algorithm  
-[ ] Bellman Equation-based DP  
-[ ] Knuth Optimization  
+🚧 Kadane's Algorithm  
+🚧 Matrix Chain Multiplication  
+🚧 Edit Distance  
+🚧 Coin Change  
+🚧 Longest Common Subsequence  
+🚧 Longest Increasing Subsequence  
+🚧 Weighted Interval Scheduling  
+🚧 Viterbi Algorithm  
+🚧 Bellman Equation-based DP  
+🚧 Knuth Optimization  
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
