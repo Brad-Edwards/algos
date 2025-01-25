@@ -75,9 +75,9 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 #### Graph Algorithms (Part 2)
 
-🚧 Edmond–Karp (max flow)  
-🚧 Dinic’s Algorithm (max flow)  
-🚧 Ford–Fulkerson (max flow)  
+✅ Edmond–Karp (max flow)  
+✅ Dinic’s Algorithm (max flow)  
+✅ Ford–Fulkerson (max flow)  
 🚧 Hungarian Algorithm (assignment)  
 🚧 Hopcroft–Karp (bipartite matching)  
 🚧 Bron–Kerbosch (maximal clique)  

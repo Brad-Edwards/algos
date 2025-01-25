@@ -55,6 +55,10 @@ pub enum Error {
     /// Invalid vertex
     #[error("invalid vertex")]
     InvalidVertex,
+
+    /// No Eulerian path exists in the graph
+    #[error("no Eulerian path exists")]
+    NoEulerianPath,
 }
 
 /// Result type for algorithm operations

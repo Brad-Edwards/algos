@@ -17,6 +17,7 @@ pub mod prim;
 pub mod tarjan;
 pub mod topological_sort;
 pub mod warshall;
+pub mod hierholzer;
 
 use num_traits::{Float, Zero};
 use std::collections::{HashMap, HashSet};
@@ -44,6 +45,7 @@ pub use prim::minimum_spanning_tree as prim_minimum_spanning_tree;
 pub use tarjan::strongly_connected_components as tarjan_strongly_connected_components;
 pub use topological_sort::sort as topological_sort;
 pub use warshall::transitive_closure as warshall_transitive_closure;
+pub use hierholzer::find_eulerian_path as hierholzer_find_eulerian_path;
 
 /// A weighted graph implementation supporting both directed and undirected graphs.
 #[derive(Debug, Clone)]
