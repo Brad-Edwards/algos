@@ -88,6 +88,17 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 [ ] Bellman Equation-based DP  
 [ ] Knuth Optimization  
 
+🚧 Perfect Hashing  
+🚧 Universal Hashing  
+🚧 Cuckoo Hashing  
+🚧 Separate Chaining  
+🚧 Open Addressing (linear/quadratic probing, double hashing)  
+🚧 Polynomial Rolling Hash  
+🚧 FNV (Fowler–Noll–Vo) Hash  
+🚧 CRC32  
+🚧 Jenkins Hash  
+🚧 MurmurHash  
+
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
 - Graph Algorithms (Part 2)
