@@ -78,28 +78,28 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Edmond–Karp (max flow)  
 ✅ Dinic’s Algorithm (max flow)  
 ✅ Ford–Fulkerson (max flow)  
-🚧 Hungarian Algorithm (assignment)  
-🚧 Hopcroft–Karp (bipartite matching)  
-🚧 Bron–Kerbosch (maximal clique)  
-🚧 Johnson’s Cycle Detection  
-🚧 Floyd’s Cycle Detection (Tortoise and Hare)  
-🚧 Euler Tour / Euler Circuit Algorithm  
-🚧 Hierholzer’s Algorithm (Euler paths/circuits)
-
-### 🚧 Planned Implementation
+✅ Hungarian Algorithm (assignment)  
+✅ Hopcroft–Karp (bipartite matching)  
+✅ Bron–Kerbosch (maximal clique)  
+✅ Johnson’s Cycle Detection  
+✅ Floyd’s Cycle Detection (Tortoise and Hare)  
+✅ Euler Tour / Euler Circuit Algorithm  
+✅ Hierholzer’s Algorithm (Euler paths/circuits)
 
 #### Dynamic Programming
 
-[ ] Kadane's Algorithm  
-[ ] Matrix Chain Multiplication  
-[ ] Edit Distance  
-[ ] Coin Change  
-[ ] Longest Common Subsequence  
-[ ] Longest Increasing Subsequence  
-[ ] Weighted Interval Scheduling  
-[ ] Viterbi Algorithm  
-[ ] Bellman Equation-based DP  
-[ ] Knuth Optimization  
+✅ Kadane's Algorithm  
+✅ Matrix Chain Multiplication  
+✅ Edit Distance  
+✅ Coin Change  
+✅ Longest Common Subsequence  
+✅ Longest Increasing Subsequence  
+✅ Weighted Interval Scheduling  
+✅ Viterbi Algorithm  
+✅ Bellman Equation-based DP  
+✅ Knuth Optimization  
+
+### 🚧 Planned Implementation
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
