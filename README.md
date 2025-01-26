@@ -73,20 +73,31 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Warshall's Algorithm  
 ✅ Topological Sort  
 
-### 🚧 Planned Implementation
+#### Graph Algorithms (Part 2)
+
+✅ Edmond–Karp (max flow)  
+✅ Dinic’s Algorithm (max flow)  
+✅ Ford–Fulkerson (max flow)  
+✅ Hungarian Algorithm (assignment)  
+✅ Hopcroft–Karp (bipartite matching)  
+✅ Bron–Kerbosch (maximal clique)  
+✅ Johnson’s Cycle Detection  
+✅ Floyd’s Cycle Detection (Tortoise and Hare)  
+✅ Euler Tour / Euler Circuit Algorithm  
+✅ Hierholzer’s Algorithm (Euler paths/circuits)
 
 #### Dynamic Programming
 
-[ ] Kadane's Algorithm  
-[ ] Matrix Chain Multiplication  
-[ ] Edit Distance  
-[ ] Coin Change  
-[ ] Longest Common Subsequence  
-[ ] Longest Increasing Subsequence  
-[ ] Weighted Interval Scheduling  
-[ ] Viterbi Algorithm  
-[ ] Bellman Equation-based DP  
-[ ] Knuth Optimization
+✅ Kadane's Algorithm  
+✅ Matrix Chain Multiplication  
+✅ Edit Distance  
+✅ Coin Change  
+✅ Longest Common Subsequence  
+✅ Longest Increasing Subsequence  
+✅ Weighted Interval Scheduling  
+✅ Viterbi Algorithm  
+✅ Bellman Equation-based DP  
+✅ Knuth Optimization  
 
 🚧 k-Means Clustering
 🚧 k-Nearest Neighbors (k-NN)
@@ -98,6 +109,9 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 🚧 Naive Bayes
 🚧 Gradient Boosting (GBM family)
 🚧 XGBoost
+
+### 🚧 Planned Implementation
+
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
