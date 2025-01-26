@@ -86,7 +86,18 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 [ ] Weighted Interval Scheduling  
 [ ] Viterbi Algorithm  
 [ ] Bellman Equation-based DP  
-[ ] Knuth Optimization  
+[ ] Knuth Optimization
+
+🚧 RSA  
+🚧 Diffie–Hellman Key Exchange  
+🚧 ElGamal Encryption  
+🚧 AES (Rijndael)  
+🚧 Blowfish  
+🚧 Twofish  
+🚧 SHA-256  
+🚧 MD5 (legacy)  
+🚧 Elliptic Curve Cryptography (ECC)  
+🚧 DSA (Digital Signature Algorithm)  
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
