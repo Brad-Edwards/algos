@@ -26,7 +26,7 @@ impl BronKerbosch {
 
     fn bron_kerbosch(
         &self,
-        mut r: HashSet<usize>,
+        r: HashSet<usize>,
         mut p: HashSet<usize>,
         mut x: HashSet<usize>,
         cliques: &mut Vec<Vec<usize>>,
@@ -80,13 +80,13 @@ impl BronKerbosch {
             let mut new_r = r.clone();
             new_r.insert(v);
 
-            let mut new_p = p
+            let new_p = p
                 .iter()
                 .filter(|&n| v_neighbors.contains(n))
                 .cloned()
                 .collect();
 
-            let mut new_x = x
+            let new_x = x
                 .iter()
                 .filter(|&n| v_neighbors.contains(n))
                 .cloned()
@@ -97,6 +97,12 @@ impl BronKerbosch {
             p.remove(&v);
             x.insert(v);
         }
+    }
+}
+
+impl Default for BronKerbosch {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -3,10 +3,10 @@ pub mod bron_kerbosch;
 pub mod dijkstra;
 pub mod dinic;
 pub mod edmond_karp;
-pub mod euler_tour;
 pub mod floyd_cycle;
 pub mod floyd_warshall;
 pub mod ford_fulkerson;
+pub mod hierholzer;
 pub mod hopcroft_karp;
 pub mod hungarian;
 pub mod johnson;
@@ -17,7 +17,6 @@ pub mod prim;
 pub mod tarjan;
 pub mod topological_sort;
 pub mod warshall;
-pub mod hierholzer;
 
 use num_traits::{Float, Zero};
 use std::collections::{HashMap, HashSet};
@@ -31,10 +30,10 @@ pub use bron_kerbosch::BronKerbosch;
 pub use dijkstra::shortest_paths as dijkstra_shortest_paths;
 pub use dinic::Dinic;
 pub use edmond_karp::edmond_karp as edmond_karp_max_flow;
-pub use euler_tour::euler_tour;
 pub use floyd_cycle::has_cycle as floyd_cycle_detection;
 pub use floyd_warshall::all_pairs_shortest_paths as floyd_warshall_all_pairs_shortest_paths;
 pub use ford_fulkerson::ford_fulkerson as ford_fulkerson_max_flow;
+pub use hierholzer::hierholzer_eulerian_path;
 pub use hopcroft_karp::HopcroftKarp;
 pub use hungarian::hungarian_method;
 pub use johnson::all_pairs_shortest_paths as johnson_all_pairs_shortest_paths;
@@ -45,7 +44,6 @@ pub use prim::minimum_spanning_tree as prim_minimum_spanning_tree;
 pub use tarjan::strongly_connected_components as tarjan_strongly_connected_components;
 pub use topological_sort::sort as topological_sort;
 pub use warshall::transitive_closure as warshall_transitive_closure;
-pub use hierholzer::find_eulerian_path as hierholzer_find_eulerian_path;
 
 /// A weighted graph implementation supporting both directed and undirected graphs.
 #[derive(Debug, Clone)]

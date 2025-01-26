@@ -2,7 +2,7 @@ use crate::cs::error::Error;
 use std::cmp::min;
 use std::collections::VecDeque;
 
-pub fn edmond_karp(capacity: &Vec<Vec<i32>>, source: usize, sink: usize) -> Result<i32, Error> {
+pub fn edmond_karp(capacity: &[Vec<i32>], source: usize, sink: usize) -> Result<i32, Error> {
     let n = capacity.len();
     if n == 0 {
         return Ok(0);
@@ -32,8 +32,8 @@ pub fn edmond_karp(capacity: &Vec<Vec<i32>>, source: usize, sink: usize) -> Resu
 }
 
 fn find_augmenting_path(
-    capacity: &Vec<Vec<i32>>,
-    flow: &Vec<Vec<i32>>,
+    capacity: &[Vec<i32>],
+    flow: &[Vec<i32>],
     source: usize,
     sink: usize,
 ) -> Option<(Vec<usize>, i32)> {
@@ -64,9 +64,9 @@ fn find_augmenting_path(
 }
 
 fn construct_path(
-    capacity: &Vec<Vec<i32>>,
-    flow: &Vec<Vec<i32>>,
-    parent: &Vec<Option<usize>>,
+    capacity: &[Vec<i32>],
+    flow: &[Vec<i32>],
+    parent: &[Option<usize>],
     source: usize,
     sink: usize,
 ) -> Option<(Vec<usize>, i32)> {

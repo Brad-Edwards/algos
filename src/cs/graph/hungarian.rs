@@ -49,10 +49,10 @@ pub fn hungarian_method(cost_matrix: Vec<Vec<i32>>) -> (i32, Vec<usize>) {
     let mut matrix = square;
 
     // STEP 1: Subtract row minima
-    for r in 0..dim {
-        let min_val = matrix[r].iter().copied().min().unwrap();
-        for c in 0..dim {
-            matrix[r][c] -= min_val;
+    for row in matrix.iter_mut().take(dim) {
+        let min_val = row.iter().copied().min().unwrap();
+        for val in row.iter_mut() {
+            *val -= min_val;
         }
     }
 
@@ -60,12 +60,12 @@ pub fn hungarian_method(cost_matrix: Vec<Vec<i32>>) -> (i32, Vec<usize>) {
     for c in 0..dim {
         // Find min in col c
         let mut min_val = i32::MAX;
-        for r in 0..dim {
-            min_val = min_val.min(matrix[r][c]);
+        for row in matrix.iter().take(dim) {
+            min_val = min_val.min(row[c]);
         }
         // Subtract
-        for r in 0..dim {
-            matrix[r][c] -= min_val;
+        for row in matrix.iter_mut().take(dim) {
+            row[c] -= min_val;
         }
     }
 
@@ -140,8 +140,7 @@ pub fn hungarian_method(cost_matrix: Vec<Vec<i32>>) -> (i32, Vec<usize>) {
     // Now p_col[c] is the row matched to column c
     // We'll compute total cost from the original matrix
     let mut assignment = vec![0; dim]; // row -> col
-    for j in 1..=dim {
-        let i = p_col[j];
+    for (j, &i) in p_col.iter().enumerate().take(dim + 1).skip(1) {
         if i != 0 {
             assignment[i - 1] = j - 1;
         }
@@ -210,11 +209,10 @@ mod tests {
         ];
         let (min_cost, assign) = hungarian_method(cost);
         // The function pads to 5x5 internally. We just check correctness:
-        // minimal cost: e.g. row0->col1=1, row1->col0=2, row2->col3=1 => sum=4
-        // That leaves columns 2 and 4 unused in the original sub-block, which is fine.
-        assert_eq!(min_cost, 4);
+        // minimal cost: row0->col1=1, row1->col1=0, row2->col3=1 => sum=3
+        // That leaves columns 0, 2 and 4 unused in the original sub-block, which is fine.
+        assert_eq!(min_cost, 3);
         // assignment has length 3 (equal to rows)
-        //   row0->1, row1->0, row2->3 for example
         assert_eq!(assign.len(), 3);
     }
 }

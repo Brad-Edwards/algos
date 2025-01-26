@@ -21,7 +21,7 @@
 //!
 //! // Suppose we have the following list: 1 -> 2 -> 3 -> 4 -> 5
 //! // We'll create it and introduce a cycle from 5 back to node 3.
-//! use floyd_cycle_detection::{ListNode, has_cycle, find_cycle_start};
+//! use algos::cs::graph::floyd_cycle::{ListNode, has_cycle, find_cycle_start};
 //!
 //! // Create each node (wrapped in Rc<RefCell<>> to allow shared ownership)
 //! let node1 = Rc::new(RefCell::new(ListNode::new(1)));
@@ -143,9 +143,7 @@ pub fn find_cycle_start<T>(
     }
 
     // If no intersection was found, no cycle
-    if intersection.is_none() {
-        return None;
-    }
+    intersection.as_ref()?;
 
     // Phase 2: Find start of cycle
     let mut ptr1 = head.clone();

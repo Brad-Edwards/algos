@@ -1,10 +1,10 @@
-use num_traits::{Float, Zero};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::cs::error::{Error, Result};
+use crate::cs::error::Result;
 use crate::cs::graph::Graph;
+use num_traits::{Float, Zero};
 
 pub fn find_cycles<V, W>(graph: &Graph<V, W>) -> Result<Vec<Vec<V>>>
 where
@@ -45,8 +45,8 @@ where
     if let Ok(neighbors) = graph.neighbors(&current_node) {
         for (neighbor, _) in neighbors {
             if *neighbor == start_node {
-                // Cycle detected
-                let mut cycle = stack.clone();
+                // Found a cycle, add it to the result
+                let cycle = stack.clone();
                 cycles.push(cycle);
             } else if !visited.contains(neighbor) {
                 find_cycles_recursive(graph, *neighbor, start_node, visited, stack, cycles)?;

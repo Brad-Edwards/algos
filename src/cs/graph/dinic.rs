@@ -105,7 +105,7 @@ impl Dinic {
         });
     }
 
-    fn bfs(&self, s: usize, t: usize, level: &mut Vec<i32>) -> bool {
+    fn bfs(&self, s: usize, t: usize, level: &mut [i32]) -> bool {
         level.fill(-1);
         level[s] = 0;
         let mut queue = VecDeque::new();
