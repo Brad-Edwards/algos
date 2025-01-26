@@ -73,6 +73,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Warshall's Algorithm  
 ✅ Topological Sort  
 
+#### Graph Algorithms (Part 2)
+
+✅ Edmond–Karp (max flow)  
+✅ Dinic’s Algorithm (max flow)  
+✅ Ford–Fulkerson (max flow)  
+🚧 Hungarian Algorithm (assignment)  
+🚧 Hopcroft–Karp (bipartite matching)  
+🚧 Bron–Kerbosch (maximal clique)  
+🚧 Johnson’s Cycle Detection  
+🚧 Floyd’s Cycle Detection (Tortoise and Hare)  
+🚧 Euler Tour / Euler Circuit Algorithm  
+🚧 Hierholzer’s Algorithm (Euler paths/circuits)
+
 ### 🚧 Planned Implementation
 
 #### Dynamic Programming
