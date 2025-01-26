@@ -1,11 +1,11 @@
-/// lib.rs
+//! lib.rs
 
 /// Represents a single weighted interval in scheduling.
 #[derive(Debug, Clone)]
 pub struct WeightedInterval {
     pub start: usize,
     pub end: usize,
-    pub weight: usize,
+    pub weight: u64,
 }
 
 impl WeightedInterval {
@@ -14,7 +14,7 @@ impl WeightedInterval {
     /// # Panics
     ///
     /// Panics if `start > end`.
-    pub fn new(start: usize, end: usize, weight: usize) -> Self {
+    pub fn new(start: usize, end: usize, weight: u64) -> Self {
         assert!(start <= end, "start cannot be greater than end");
         Self { start, end, weight }
     }
@@ -25,8 +25,7 @@ impl WeightedInterval {
 /// # Examples
 ///
 /// ```
-/// use winterval::WeightedInterval;
-/// use winterval::max_weighted_schedule;
+/// use algos::cs::dynamic::weighted_interval::{WeightedInterval, max_weighted_schedule};
 ///
 /// let intervals = vec![
 ///     WeightedInterval::new(0, 3, 4),
@@ -53,15 +52,16 @@ pub fn max_weighted_schedule(intervals: &[WeightedInterval]) -> usize {
     // dp[i] = maximum weight of scheduling intervals among the first i
     // In code, dp[i] will represent the result for sorted[..i], so it's 1-based indexing.
     let n = sorted.len();
-    let mut dp = vec![0_usize; n + 1];
+    let mut dp = vec![0_u64; n + 1];
 
     for i in 1..=n {
         let weight_i = sorted[i - 1].weight;
         let p_i = p[i - 1];
-        dp[i] = dp[i - 1].max(weight_i + dp[(p_i as usize) + 1]);
+        let pred_dp = if p_i >= 0 { dp[p_i as usize + 1] } else { 0 };
+        dp[i] = dp[i - 1].max(weight_i + pred_dp);
     }
 
-    dp[n]
+    dp[n] as usize
 }
 
 /// Reconstructs an actual optimal schedule for Weighted Interval Scheduling.
@@ -73,7 +73,7 @@ pub fn max_weighted_schedule(intervals: &[WeightedInterval]) -> usize {
 /// # Examples
 ///
 /// ```
-/// use winterval::{WeightedInterval, best_weighted_schedule};
+/// use algos::cs::dynamic::weighted_interval::{WeightedInterval, best_weighted_schedule};
 ///
 /// let intervals = vec![
 ///     WeightedInterval::new(0, 3, 4),
@@ -84,7 +84,7 @@ pub fn max_weighted_schedule(intervals: &[WeightedInterval]) -> usize {
 ///
 /// // One optimal solution is intervals 0 and 3 => total weight 10
 /// let best_set = best_weighted_schedule(&intervals);
-/// let total_weight: usize = best_set.iter().map(|iv| iv.weight).sum();
+/// let total_weight: u64 = best_set.iter().map(|iv| iv.weight).sum();
 /// assert_eq!(total_weight, 10);
 /// ```
 pub fn best_weighted_schedule(intervals: &[WeightedInterval]) -> Vec<WeightedInterval> {
@@ -100,7 +100,7 @@ pub fn best_weighted_schedule(intervals: &[WeightedInterval]) -> Vec<WeightedInt
     let n = sorted.len();
 
     // dp[i] will store the maximum weight among intervals[0..i]
-    let mut dp = vec![0_usize; n + 1];
+    let mut dp = vec![0_u64; n + 1];
 
     // We'll store decisions for reconstruction:
     // chosen[i] = true if interval i is included in the optimal schedule
@@ -110,7 +110,8 @@ pub fn best_weighted_schedule(intervals: &[WeightedInterval]) -> Vec<WeightedInt
     for i in 1..=n {
         let weight_i = sorted[i - 1].weight;
         let p_i = p[i - 1];
-        let with_current = weight_i + dp[(p_i as usize) + 1];
+        let pred_dp = if p_i >= 0 { dp[p_i as usize + 1] } else { 0 };
+        let with_current = weight_i + pred_dp;
         let without_current = dp[i - 1];
 
         if with_current > without_current {
@@ -127,7 +128,11 @@ pub fn best_weighted_schedule(intervals: &[WeightedInterval]) -> Vec<WeightedInt
     while i > 0 {
         if chosen[i - 1] {
             result.push(sorted[i - 1].clone());
-            i = (p[i - 1] as usize) + 1;
+            i = if p[i - 1] >= 0 {
+                (p[i - 1] as usize) + 1
+            } else {
+                0
+            };
         } else {
             i -= 1;
         }
@@ -199,7 +204,7 @@ mod tests {
             WeightedInterval::new(5, 9, 6),
         ];
         let result = best_weighted_schedule(&intervals);
-        let total_weight: usize = result.iter().map(|iv| iv.weight).sum();
+        let total_weight: u64 = result.iter().map(|iv| iv.weight).sum();
         assert_eq!(total_weight, 10);
         // Check non-overlapping
         for i in 0..result.len() {

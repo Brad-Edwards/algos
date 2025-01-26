@@ -1,12 +1,15 @@
-/// lib.rs
+//! lib.rs
 
 /// Returns the length of the Longest Increasing Subsequence (LIS) in `numbers`.
 ///
 /// # Examples
 ///
 /// ```
-/// use lis::longest_increasing_subsequence_length;
-/// assert_eq!(longest_increasing_subsequence_length(&[10,9,2,5,3,7,101,18]), 4);
+/// use algos::cs::dynamic::longest_increasing_subsequence::longest_increasing_subsequence_length;
+///
+/// let arr = vec![10, 9, 2, 5, 3, 7, 101, 18];
+/// assert_eq!(longest_increasing_subsequence_length(&arr), 4);
+/// // One possible LIS is [2, 5, 7, 101]
 /// ```
 pub fn longest_increasing_subsequence_length(numbers: &[i32]) -> usize {
     let mut tails = Vec::with_capacity(numbers.len());
@@ -39,10 +42,12 @@ pub fn longest_increasing_subsequence_length(numbers: &[i32]) -> usize {
 /// # Examples
 ///
 /// ```
-/// use lis::longest_increasing_subsequence;
+/// use algos::cs::dynamic::longest_increasing_subsequence::longest_increasing_subsequence;
 ///
-/// let seq = longest_increasing_subsequence(&[10,9,2,5,3,7,101,18]);
-/// assert_eq!(seq.len(), 4); // One valid LIS might be [2,3,7,18]
+/// let arr = vec![10, 9, 2, 5, 3, 7, 101, 18];
+/// let lis = longest_increasing_subsequence(&arr);
+/// assert_eq!(lis.len(), 4);
+/// // One possible LIS is [2, 5, 7, 101]
 /// ```
 pub fn longest_increasing_subsequence(numbers: &[i32]) -> Vec<i32> {
     if numbers.is_empty() {
@@ -58,9 +63,10 @@ pub fn longest_increasing_subsequence(numbers: &[i32]) -> Vec<i32> {
 
     for (i, &num) in numbers.iter().enumerate() {
         // Binary search in the slice of `tails_index[..length]` using numbers[tails_index[pos]] for comparison
-        let pos = match tails_index[..length].binary_search_by(|&idx: &usize| numbers[idx].cmp(&num)) {
-            Ok(pos) | Err(pos) => pos,
-        };
+        let pos =
+            match tails_index[..length].binary_search_by(|&idx: &usize| numbers[idx].cmp(&num)) {
+                Ok(pos) | Err(pos) => pos,
+            };
 
         // If pos equals current LIS length, we extend tails_index by one
         if pos == length {

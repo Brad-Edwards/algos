@@ -1,8 +1,6 @@
-/// lib.rs
-///
-/// This module provides a simple Markov Decision Process (MDP) representation
-/// and a value iteration procedure that solves the Bellman equations
-/// to compute an optimal policy.
+//! This module provides a simple Markov Decision Process (MDP) representation
+//! and a value iteration procedure that solves the Bellman equations
+//! to compute an optimal policy.
 
 /// A struct representing a Markov Decision Process in discrete form.
 #[derive(Debug)]
@@ -40,7 +38,7 @@ impl MarkovDecisionProcess {
         transitions: Vec<Vec<Vec<(usize, f64, f64)>>>,
     ) -> Self {
         assert!(
-            gamma >= 0.0 && gamma <= 1.0,
+            (0.0..=1.0).contains(&gamma),
             "Discount factor gamma must be between 0 and 1"
         );
         assert_eq!(transitions.len(), num_states);
@@ -48,12 +46,9 @@ impl MarkovDecisionProcess {
             assert_eq!(sa.len(), num_actions);
         }
         // Validate probability sums
-        for s in 0..num_states {
+        for (s, _sa) in transitions.iter().enumerate().take(num_states) {
             for a in 0..num_actions {
-                let prob_sum: f64 = transitions[s][a]
-                    .iter()
-                    .map(|(_, p, _)| p)
-                    .sum();
+                let prob_sum: f64 = transitions[s][a].iter().map(|(_, p, _)| p).sum();
                 let diff = (prob_sum - 1.0).abs();
                 // Allow a little floating error
                 assert!(
@@ -89,41 +84,39 @@ impl MarkovDecisionProcess {
 /// - `policy`: a `Vec<usize>` of length `mdp.num_states` specifying the action that
 ///   maximizes the Q-value for each state (ties broken arbitrarily).
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
-/// use bellman_dp::{MarkovDecisionProcess, value_iteration};
+/// use algos::cs::dynamic::bellman_equation::{MarkovDecisionProcess, value_iteration};
 ///
-/// // A simple 2-state, 2-action MDP. Suppose each state+action transitions deterministically
-/// // to some next state with a certain reward.
-/// let mdp = MarkovDecisionProcess::new(
-///     2, // states: 0, 1
-///     2, // actions: 0, 1
-///     0.9, // discount factor
+/// // Create a simple MDP with 2 states and 2 actions
+/// let states = 2;
+/// let actions = 2;
+/// let gamma = 0.9;
+///
+/// // Define transitions: for each (state, action), a list of (next_state, probability, reward)
+/// let transitions = vec![
+///     // State 0
 ///     vec![
-///         // For state 0
-///         vec![
-///             // Action 0 => go to state 0 with prob 1.0, reward 1.0
-///             vec![(0, 1.0, 1.0)],
-///             // Action 1 => go to state 1 with prob 1.0, reward 0.0
-///             vec![(1, 1.0, 0.0)],
-///         ],
-///         // For state 1
-///         vec![
-///             // Action 0 => go to state 0 with prob 1.0, reward 0.0
-///             vec![(0, 1.0, 0.0)],
-///             // Action 1 => stay in state 1 with prob 1.0, reward 2.0
-///             vec![(1, 1.0, 2.0)],
-///         ]
+///         // Action 0
+///         vec![(0, 0.7, 1.0), (1, 0.3, 0.5)],
+///         // Action 1
+///         vec![(1, 1.0, 2.0)],
 ///     ],
-/// );
+///     // State 1
+///     vec![
+///         // Action 0
+///         vec![(0, 0.4, 0.8), (1, 0.6, 0.0)],
+///         // Action 1
+///         vec![(0, 0.1, 0.0), (1, 0.9, 1.5)],
+///     ],
+/// ];
 ///
-/// let (values, policy) = value_iteration(&mdp, 100, 1e-6);
-/// println!("Values: {:?}", values);
-/// println!("Policy: {:?}", policy);
+/// let mdp = MarkovDecisionProcess::new(states, actions, gamma, transitions);
+/// let (values, policy) = value_iteration(&mdp, 100, 0.01);
 ///
-/// // We expect state 1, action 1 to accumulate decent reward, so the policy for state 1
-/// // might be action 1, etc.
+/// assert_eq!(values.len(), states);
+/// assert_eq!(policy.len(), states);
 /// ```
 pub fn value_iteration(
     mdp: &MarkovDecisionProcess,
@@ -162,7 +155,7 @@ pub fn value_iteration(
 
     // After convergence (or max_iterations), produce a greedy policy
     let mut policy = vec![0_usize; n];
-    for s in 0..n {
+    for (s, policy_s) in policy.iter_mut().enumerate().take(n) {
         let mut best_a = 0;
         let mut best_val = f64::NEG_INFINITY;
         for a in 0..mdp.num_actions {
@@ -172,7 +165,7 @@ pub fn value_iteration(
                 best_a = a;
             }
         }
-        policy[s] = best_a;
+        *policy_s = best_a;
     }
 
     (v, policy)
@@ -221,7 +214,7 @@ mod tests {
         // The second might be better if V(1) is large.
         // Let's see if we converge near that logic.
         assert!(values[1] > 10.0); // should be fairly large
-        // The policy in state 1 should be action 1
+                                   // The policy in state 1 should be action 1
         assert_eq!(policy[1], 1);
 
         // The policy in state 0 might be action 1 if transitioning to state 1 yields a higher long-term return.

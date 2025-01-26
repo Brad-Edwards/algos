@@ -1,15 +1,15 @@
-/// lib.rs
+//! lib.rs
 
 /// Returns the length of the longest common subsequence (LCS) between `a` and `b`.
 ///
 /// # Examples
 ///
 /// ```
-/// use lcs::lcs_length;
+/// use algos::cs::dynamic::longest_common_subsequence::lcs_length;
 ///
-/// let s1 = "ABCBDAB";
-/// let s2 = "BDCABA";
-/// assert_eq!(lcs_length(s1, s2), 4); // One LCS could be "BCBA"
+/// let s1 = "ABCDGH";
+/// let s2 = "AEDFHR";
+/// assert_eq!(lcs_length(s1, s2), 3); // "ADH" is one possible LCS
 /// ```
 pub fn lcs_length(a: &str, b: &str) -> usize {
     let a_chars: Vec<char> = a.chars().collect();
@@ -32,7 +32,7 @@ pub fn lcs_length(a: &str, b: &str) -> usize {
     dp[m][n]
 }
 
-/// Reconstructs and returns one actual LCS (Longest Common Subsequence) 
+/// Reconstructs and returns one actual LCS (Longest Common Subsequence)
 /// between `a` and `b`.
 ///
 /// If there are multiple subsequences with the same length, this returns
@@ -41,13 +41,12 @@ pub fn lcs_length(a: &str, b: &str) -> usize {
 /// # Examples
 ///
 /// ```
-/// use lcs::lcs_sequence;
+/// use algos::cs::dynamic::longest_common_subsequence::lcs_sequence;
 ///
-/// let s1 = "ABCBDAB";
-/// let s2 = "BDCABA";
-/// let subseq = lcs_sequence(s1, s2);
-/// // "BCBA" or "BDAB" or similar. All have length 4.
-/// assert_eq!(subseq.len(), 4);
+/// let s1 = "ABCDGH";
+/// let s2 = "AEDFHR";
+/// let lcs = lcs_sequence(s1, s2);
+/// assert_eq!(lcs.len(), 3); // "ADH" is one possible LCS
 /// ```
 pub fn lcs_sequence(a: &str, b: &str) -> String {
     let a_chars: Vec<char> = a.chars().collect();

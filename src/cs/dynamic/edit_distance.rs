@@ -1,4 +1,4 @@
-/// lib.rs
+//! lib.rs
 
 /// Computes the Levenshtein (edit) distance between two string slices.
 ///
@@ -8,7 +8,7 @@
 /// # Examples
 ///
 /// ```
-/// use editdistance::levenshtein_distance;
+/// use algos::cs::dynamic::edit_distance::levenshtein_distance;
 ///
 /// assert_eq!(levenshtein_distance("", ""), 0);
 /// assert_eq!(levenshtein_distance("kitten", "sitting"), 3);

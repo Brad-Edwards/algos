@@ -1,6 +1,8 @@
-/// lib.rs
+//! lib.rs
 
-/// Represents a discrete Hidden Markov Model (HMM), storing:
+/// A struct representing a Hidden Markov Model (HMM).
+///
+/// Stores:
 /// - `num_states`: how many hidden states
 /// - `num_observations`: how many distinct observation types
 /// - `initial_probabilities`: probability of starting in each state
@@ -159,7 +161,7 @@ mod tests {
         //
         // HMM parameters (all probabilities must sum to 1 in their respective arrays):
         // initial_prob: P(state0) = 0.6, P(state1) = 0.4
-        // transitions: 
+        // transitions:
         //    state0 -> [state0=0.7, state1=0.3]
         //    state1 -> [state0=0.4, state1=0.6]
         // emission:
@@ -169,14 +171,8 @@ mod tests {
             2,
             3,
             vec![0.6, 0.4],
-            vec![
-                vec![0.7, 0.3],
-                vec![0.4, 0.6],
-            ],
-            vec![
-                vec![0.5, 0.4, 0.1],
-                vec![0.1, 0.3, 0.6],
-            ],
+            vec![vec![0.7, 0.3], vec![0.4, 0.6]],
+            vec![vec![0.5, 0.4, 0.1], vec![0.1, 0.3, 0.6]],
         );
 
         // Observed sequence: [walk, shop, clean]
@@ -196,7 +192,13 @@ mod tests {
 
     #[test]
     fn test_viterbi_empty() {
-        let hmm = HiddenMarkovModel::new(2, 3, vec![1.0, 0.0], vec![vec![1.0, 0.0], vec![0.0, 1.0]], vec![vec![1.0,0.0,0.0], vec![0.0,1.0,0.0]]);
+        let hmm = HiddenMarkovModel::new(
+            2,
+            3,
+            vec![1.0, 0.0],
+            vec![vec![1.0, 0.0], vec![0.0, 1.0]],
+            vec![vec![1.0, 0.0, 0.0], vec![0.0, 1.0, 0.0]],
+        );
         let empty_obs: Vec<usize> = vec![];
         let path = viterbi(&hmm, &empty_obs);
         assert_eq!(path.len(), 0);
@@ -209,14 +211,8 @@ mod tests {
             2,
             3,
             vec![0.6, 0.4],
-            vec![
-                vec![0.7, 0.3],
-                vec![0.4, 0.6],
-            ],
-            vec![
-                vec![0.5, 0.4, 0.1],
-                vec![0.1, 0.3, 0.6],
-            ],
+            vec![vec![0.7, 0.3], vec![0.4, 0.6]],
+            vec![vec![0.5, 0.4, 0.1], vec![0.1, 0.3, 0.6]],
         );
 
         for row in &hmm.transition_probabilities {

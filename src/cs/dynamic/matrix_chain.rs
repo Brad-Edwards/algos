@@ -1,4 +1,4 @@
-/// lib.rs
+//! lib.rs
 
 /// A basic matrix implementation using `Vec<f64>`.
 #[derive(Debug, Clone)]
@@ -66,9 +66,7 @@ fn matrix_chain_order(dims: &[usize]) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {
             let j = i + chain_length - 1;
             m[i][j] = usize::MAX;
             for k in i..j {
-                let q = m[i][k]
-                    + m[k + 1][j]
-                    + dims[i] * dims[k + 1] * dims[j + 1];
+                let q = m[i][k] + m[k + 1][j] + dims[i] * dims[k + 1] * dims[j + 1];
                 if q < m[i][j] {
                     m[i][j] = q;
                     s[i][j] = k;
@@ -129,12 +127,12 @@ pub fn optimal_matrix_chain_multiplication(matrices: &[Matrix]) -> Result<Matrix
 
     // Reconstruct multiplication order
     // Example: s = split table. Then we walk it to find the actual multiplication steps
-    let order = construct_optimal_parens(&s, 0, n - 1);
+    let _order = construct_optimal_parens(&s, 0, n - 1);
 
     // The `order` slice effectively lists each matrix as a segment [start, end].
     // We'll multiply from left to right in that list (though it's a bit more nuanced).
     // A simpler approach is to do a top-down simulation of the DP splits.
-    multiply_chain_rec(&matrices, &s, 0, n - 1)
+    multiply_chain_rec(matrices, &s, 0, n - 1)
 }
 
 /// Recursively multiply sub-chains based on split table.

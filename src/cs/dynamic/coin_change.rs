@@ -1,4 +1,4 @@
-/// lib.rs
+//! lib.rs
 
 /// Computes the minimum number of coins needed to form the target `amount`.
 ///
@@ -9,7 +9,7 @@
 /// # Examples
 ///
 /// ```
-/// use coinchange::min_coins_for_change;
+/// use algos::cs::dynamic::coin_change::min_coins_for_change;
 ///
 /// // Minimum 3 coins: 6 + 6 + 6 = 18
 /// let coins = vec![1, 6, 10];
@@ -57,7 +57,7 @@ pub fn min_coins_for_change(coins: &[usize], amount: usize) -> Option<usize> {
 /// # Examples
 ///
 /// ```
-/// use coinchange::count_change_ways;
+/// use algos::cs::dynamic::coin_change::count_change_ways;
 ///
 /// // There are 4 ways to make 5 using [1,2,5]:
 /// //   1) 1+1+1+1+1
@@ -109,10 +109,11 @@ mod tests {
 
         // Using [2,4], ways to form 8:
         //   - 2+2+2+2
+        //   - 2+2+4
         //   - 4+4
-        // => 2 ways
+        // => 3 ways
         let coins2 = vec![2, 4];
-        assert_eq!(count_change_ways(&coins2, 8), 2);
+        assert_eq!(count_change_ways(&coins2, 8), 3);
 
         // If coins is empty, 0 ways to form any positive amount
         assert_eq!(count_change_ways(&[], 5), 0);

@@ -1,4 +1,4 @@
-/// lib.rs
+//! lib.rs
 
 /// Computes the minimum cost to merge consecutive segments (files) with sizes given in `weights`
 /// using Knuth Optimization for an O(n^2) solution.
@@ -14,13 +14,13 @@
 ///   You can use `reconstruct_optimal_merge` (below) to build an actual merge order
 ///   if you desire, though many applications only need the minimal cost.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
-/// use knuth_opt::min_merge_cost_knuth;
+/// use algos::cs::dynamic::knuth_optimization::min_merge_cost_knuth;
 ///
-/// let files = vec![10, 20, 30];
-/// let (cost, opt) = min_merge_cost_knuth(&files);
+/// let weights = vec![10, 20, 30];
+/// let (cost, _) = min_merge_cost_knuth(&weights);
 /// assert_eq!(cost, 90);
 /// // Explanation:
 /// // - Merge (10, 20) cost=30, new array [30, 30]
@@ -67,7 +67,8 @@ pub fn min_merge_cost_knuth(weights: &[usize]) -> (usize, Vec<Vec<usize>>) {
             // Because of Knuth's monotonic queue bounding.
             // But we must ensure these indices are within [i..j-1].
             let start_k = opt[i][j.saturating_sub(1)].max(i);
-            let end_k = opt.get(i + 1)
+            let end_k = opt
+                .get(i + 1)
                 .map(|row| row.get(j).cloned().unwrap_or(j.saturating_sub(1)))
                 .unwrap_or(j.saturating_sub(1))
                 .min(j.saturating_sub(1));
@@ -90,23 +91,25 @@ pub fn min_merge_cost_knuth(weights: &[usize]) -> (usize, Vec<Vec<usize>>) {
 }
 
 /// Reconstructs one optimal merge sequence using the `opt` table from `min_merge_cost_knuth`.
-/// 
+///
 /// Returns a list of merges in the form `(start, mid, end)` meaning "merge subarray `[start..=mid]` with `[mid+1..=end]`".
 /// This is one way to represent the merge strategy, but in practice you might
-/// only need the minimal cost. 
-/// 
+/// only need the minimal cost.
+///
 /// # Arguments
 /// - `opt`: the 2D table from `min_merge_cost_knuth`
 /// - `i`: start index of the subarray
 /// - `j`: end index of the subarray
-/// 
-/// # Example
+///
+/// # Examples
+///
 /// ```
-/// use knuth_opt::{min_merge_cost_knuth, reconstruct_optimal_merge};
+/// use algos::cs::dynamic::knuth_optimization::{min_merge_cost_knuth, reconstruct_optimal_merge};
+///
 /// let weights = vec![10, 20, 30];
-/// let (_, opt_table) = min_merge_cost_knuth(&weights);
-/// let merges = reconstruct_optimal_merge(&opt_table, 0, weights.len()-1);
-/// println!("Optimal merges: {:?}", merges);
+/// let (_, s) = min_merge_cost_knuth(&weights);
+/// let merges = reconstruct_optimal_merge(&s, 0, weights.len() - 1);
+/// assert_eq!(merges.len(), 2); // Two merge operations needed
 /// ```
 pub fn reconstruct_optimal_merge(
     opt: &Vec<Vec<usize>>,
@@ -176,7 +179,7 @@ mod tests {
         // There's more than one merge order but let's just check the final cost is correct.
         // Known minimal cost is 19:
         // e.g., merge(1,2)=3 -> cost=3, new array [3,3,4], merge(3,3)=6 -> cost=6, new array [6,4], final merge=10 => total=3+6+10=19
-        let weights = vec![1,2,3,4];
+        let weights = vec![1, 2, 3, 4];
         let (cost, _opt) = min_merge_cost_knuth(&weights);
         assert_eq!(cost, 19);
     }

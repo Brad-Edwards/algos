@@ -5,11 +5,13 @@
 /// # Examples
 ///
 /// ```
-/// use algos::cs::graph::kadane;
+/// use algos::cs::dynamic::kadane::kadane;
 ///
-/// let arr = [1, -2, 3, 5, -1];
-/// let result = kadane(&arr);
-/// assert_eq!(result, Some(8)); // The subarray [3, 5] has sum 8
+/// let arr = vec![-2, 1, -3, 4, -1, 2, 1, -5, 4];
+/// assert_eq!(kadane(&arr), Some(6));  // subarray [4, -1, 2, 1] has sum 6
+///
+/// let empty: Vec<i32> = vec![];
+/// assert_eq!(kadane(&empty), None);
 /// ```
 pub fn kadane(arr: &[i32]) -> Option<i32> {
     if arr.is_empty() {
