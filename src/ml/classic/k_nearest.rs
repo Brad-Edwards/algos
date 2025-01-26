@@ -34,7 +34,10 @@ impl<L: Eq + Hash + Clone> KNNClassifier<L> {
         let n = features.len();
         assert_eq!(n, labels.len(), "features and labels must have same length");
         for f in &features {
-            assert!(!f.is_empty(), "All feature vectors must have at least one dimension");
+            assert!(
+                !f.is_empty(),
+                "All feature vectors must have at least one dimension"
+            );
         }
 
         Self {
@@ -72,7 +75,10 @@ impl<L: Eq + Hash + Clone> KNNClassifier<L> {
     /// println!("Predicted label: {}", predicted_label);
     /// ```
     pub fn predict(&self, point: &[f64]) -> L {
-        assert!(!self.features.is_empty(), "No training data in the classifier");
+        assert!(
+            !self.features.is_empty(),
+            "No training data in the classifier"
+        );
         let neighbors = self.find_k_nearest(point);
         // Majority vote among these neighbors
         self.majority_vote(neighbors)
@@ -86,7 +92,8 @@ impl<L: Eq + Hash + Clone> KNNClassifier<L> {
     /// Find the indices of the k nearest neighbors of `point`.
     fn find_k_nearest(&self, point: &[f64]) -> Vec<usize> {
         // We will store (distance, index), then sort by distance
-        let mut dists: Vec<(f64, usize)> = self.features
+        let mut dists: Vec<(f64, usize)> = self
+            .features
             .iter()
             .enumerate()
             .map(|(i, f)| (euclidean_distance_sq(f, point), i))
@@ -109,7 +116,11 @@ impl<L: Eq + Hash + Clone> KNNClassifier<L> {
             *counts.entry(label.clone()).or_insert(0) += 1;
         }
         // Find label with max count
-        counts.into_iter().max_by_key(|(_label, count)| *count).unwrap().0
+        counts
+            .into_iter()
+            .max_by_key(|(_label, count)| *count)
+            .unwrap()
+            .0
     }
 }
 

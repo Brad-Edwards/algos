@@ -35,8 +35,8 @@ enum TreeNode<L> {
     /// - For continuous splits, we store two keys: "<=" and ">" in `branches`.
     Internal {
         feature_index: usize,
-        threshold: f64,           // only used if continuous
-        is_continuous: bool,      // true if the feature is treated as continuous
+        threshold: f64,      // only used if continuous
+        is_continuous: bool, // true if the feature is treated as continuous
         branches: HashMap<String, TreeNode<L>>,
     },
 }
@@ -81,14 +81,22 @@ impl<L: Clone + Eq + std::hash::Hash> RandomForest<L> {
     /// - If `data.len() != labels.len()`.
     /// - If `data` is empty or has inconsistent row lengths.
     pub fn fit(&mut self, data: &[Vec<String>], labels: &[L], seed: Option<u64>) {
-        assert_eq!(data.len(), labels.len(), "data and labels must match in length");
+        assert_eq!(
+            data.len(),
+            labels.len(),
+            "data and labels must match in length"
+        );
         let n_samples = data.len();
         if n_samples == 0 {
             panic!("No training data provided.");
         }
         let num_features = data[0].len();
         for row in data.iter() {
-            assert_eq!(row.len(), num_features, "Inconsistent feature dimension in data.");
+            assert_eq!(
+                row.len(),
+                num_features,
+                "Inconsistent feature dimension in data."
+            );
         }
 
         let mut rng = match seed {
@@ -107,7 +115,8 @@ impl<L: Clone + Eq + std::hash::Hash> RandomForest<L> {
         for _ in 0..self.n_trees {
             // Bootstrap sample
             let subset_size = (self.sample_ratio * n_samples as f64).round() as usize;
-            let (sampled_data, sampled_labels) = bootstrap_sample(data, labels, subset_size, &mut rng);
+            let (sampled_data, sampled_labels) =
+                bootstrap_sample(data, labels, subset_size, &mut rng);
 
             // Build a decision tree with random feature subspace
             let tree = DecisionTree::build(
@@ -329,10 +338,10 @@ fn partition_indices(
 }
 
 /// Compute the Gini impurity of an entire label list.
-fn gini<L: Eq + std::hash::Hash>(labels: &[L]) -> f64 {
+fn gini<L: Clone + Eq + std::hash::Hash>(labels: &[L]) -> f64 {
     let mut counts = HashMap::new();
     for lbl in labels {
-        *counts.entry(lbl).or_insert(0) += 1;
+        *counts.entry(lbl.clone()).or_insert(0) += 1;
     }
     let n = labels.len() as f64;
     let mut impurity = 1.0;
@@ -344,10 +353,10 @@ fn gini<L: Eq + std::hash::Hash>(labels: &[L]) -> f64 {
 }
 
 /// Compute Gini impurity for a subset of `labels` given by `indices`.
-fn gini_of_subset<L: Eq + std::hash::Hash>(labels: &[L], indices: &[usize]) -> f64 {
+fn gini_of_subset<L: Clone + Eq + std::hash::Hash>(labels: &[L], indices: &[usize]) -> f64 {
     let mut counts = HashMap::new();
     for &i in indices {
-        *counts.entry(&labels[i]).or_insert(0) += 1;
+        *counts.entry(labels[i].clone()).or_insert(0) += 1;
     }
     let n = indices.len() as f64;
     let mut impurity = 1.0;
@@ -371,7 +380,7 @@ fn all_same<L: PartialEq>(labels: &[L]) -> bool {
 fn majority_label<L: Clone + Eq + std::hash::Hash>(labels: &[L]) -> L {
     let mut counts = HashMap::new();
     for lbl in labels {
-        *counts.entry(lbl).or_insert(0) += 1;
+        *counts.entry(lbl.clone()).or_insert(0) += 1;
     }
     counts.into_iter().max_by_key(|(_, c)| *c).unwrap().0
 }
@@ -387,7 +396,9 @@ fn traverse<L: Clone>(node: &TreeNode<L>, features: &[String]) -> L {
             branches,
         } => {
             if *is_continuous {
-                let val = features[*feature_index].parse::<f64>().unwrap_or(f64::INFINITY);
+                let val = features[*feature_index]
+                    .parse::<f64>()
+                    .unwrap_or(f64::INFINITY);
                 if val <= *threshold {
                     match branches.get("≤") {
                         Some(child) => traverse(child, features),
@@ -417,7 +428,11 @@ fn traverse<L: Clone>(node: &TreeNode<L>, features: &[String]) -> L {
 }
 
 /// Returns a random subset of feature indices of size up to `max_features`.
-fn random_feature_subset(num_features: usize, max_features: usize, rng: &mut impl Rng) -> Vec<usize> {
+fn random_feature_subset(
+    num_features: usize,
+    max_features: usize,
+    rng: &mut impl Rng,
+) -> Vec<usize> {
     // sample without replacement
     let mut all_feats: Vec<usize> = (0..num_features).collect();
     all_feats.shuffle(rng);

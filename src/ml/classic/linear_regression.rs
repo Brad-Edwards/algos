@@ -1,12 +1,12 @@
 /// lib.rs
 
 /// A simple linear regression model using the Ordinary Least Squares (OLS) solution.
-/// 
+///
 /// # Fields
 /// - `coefficients`: The learned parameters (including intercept as the first element).
 #[derive(Debug, Clone)]
 pub struct LinearRegression {
-    /// `coefficients[0]` is the intercept (beta_0), 
+    /// `coefficients[0]` is the intercept (beta_0),
     /// `coefficients[1..]` are the slopes for each feature (beta_1, ..., beta_d).
     pub coefficients: Vec<f64>,
 }
@@ -93,7 +93,7 @@ impl LinearRegression {
 
         // 1. X^T X
         let xtx = matmul_transpose_a(&x_matrix, n, x_cols); // (x_cols x x_cols)
-        let mut xtx_inv = invert_matrix(xtx, x_cols)
+        let xtx_inv = invert_matrix(xtx, x_cols)
             .unwrap_or_else(|| panic!("Matrix inversion failed (X^T X might be singular)."));
 
         // 2. X^T y => shape (x_cols)
@@ -119,7 +119,7 @@ impl LinearRegression {
     ///   or `coefficients.len()` if no intercept.
     pub fn predict(&self, x: &[f64]) -> f64 {
         let dim = self.coefficients.len();
-        // If we have an intercept, the first coefficient is beta_0, 
+        // If we have an intercept, the first coefficient is beta_0,
         // otherwise we treat `coefficients` as purely slope terms.
         let has_intercept = match dim {
             1 => true, // 1D with intercept means just beta0?
@@ -140,7 +140,11 @@ impl LinearRegression {
         } else {
             // pred = sum_{j=0..d-1} beta_j * x_j
             if x.len() != dim {
-                panic!("Input feature length mismatch. Expected {}, got {}", dim, x.len());
+                panic!(
+                    "Input feature length mismatch. Expected {}, got {}",
+                    dim,
+                    x.len()
+                );
             }
             let mut result = 0.0;
             for (j, &val) in x.iter().enumerate() {
@@ -258,12 +262,7 @@ mod tests {
     fn test_basic_regression() {
         // We'll fit y = 2 + 3x, with a small dataset.
         // x = 0 => y=2, x=1 => y=5, x=2 => y=8, ...
-        let x = vec![
-            vec![0.0],
-            vec![1.0],
-            vec![2.0],
-            vec![3.0],
-        ];
+        let x = vec![vec![0.0], vec![1.0], vec![2.0], vec![3.0]];
         let y = vec![2.0, 5.0, 8.0, 11.0];
         let model = LinearRegression::fit(&x, &y, true);
 

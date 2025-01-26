@@ -163,7 +163,10 @@ impl LogisticRegression {
 
     /// Predict probabilities for multiple rows of features.
     pub fn predict_proba_batch(&self, features: &[Vec<f64>]) -> Vec<f64> {
-        features.iter().map(|row| self.predict_proba_one(row)).collect()
+        features
+            .iter()
+            .map(|row| self.predict_proba_one(row))
+            .collect()
     }
 
     /// Predict a binary label (0 or 1) for a single feature vector, using threshold=0.5.
@@ -201,13 +204,7 @@ mod tests {
     fn test_basic_logistic_regression() {
         // We'll fit a simple logistic regression for a linearly separable dataset in 1D.
         // y=1 if x>2.0 else 0, with some margin.
-        let x = vec![
-            vec![0.0],
-            vec![1.0],
-            vec![2.0],
-            vec![3.0],
-            vec![4.0],
-        ];
+        let x = vec![vec![0.0], vec![1.0], vec![2.0], vec![3.0], vec![4.0]];
         let y = vec![
             0.0, //  x=0
             0.0, //  x=1

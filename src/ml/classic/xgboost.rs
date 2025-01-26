@@ -1,16 +1,15 @@
 use rand::prelude::*;
-use std::collections::HashMap;
 use std::f64::EPSILON;
 
 /// The training objective for XGBoost-style gradient boosting.
 #[derive(Debug, Clone)]
 pub enum XGBObjective {
-    /// Regression with squared error loss: 
+    /// Regression with squared error loss:
     ///   gradient = (pred - label)
     ///   hessian = 1
     RegSquareError,
     /// Binary logistic classification (labels in {0,1}).
-    /// We treat the model output as log-odds. 
+    /// We treat the model output as log-odds.
     /// gradient = p - label, hessian = p*(1-p), where p = sigmoid(pred).
     BinaryLogistic,
 }
@@ -58,7 +57,7 @@ pub struct XGBoostModel {
 enum XGBTreeNode {
     /// Leaf node with a constant weight (score) contribution.
     Leaf(f64),
-    /// Internal node that splits on feature_index <= threshold. 
+    /// Internal node that splits on feature_index <= threshold.
     Internal {
         feature_index: usize,
         threshold: f64,
@@ -67,7 +66,7 @@ enum XGBTreeNode {
     },
 }
 
-/// A CART-style regression tree used by XGBoost, storing node splits with 
+/// A CART-style regression tree used by XGBoost, storing node splits with
 /// second-order statistics to guide splitting.
 #[derive(Debug, Clone)]
 pub struct XGBTree {
@@ -95,7 +94,7 @@ impl XGBoostModel {
 
     /// Fit the XGBoost model on the dataset (features, labels).
     ///
-    /// For `BinaryLogistic`, labels must be 0.0 or 1.0. 
+    /// For `BinaryLogistic`, labels must be 0.0 or 1.0.
     /// For `RegSquareError`, labels can be any numeric value.
     pub fn fit(&mut self, x: &[Vec<f64>], y: &[f64]) {
         let n = x.len();
@@ -130,7 +129,11 @@ impl XGBoostModel {
                         (p, q + 1.0)
                     }
                 });
-                let ratio = if neg < EPSILON { pos / (EPSILON) } else { pos / neg };
+                let ratio = if neg < EPSILON {
+                    pos / (EPSILON)
+                } else {
+                    pos / neg
+                };
                 self.base_score = (ratio).max(EPSILON).ln();
             }
         }
@@ -152,9 +155,9 @@ impl XGBoostModel {
                 XGBObjective::RegSquareError => {
                     // gradient = (pred - y), hessian = 1
                     let mut g = vec![0.0; n];
-                    let mut hh = vec![1.0; n];
+                    let hh = vec![1.0; n];
                     for i in 0..n {
-                        g[i] = (preds[i] - y[i]);
+                        g[i] = preds[i] - y[i];
                     }
                     (g, hh)
                 }
@@ -174,21 +177,16 @@ impl XGBoostModel {
             };
 
             // 2) row and col subsampling
-            let (sample_mask, col_mask) = subsample_masks(n, x[0].len(), 
-                                                          self.config.subsample, 
-                                                          self.config.colsample_bytree, 
-                                                          &mut rng);
+            let (sample_mask, col_mask) = subsample_masks(
+                n,
+                x[0].len(),
+                self.config.subsample,
+                self.config.colsample_bytree,
+                &mut rng,
+            );
 
             // 3) build a tree
-            let tree = build_xgb_tree(
-                x, 
-                &grad,
-                &hess,
-                &sample_mask,
-                &col_mask,
-                &self.config,
-                0,
-            );
+            let tree = build_xgb_tree(x, &grad, &hess, &sample_mask, &col_mask, &self.config, 0);
             // 4) append the tree
             self.trees.push(XGBTree { root: tree.clone() });
 
@@ -197,7 +195,7 @@ impl XGBoostModel {
                 if sample_mask[i] {
                     let incr = traverse(&tree, &x[i]) * self.config.learning_rate;
                     preds[i] += incr;
-                } 
+                }
                 // if mask is false, we keep previous pred (some implementations do anyway).
                 // Typically we use the same for all rows, but this is a simplified approach.
                 // For standard XGBoost, even out-of-bag rows are updated with the new tree.
@@ -219,12 +217,16 @@ impl XGBoostModel {
             XGBObjective::RegSquareError => score,
             XGBObjective::BinaryLogistic => {
                 let p = 1.0 / (1.0 + (-score).exp());
-                if p >= 0.5 { 1.0 } else { 0.0 }
+                if p >= 0.5 {
+                    1.0
+                } else {
+                    0.0
+                }
             }
         }
     }
 
-    /// The raw model output: base_score + sum of tree outputs. 
+    /// The raw model output: base_score + sum of tree outputs.
     /// For logistic, interpret as log-odds.
     pub fn decision_function_one(&self, sample: &[f64]) -> f64 {
         let mut sum_val = self.base_score;
@@ -310,7 +312,8 @@ fn build_xgb_tree(
             }
 
             let left_child = build_xgb_tree(x, grad, hess, &left_mask, col_mask, config, depth + 1);
-            let right_child = build_xgb_tree(x, grad, hess, &right_mask, col_mask, config, depth + 1);
+            let right_child =
+                build_xgb_tree(x, grad, hess, &right_mask, col_mask, config, depth + 1);
 
             XGBTreeNode::Internal {
                 feature_index: sp.feature_index,
@@ -322,7 +325,7 @@ fn build_xgb_tree(
     }
 }
 
-/// Find the best split over the allowed columns. 
+/// Find the best split over the allowed columns.
 /// We compute approximate gain using G = sum(grad), H = sum(hess) for left/right subsets.
 fn find_best_xgb_split(
     x: &[Vec<f64>],
@@ -381,10 +384,8 @@ fn find_best_xgb_split(
                     if best.is_none() || gain > best.as_ref().unwrap().gain {
                         // build lists
                         let left_index = left_idx.clone();
-                        let right_index: Vec<usize> = vals[(i + 1)..]
-                            .iter()
-                            .map(|(_, idx)| *idx)
-                            .collect();
+                        let right_index: Vec<usize> =
+                            vals[(i + 1)..].iter().map(|(_, idx)| *idx).collect();
                         best = Some(XGBNodeSplit {
                             feature_index: feat_idx,
                             threshold,
@@ -478,10 +479,10 @@ fn calc_gamma(g: f64, h: f64, lambda: f64, alpha: f64) -> f64 {
 
 /// The gain from splitting one node into two, ignoring gamma here, is:
 /// gain = 1/2 * [G_L^2/(H_L + lambda) + G_R^2/(H_R + lambda) - G^2/(H + lambda)]
-fn calc_gain(g: f64, h: f64, lambda: f64, alpha: f64) -> f64 {
-    // ignoring alpha for gain formula except in leaf weight. 
-    // This is a simplified approach. 
-    // Typically alpha affects the leaf weight, thus the net gain is also influenced indirectly. 
+fn calc_gain(g: f64, h: f64, lambda: f64, _alpha: f64) -> f64 {
+    // ignoring alpha for gain formula except in leaf weight.
+    // This is a simplified approach.
+    // Typically alpha affects the leaf weight, thus the net gain is also influenced indirectly.
     // We'll do standard formula ignoring alpha's direct role in splitting gain.
     if h.abs() < EPSILON {
         return 0.0;
@@ -566,7 +567,10 @@ mod tests {
             vec![0.0, 4.0], // sum=4 => 1
             vec![0.0, 0.0], // sum=0 => 0
         ];
-        let y: Vec<f64> = x.iter().map(|row| if row[0] + row[1] > 3.0 {1.0} else {0.0}).collect();
+        let y: Vec<f64> = x
+            .iter()
+            .map(|row| if row[0] + row[1] > 3.0 { 1.0 } else { 0.0 })
+            .collect();
 
         let config = XGBConfig {
             n_estimators: 10,
@@ -588,7 +592,11 @@ mod tests {
             let pred = model.predict_one(&x[i]);
             let truth = y[i];
             let is_correct = (pred - truth).abs() < 0.5;
-            assert!(is_correct, "Wrong classification for row {} => pred={}", i, pred);
+            assert!(
+                is_correct,
+                "Wrong classification for row {} => pred={}",
+                i, pred
+            );
         }
     }
 }

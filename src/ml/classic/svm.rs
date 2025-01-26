@@ -1,5 +1,3 @@
-use std::f64::consts::E;
-
 /// A trait for kernel functions used by the SVM.
 pub trait Kernel {
     /// Compute the kernel value between two feature vectors.
@@ -176,8 +174,9 @@ impl<K: Kernel> SVM<K> {
         let cache = self.kernel_cache.as_mut().unwrap();
         for i in 0..n {
             for j in 0..n {
-                cache[i][j] =
-                    self.kernel.compute(&self.support_vectors[i], &self.support_vectors[j]);
+                cache[i][j] = self
+                    .kernel
+                    .compute(&self.support_vectors[i], &self.support_vectors[j]);
             }
         }
     }
@@ -208,7 +207,7 @@ impl<K: Kernel> SVM<K> {
             errors[i] = self.compute_error(i);
         }
 
-        while iter_count < max_iter {
+        while iter_count < max_iter && alpha_changed > 0 {
             alpha_changed = 0;
             for i in 0..n {
                 let e_i = errors[i];
@@ -257,16 +256,12 @@ impl<K: Kernel> SVM<K> {
                     // update b
                     let b1 = self.b
                         - e_i
-                        - self.labels[i] * (self.alphas[i] - alpha_i_old)
-                            * self.kernel_value(i, i)
-                        - self.labels[j] * (self.alphas[j] - alpha_j_old)
-                            * self.kernel_value(i, j);
+                        - self.labels[i] * (self.alphas[i] - alpha_i_old) * self.kernel_value(i, i)
+                        - self.labels[j] * (self.alphas[j] - alpha_j_old) * self.kernel_value(i, j);
                     let b2 = self.b
                         - e_j
-                        - self.labels[i] * (self.alphas[i] - alpha_i_old)
-                            * self.kernel_value(i, j)
-                        - self.labels[j] * (self.alphas[j] - alpha_j_old)
-                            * self.kernel_value(j, j);
+                        - self.labels[i] * (self.alphas[i] - alpha_i_old) * self.kernel_value(i, j)
+                        - self.labels[j] * (self.alphas[j] - alpha_j_old) * self.kernel_value(j, j);
 
                     if self.alphas[i] > 0.0 && self.alphas[i] < c {
                         self.b = b1;
@@ -283,9 +278,6 @@ impl<K: Kernel> SVM<K> {
                     alpha_changed += 1;
                 }
             } // end for i
-            if alpha_changed == 0 {
-                break;
-            }
             iter_count += 1;
         } // end while
     }
@@ -351,10 +343,10 @@ mod tests {
         let labels = vec![
             -1.0, // sum=0.0
             -1.0, // sum=1.5
-            -1.0, // sum=2.0 borderline
-            +1.0, // sum=4.5
-            +1.0, // sum=4.5
-            +1.0, // sum=6.0
+            -1.0, // sum=2.0
+            1.0,  // sum=4.5
+            1.0,  // sum=4.5
+            1.0   // sum=6.0
         ];
 
         let config = SVMConfig {

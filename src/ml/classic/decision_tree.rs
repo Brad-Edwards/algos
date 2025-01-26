@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 /// Configuration for building a decision tree.
 #[derive(Debug, Clone)]
@@ -38,7 +38,7 @@ pub struct DecisionTree<L> {
 
 impl<L: Clone + Eq + std::hash::Hash> DecisionTree<L> {
     /// Builds a decision tree from the provided dataset.
-    /// 
+    ///
     /// - `data`: a slice of feature vectors, each element is a vector of strings for categorical
     ///   features or "numeric" strings for continuous. (C4.5 attempts to interpret numeric fields.)
     /// - `labels`: the corresponding label for each data row.
@@ -54,7 +54,11 @@ impl<L: Clone + Eq + std::hash::Hash> DecisionTree<L> {
         feature_names: Option<&[String]>,
         algorithm: DecisionTreeAlgorithm,
     ) -> Self {
-        assert_eq!(data.len(), labels.len(), "data and labels must match in length");
+        assert_eq!(
+            data.len(),
+            labels.len(),
+            "data and labels must match in length"
+        );
         if data.is_empty() {
             panic!("No training data provided.");
         }
@@ -67,7 +71,11 @@ impl<L: Clone + Eq + std::hash::Hash> DecisionTree<L> {
 
         let feat_names = match feature_names {
             Some(names) => {
-                assert_eq!(names.len(), num_features, "feature_names must match data columns");
+                assert_eq!(
+                    names.len(),
+                    num_features,
+                    "feature_names must match data columns"
+                );
                 names.to_vec()
             }
             None => (0..num_features).map(|i| format!("F{}", i)).collect(),
@@ -193,8 +201,13 @@ fn make_categorical_node<L: Clone + Eq + std::hash::Hash>(
     let mut subsets: HashMap<String, (Vec<Vec<String>>, Vec<L>)> = HashMap::new();
     for (row, lbl) in data.iter().zip(labels.iter()) {
         let val = row[feat_idx].clone();
-        subsets.entry(val).or_insert((Vec::new(), Vec::new())).0.push(row.clone());
-        subsets.entry(row[feat_idx].clone())
+        subsets
+            .entry(val)
+            .or_insert((Vec::new(), Vec::new()))
+            .0
+            .push(row.clone());
+        subsets
+            .entry(row[feat_idx].clone())
             .or_insert((Vec::new(), Vec::new()))
             .1
             .push(lbl.clone());
@@ -363,7 +376,10 @@ fn info_gain_categorical<L: Clone + Eq + std::hash::Hash>(
 ) -> f64 {
     let mut subsets: HashMap<String, Vec<L>> = HashMap::new();
     for (row, lbl) in data.iter().zip(labels.iter()) {
-        subsets.entry(row[feat_idx].clone()).or_insert(Vec::new()).push(lbl.clone());
+        subsets
+            .entry(row[feat_idx].clone())
+            .or_insert(Vec::new())
+            .push(lbl.clone());
     }
     let n = labels.len() as f64;
     let mut remainder = 0.0;
@@ -374,13 +390,9 @@ fn info_gain_categorical<L: Clone + Eq + std::hash::Hash>(
     base_entropy - remainder
 }
 
-/// Compute split info for a continuous split (C4.5). 
+/// Compute split info for a continuous split (C4.5).
 /// SplitInfo = - ( (m/n) * log2(m/n) + (n-m)/n * log2((n-m)/n) ) ignoring empty side.
-fn split_info_continuous(
-    data: &[Vec<String>],
-    feat_idx: usize,
-    threshold: f64,
-) -> f64 {
+fn split_info_continuous(data: &[Vec<String>], feat_idx: usize, threshold: f64) -> f64 {
     let mut left_count = 0;
     let mut right_count = 0;
     for row in data {
@@ -482,7 +494,7 @@ fn traverse_tree<L: Clone>(node: &DecisionTreeNode<L>, features: &[String]) -> L
                     None => {
                         // fallback if something is missing
                         // e.g., val is NaN => choose majority child or any child
-                        // just pick the first or a default. 
+                        // just pick the first or a default.
                         let mut iter = branches.values();
                         iter.next().unwrap().clone_leaf()
                     }
@@ -520,8 +532,8 @@ impl<L: Clone> DecisionTreeNode<L> {
 
 /// Returns true if all elements in `labels` are the same.
 fn all_same<L: PartialEq>(labels: &[L]) -> bool {
-    if labels.is_empty() { 
-        return true; 
+    if labels.is_empty() {
+        return true;
     }
     labels.iter().all(|x| x == &labels[0])
 }

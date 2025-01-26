@@ -1,6 +1,3 @@
-use rand::prelude::*;
-use std::collections::HashMap;
-
 /// Enum specifying the objective function for gradient boosting.
 #[derive(Debug, Clone)]
 pub enum GBMObjective {
@@ -79,13 +76,7 @@ impl DecisionTreeRegressor {
     pub fn fit(&mut self, x: &[Vec<f64>], y: &[f64]) {
         assert!(!x.is_empty(), "No data for tree fitting.");
         assert_eq!(x.len(), y.len(), "X and y length mismatch.");
-        let root_node = build_tree_recursive(
-            x,
-            y,
-            self.max_depth,
-            self.min_samples_split,
-            0,
-        );
+        let root_node = build_tree_recursive(x, y, self.max_depth, self.min_samples_split, 0);
         self.root = root_node;
     }
 
@@ -150,10 +141,7 @@ fn build_tree_recursive(
 }
 
 /// Find best split by scanning all features for the minimum MSE split.
-fn find_best_split(
-    x: &[Vec<f64>],
-    y: &[f64],
-) -> (usize, f64, f64, Vec<usize>, Vec<usize>) {
+fn find_best_split(x: &[Vec<f64>], y: &[f64]) -> (usize, f64, f64, Vec<usize>, Vec<usize>) {
     let n = x.len();
     let d = x[0].len();
 
@@ -179,8 +167,8 @@ fn find_best_split(
 
         // We'll try midpoints between distinct sorted values
         for w in values.windows(2) {
-            let (val1, idx1) = w[0];
-            let (val2, idx2) = w[1];
+            let (val1, _idx1) = w[0];
+            let (val2, _idx2) = w[1];
             if (val1 - val2).abs() < 1e-15 {
                 continue;
             }
@@ -206,7 +194,6 @@ fn find_best_split(
             let rvar = variance_subset(y, &right_idx);
             let nl = left_idx.len() as f64;
             let nr = right_idx.len() as f64;
-            let total = nl + nr;
             let split_loss = nl * lvar + nr * rvar; // sum of squares after split
 
             let reduction = base_loss - split_loss;
@@ -318,7 +305,10 @@ impl GradientBoostedModel {
         if let GBMObjective::BinaryLogistic = self.objective {
             for &lbl in labels {
                 if lbl < 0.0 || lbl > 1.0 {
-                    panic!("For BinaryLogistic, labels must be in {{0.0, 1.0}}. Found {}", lbl);
+                    panic!(
+                        "For BinaryLogistic, labels must be in {{0.0, 1.0}}. Found {}",
+                        lbl
+                    );
                 }
             }
         }
@@ -332,11 +322,15 @@ impl GradientBoostedModel {
             GBMObjective::BinaryLogistic => {
                 // init_pred = log( pos/(neg) ), naive approach
                 let (pos, neg) = labels.iter().fold((0.0, 0.0), |(p, q), &v| {
-                    if v > 0.5 { (p + 1.0, q) } else { (p, q + 1.0) }
+                    if v > 0.5 {
+                        (p + 1.0, q)
+                    } else {
+                        (p, q + 1.0)
+                    }
                 });
                 // avoid division by zero
                 let ratio = if neg > 0.0 { pos / neg } else { 1e-6 };
-                self.init_pred = ratio.max(1e-6).ln();
+                self.init_pred = (ratio as f64).max(1e-6).ln();
             }
         }
 
@@ -368,7 +362,8 @@ impl GradientBoostedModel {
             };
 
             // 2) Fit a regression tree to the pseudo-residuals
-            let mut tree = DecisionTreeRegressor::new(self.config.max_depth, self.config.min_samples_split);
+            let mut tree =
+                DecisionTreeRegressor::new(self.config.max_depth, self.config.min_samples_split);
             tree.fit(features, &residuals);
             self.trees.push(tree.clone());
 
@@ -394,7 +389,11 @@ impl GradientBoostedModel {
             GBMObjective::BinaryLogistic => {
                 // logistic transform => class
                 let prob = 1.0 / (1.0 + (-score).exp());
-                if prob >= 0.5 { 1.0 } else { 0.0 }
+                if prob >= 0.5 {
+                    1.0
+                } else {
+                    0.0
+                }
             }
         }
     }
@@ -482,7 +481,10 @@ mod tests {
             let pred = model.predict_one(row);
             let truth = y[i];
             if (pred - truth).abs() > 0.001 {
-                panic!("Prediction mismatch at {}, pred={} vs truth={}", i, pred, truth);
+                panic!(
+                    "Prediction mismatch at {}, pred={} vs truth={}",
+                    i, pred, truth
+                );
             }
         }
     }

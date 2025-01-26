@@ -81,15 +81,15 @@ pub fn kmeans(data: &[Vec<f64>], config: &KMeansConfig) -> (Vec<usize>, Vec<Vec<
         panic!("Data points must have at least one dimension.");
     }
     if config.k == 0 || config.k > n {
-        panic!("Invalid number of clusters k = {} for dataset of size {}", config.k, n);
+        panic!(
+            "Invalid number of clusters k = {} for dataset of size {}",
+            config.k, n
+        );
     }
 
     // Initialize centroids by sampling k distinct points
     let mut rng = thread_rng();
-    let mut centroids: Vec<Vec<f64>> = data
-        .choose_multiple(&mut rng, config.k)
-        .cloned()
-        .collect();
+    let mut centroids: Vec<Vec<f64>> = data.choose_multiple(&mut rng, config.k).cloned().collect();
 
     // Vector of cluster assignments for each point
     let mut assignments = vec![0_usize; n];
@@ -141,7 +141,7 @@ pub fn kmeans(data: &[Vec<f64>], config: &KMeansConfig) -> (Vec<usize>, Vec<Vec<
                 }
                 centroids[cluster_idx] = new_centroid;
             }
-            // if a cluster gets zero points, we leave its centroid as is 
+            // if a cluster gets zero points, we leave its centroid as is
             // or could re-initialize randomly, but standard practice is to keep it.
         }
 
@@ -191,7 +191,9 @@ mod tests {
             vec![5.0, 8.0],
             vec![8.0, 8.0],
         ];
-        let config = KMeansConfig::new(2).with_max_iterations(50).with_tolerance(1e-4);
+        let config = KMeansConfig::new(2)
+            .with_max_iterations(50)
+            .with_tolerance(1e-4);
         let (assignments, centroids) = kmeans(&data, &config);
 
         // We won't test the exact assignment or centroids, but ensure we have valid output.
