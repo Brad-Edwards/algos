@@ -1,4 +1,4 @@
-use std::f64::EPSILON;
+use std::f64;
 
 /// A simple logistic regression model with L2 regularization (optional).
 /// It uses batch gradient descent for training.
@@ -67,7 +67,7 @@ impl LogisticRegression {
 
         // Check labels are in {0, 1}, within floating tolerance
         for &lbl in labels {
-            if lbl < -EPSILON || lbl > 1.0 + EPSILON {
+            if !(-f64::EPSILON..=1.0 + f64::EPSILON).contains(&lbl) {
                 panic!("Label out of [0,1] range: {}", lbl);
             }
         }
@@ -91,29 +91,29 @@ impl LogisticRegression {
                     // gradient for intercept
                     gradient[0] += error;
                     // gradient for features
-                    for j in 0..d {
-                        gradient[j + 1] += error * xi[j];
+                    for (j, val) in xi.iter().enumerate().take(d) {
+                        gradient[j + 1] += error * val;
                     }
                 } else {
-                    for j in 0..d {
-                        gradient[j] += error * xi[j];
+                    for (j, val) in xi.iter().enumerate().take(d) {
+                        gradient[j] += error * val;
                     }
                 }
             }
 
             // Average gradient & add regularization term
-            for j in 0..effective_dim {
-                gradient[j] /= n as f64; // average
+            for (j, val) in gradient.iter_mut().enumerate().take(effective_dim) {
+                *val /= n as f64; // average
                 if self.lambda > 0.0 && j > 0 {
                     // do not regularize intercept
-                    gradient[j] += (self.lambda / n as f64) * self.coefficients[j];
+                    *val += (self.lambda / n as f64) * self.coefficients[j];
                 }
             }
 
             // Update step
             let mut max_update = 0.0;
-            for j in 0..effective_dim {
-                let update = self.learning_rate * gradient[j];
+            for (j, &val) in gradient.iter().enumerate().take(effective_dim) {
+                let update = self.learning_rate * val;
                 self.coefficients[j] -= update;
                 let abs_update = update.abs();
                 if abs_update > max_update {
@@ -149,12 +149,12 @@ impl LogisticRegression {
             0.0
         };
         if self.fit_intercept {
-            for j in 0..d {
-                z += self.coefficients[j + 1] * features[j];
+            for (j, val) in features.iter().enumerate().take(d) {
+                z += self.coefficients[j + 1] * val;
             }
         } else {
-            for j in 0..d {
-                z += self.coefficients[j] * features[j];
+            for (j, val) in features.iter().enumerate().take(d) {
+                z += self.coefficients[j] * val;
             }
         }
 

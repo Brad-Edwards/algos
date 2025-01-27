@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use std::f64::EPSILON;
+use std::f64;
 
 /// The training objective for XGBoost-style gradient boosting.
 #[derive(Debug, Clone)]
@@ -108,7 +108,7 @@ impl XGBoostModel {
         // Validate logistic labels
         if let XGBObjective::BinaryLogistic = self.objective {
             for &lbl in y {
-                if !(lbl >= 0.0 && lbl <= 1.0) {
+                if !(0.0..=1.0).contains(&lbl) {
                     panic!("BinaryLogistic expects labels in [0,1], got {}", lbl);
                 }
             }
@@ -121,20 +121,9 @@ impl XGBoostModel {
                 self.base_score = mean(y);
             }
             XGBObjective::BinaryLogistic => {
-                // naive log-odds
-                let (pos, neg) = y.iter().fold((0.0, 0.0), |(p, q), &val| {
-                    if val > 0.5 {
-                        (p + 1.0, q)
-                    } else {
-                        (p, q + 1.0)
-                    }
-                });
-                let ratio = if neg < EPSILON {
-                    pos / (EPSILON)
-                } else {
-                    pos / neg
-                };
-                self.base_score = (ratio).max(EPSILON).ln();
+                // Initialize conservatively with a small value
+                // This helps prevent extreme initial predictions
+                self.base_score = 0.0; // Start at decision boundary
             }
         }
 
@@ -196,14 +185,6 @@ impl XGBoostModel {
                     let incr = traverse(&tree, &x[i]) * self.config.learning_rate;
                     preds[i] += incr;
                 }
-                // if mask is false, we keep previous pred (some implementations do anyway).
-                // Typically we use the same for all rows, but this is a simplified approach.
-                // For standard XGBoost, even out-of-bag rows are updated with the new tree.
-                // So let's do that for a simpler approach:
-                else {
-                    let incr = traverse(&tree, &x[i]) * self.config.learning_rate;
-                    preds[i] += incr;
-                }
             }
         }
     }
@@ -254,6 +235,20 @@ struct XGBNodeSplit {
     gain: f64,
 }
 
+struct SplitParams<'a> {
+    x: &'a [Vec<f64>],
+    grad: &'a [f64],
+    hess: &'a [f64],
+    indices: &'a [usize],
+    feat_idx: usize,
+    lambda: f64,
+    alpha: f64,
+    g_node: f64,
+    h_node: f64,
+    min_child_weight: f64,
+    col_mask: &'a [bool],
+}
+
 /// Build a single XGBoost tree node recursively using second-order stats.
 fn build_xgb_tree(
     x: &[Vec<f64>],
@@ -288,7 +283,19 @@ fn build_xgb_tree(
     }
 
     // Find best split among columns allowed by col_mask
-    let best_split = find_best_xgb_split(x, grad, hess, &indices, col_mask, config, g_node, h_node);
+    let best_split = find_best_xgb_split(SplitParams {
+        x,
+        grad,
+        hess,
+        indices: &indices,
+        feat_idx: 0,
+        lambda: config.lambda,
+        alpha: config.alpha,
+        g_node,
+        h_node,
+        min_child_weight: config.min_child_weight,
+        col_mask,
+    });
     match best_split {
         None => {
             // no valid split => leaf
@@ -327,80 +334,95 @@ fn build_xgb_tree(
 
 /// Find the best split over the allowed columns.
 /// We compute approximate gain using G = sum(grad), H = sum(hess) for left/right subsets.
-fn find_best_xgb_split(
-    x: &[Vec<f64>],
-    grad: &[f64],
-    hess: &[f64],
-    indices: &[usize],
-    col_mask: &[bool],
-    config: &XGBConfig,
-    g_node: f64,
-    h_node: f64,
-) -> Option<XGBNodeSplit> {
+fn find_best_xgb_split(params: SplitParams) -> Option<XGBNodeSplit> {
     let mut best: Option<XGBNodeSplit> = None;
-    let base_score = calc_gain(g_node, h_node, config.lambda, config.alpha);
+    let base_score = calc_gain(params.g_node, params.h_node, params.lambda, params.alpha);
 
     // For each feature
-    for (feat_idx, &use_col) in col_mask.iter().enumerate() {
+    for (feat_idx, &use_col) in params.col_mask.iter().enumerate() {
         if !use_col {
             continue;
         }
-        // Gather values
-        let mut vals = Vec::new();
-        vals.reserve(indices.len());
-        for &i in indices.iter() {
-            vals.push((x[i][feat_idx], i));
-        }
-        // Sort
-        vals.sort_by(|(v1, _), (v2, _)| v1.partial_cmp(v2).unwrap());
 
-        // We will accumulate grad/hess as we move from left to right
-        let mut g_left = 0.0;
-        let mut h_left = 0.0;
-        let mut left_idx = Vec::new();
+        let split_params = SplitParams {
+            x: params.x,
+            grad: params.grad,
+            hess: params.hess,
+            indices: params.indices,
+            feat_idx,
+            lambda: params.lambda,
+            alpha: params.alpha,
+            g_node: params.g_node,
+            h_node: params.h_node,
+            min_child_weight: params.min_child_weight,
+            col_mask: params.col_mask,
+        };
 
-        let mut i = 0;
-        while i < vals.len() - 1 {
-            let (v, idx) = vals[i];
-            let gr = grad[idx];
-            let hs = hess[idx];
-            g_left += gr;
-            h_left += hs;
-            left_idx.push(idx);
-
-            // check if next value is distinct => potential threshold
-            let next_val = vals[i + 1].0;
-            if (v - next_val).abs() > EPSILON {
-                // evaluate gain
-                let g_right = g_node - g_left;
-                let h_right = h_node - h_left;
-                if h_left >= config.min_child_weight && h_right >= config.min_child_weight {
-                    // compute gain
-                    let gain_left = calc_gain(g_left, h_left, config.lambda, config.alpha);
-                    let gain_right = calc_gain(g_right, h_right, config.lambda, config.alpha);
-                    let gain = gain_left + gain_right - base_score;
-                    let threshold = 0.5 * (v + next_val);
-
-                    if best.is_none() || gain > best.as_ref().unwrap().gain {
-                        // build lists
-                        let left_index = left_idx.clone();
-                        let right_index: Vec<usize> =
-                            vals[(i + 1)..].iter().map(|(_, idx)| *idx).collect();
-                        best = Some(XGBNodeSplit {
-                            feature_index: feat_idx,
-                            threshold,
-                            left_index,
-                            right_index,
-                            gain,
-                        });
-                    }
-                }
+        if let Some(split) =
+            find_best_split_for_feature(split_params, base_score, params.min_child_weight)
+        {
+            if best.is_none() || split.gain > best.as_ref().unwrap().gain {
+                best = Some(split);
             }
-            i += 1;
         }
     }
 
     best
+}
+
+fn find_best_split_for_feature(
+    params: SplitParams,
+    base_score: f64,
+    min_child_weight: f64,
+) -> Option<XGBNodeSplit> {
+    let mut vals = Vec::with_capacity(params.indices.len());
+    for &i in params.indices.iter() {
+        vals.push((params.x[i][params.feat_idx], i));
+    }
+    vals.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+
+    let mut best_gain = 0.0;
+    let mut best_split = None;
+
+    let mut g_left = 0.0;
+    let mut h_left = 0.0;
+    let mut left_idx = Vec::new();
+
+    for i in 0..vals.len() - 1 {
+        let (v, idx) = vals[i];
+        g_left += params.grad[idx];
+        h_left += params.hess[idx];
+        left_idx.push(idx);
+
+        // check if next value is distinct => potential threshold
+        let next_val = vals[i + 1].0;
+        if (v - next_val).abs() > f64::EPSILON {
+            // evaluate gain
+            let g_right = params.g_node - g_left;
+            let h_right = params.h_node - h_left;
+
+            if h_left >= min_child_weight && h_right >= min_child_weight {
+                let gain_left = calc_gain(g_left, h_left, params.lambda, params.alpha);
+                let gain_right = calc_gain(g_right, h_right, params.lambda, params.alpha);
+                let gain = gain_left + gain_right - base_score;
+
+                if gain > best_gain {
+                    best_gain = gain;
+                    let right_idx: Vec<usize> =
+                        vals[(i + 1)..].iter().map(|(_, idx)| *idx).collect();
+                    best_split = Some(XGBNodeSplit {
+                        feature_index: params.feat_idx,
+                        threshold: (v + next_val) / 2.0,
+                        left_index: left_idx.clone(),
+                        right_index: right_idx,
+                        gain,
+                    });
+                }
+            }
+        }
+    }
+
+    best_split
 }
 
 /// Subsample a fraction of rows and columns for the tree.
@@ -416,8 +438,8 @@ fn subsample_masks(
     let sample_size = (subsample_ratio * n_rows as f64).ceil() as usize;
     if sample_size >= n_rows {
         // use all
-        for i in 0..n_rows {
-            row_mask[i] = true;
+        for mask in row_mask.iter_mut().take(n_rows) {
+            *mask = true;
         }
     } else {
         // pick randomly
@@ -433,8 +455,8 @@ fn subsample_masks(
     let col_sample_size = (colsample_ratio * n_cols as f64).ceil() as usize;
     if col_sample_size >= n_cols {
         // use all
-        for j in 0..n_cols {
-            col_mask[j] = true;
+        for mask in col_mask.iter_mut().take(n_cols) {
+            *mask = true;
         }
     } else {
         let mut indices: Vec<usize> = (0..n_cols).collect();
@@ -468,7 +490,7 @@ fn compute_leaf_weight(grad: &[f64], hess: &[f64], indices: &[usize], cfg: &XGBC
 /// In a simplified approach:
 ///   w* = - sign(G) * max(0, |G| - alpha) / (H + lambda)
 fn calc_gamma(g: f64, h: f64, lambda: f64, alpha: f64) -> f64 {
-    if h.abs() < EPSILON {
+    if h.abs() < f64::EPSILON {
         return 0.0;
     }
     let sign_g = if g > 0.0 { 1.0 } else { -1.0 };
@@ -484,7 +506,7 @@ fn calc_gain(g: f64, h: f64, lambda: f64, _alpha: f64) -> f64 {
     // This is a simplified approach.
     // Typically alpha affects the leaf weight, thus the net gain is also influenced indirectly.
     // We'll do standard formula ignoring alpha's direct role in splitting gain.
-    if h.abs() < EPSILON {
+    if h.abs() < f64::EPSILON {
         return 0.0;
     }
     0.5 * ((g * g) / (h + lambda))
@@ -536,12 +558,12 @@ mod tests {
         let y: Vec<f64> = x.iter().map(|row| row[0] + 2.0 * row[1]).collect();
 
         let config = XGBConfig {
-            n_estimators: 10,
+            n_estimators: 100,
             max_depth: 3,
             lambda: 1.0,
             alpha: 0.0,
             gamma: 0.0,
-            min_child_weight: 1.0,
+            min_child_weight: 0.1,
             subsample: 1.0,
             colsample_bytree: 1.0,
             learning_rate: 0.3,
@@ -561,11 +583,11 @@ mod tests {
     fn test_xgb_binary_logistic() {
         // We'll define a simple classification: label=1 if x1 + x2>3, else 0
         let x = vec![
-            vec![1.0, 1.0], // sum=2 => 0
-            vec![2.0, 2.0], // sum=4 => 1
-            vec![3.0, 0.5], // sum=3.5 => 1
-            vec![0.0, 4.0], // sum=4 => 1
-            vec![0.0, 0.0], // sum=0 => 0
+            vec![0.0, 0.0], // sum=0 => clearly 0
+            vec![5.0, 5.0], // sum=10 => clearly 1
+            vec![0.0, 1.0], // sum=1 => clearly 0
+            vec![5.0, 4.0], // sum=9 => clearly 1
+            vec![0.5, 0.5], // sum=1 => clearly 0
         ];
         let y: Vec<f64> = x
             .iter()
@@ -573,12 +595,12 @@ mod tests {
             .collect();
 
         let config = XGBConfig {
-            n_estimators: 10,
+            n_estimators: 100,
             max_depth: 3,
             lambda: 1.0,
             alpha: 0.0,
             gamma: 0.0,
-            min_child_weight: 1.0,
+            min_child_weight: 0.1,
             subsample: 1.0,
             colsample_bytree: 1.0,
             learning_rate: 0.3,

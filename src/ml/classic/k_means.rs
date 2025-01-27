@@ -55,7 +55,7 @@ impl KMeansConfig {
 /// # Example
 ///
 /// ```
-/// use kmeans::{KMeansConfig, kmeans};
+/// use algos::ml::classic::k_means::{KMeansConfig, kmeans};
 ///
 /// let data = vec![
 ///     vec![1.0, 2.0],
@@ -102,8 +102,8 @@ pub fn kmeans(data: &[Vec<f64>], config: &KMeansConfig) -> (Vec<usize>, Vec<Vec<
         for (i, point) in data.iter().enumerate() {
             let mut best_cluster = assignments[i];
             let mut best_dist = distance_sq(point, &centroids[best_cluster]);
-            for cluster_idx in 0..config.k {
-                let dist = distance_sq(point, &centroids[cluster_idx]);
+            for (cluster_idx, centroid) in centroids.iter().enumerate().take(config.k) {
+                let dist = distance_sq(point, centroid);
                 if dist < best_dist {
                     best_dist = dist;
                     best_cluster = cluster_idx;
@@ -122,7 +122,7 @@ pub fn kmeans(data: &[Vec<f64>], config: &KMeansConfig) -> (Vec<usize>, Vec<Vec<
         for (i, point) in data.iter().enumerate() {
             let c = assignments[i];
             counts[c] += 1;
-            for d in 0..dim {
+            for (d, _) in point.iter().enumerate().take(dim) {
                 sums[c][d] += point[d];
             }
         }
@@ -131,8 +131,8 @@ pub fn kmeans(data: &[Vec<f64>], config: &KMeansConfig) -> (Vec<usize>, Vec<Vec<
         for cluster_idx in 0..config.k {
             if counts[cluster_idx] > 0 {
                 let mut new_centroid = vec![0.0; dim];
-                for d in 0..dim {
-                    new_centroid[d] = sums[cluster_idx][d] / counts[cluster_idx] as f64;
+                for (d, val) in new_centroid.iter_mut().enumerate().take(dim) {
+                    *val = sums[cluster_idx][d] / counts[cluster_idx] as f64;
                 }
                 // Compute movement (euclidean) of the centroid
                 let shift_sq = distance_sq(&centroids[cluster_idx], &new_centroid);

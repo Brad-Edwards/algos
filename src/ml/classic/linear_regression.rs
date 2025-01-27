@@ -1,6 +1,6 @@
 /// lib.rs
-
-/// A simple linear regression model using the Ordinary Least Squares (OLS) solution.
+/// A simple linear regression model using ordinary least squares (OLS).
+/// Supports optional L2 regularization (Ridge regression).
 ///
 /// # Fields
 /// - `coefficients`: The learned parameters (including intercept as the first element).
@@ -30,7 +30,7 @@ impl LinearRegression {
     /// # Example
     ///
     /// ```
-    /// use linreg::LinearRegression;
+    /// use algos::ml::classic::linear_regression::LinearRegression;
     ///
     /// let x = vec![
     ///     vec![1.0, 2.0],
@@ -70,7 +70,7 @@ impl LinearRegression {
                 panic!("Inconsistent feature dimension on row {}.", i);
             }
             if fit_intercept {
-                x_matrix[i * x_cols + 0] = 1.0; // intercept
+                x_matrix[i * x_cols] = 1.0; // intercept
                 for (j, val) in row.iter().enumerate() {
                     x_matrix[i * x_cols + (j + 1)] = *val;
                 }
@@ -121,14 +121,7 @@ impl LinearRegression {
         let dim = self.coefficients.len();
         // If we have an intercept, the first coefficient is beta_0,
         // otherwise we treat `coefficients` as purely slope terms.
-        let has_intercept = match dim {
-            1 => true, // 1D with intercept means just beta0?
-            _ => {
-                // We'll guess if there's an intercept by seeing if the user expects
-                // x.len() == dim-1
-                x.len() + 1 == dim
-            }
-        };
+        let has_intercept = x.len() + 1 == dim;
 
         if has_intercept {
             // pred = beta0 + sum_{j=1..d} beta_j * x_j

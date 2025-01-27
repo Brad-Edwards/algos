@@ -172,9 +172,9 @@ impl<K: Kernel> SVM<K> {
         let n = self.support_vectors.len();
         self.kernel_cache = Some(vec![vec![0.0; n]; n]);
         let cache = self.kernel_cache.as_mut().unwrap();
-        for i in 0..n {
-            for j in 0..n {
-                cache[i][j] = self
+        for (i, row) in cache.iter_mut().enumerate().take(n) {
+            for (j, val) in row.iter_mut().enumerate().take(n) {
+                *val = self
                     .kernel
                     .compute(&self.support_vectors[i], &self.support_vectors[j]);
             }
@@ -200,14 +200,15 @@ impl<K: Kernel> SVM<K> {
 
         let mut iter_count = 0;
         let mut alpha_changed = 0;
+        let mut examine_all = true;
 
         // Precompute errors: E[i] = f(x_i) - y_i
         let mut errors = vec![0.0; n];
-        for i in 0..n {
-            errors[i] = self.compute_error(i);
+        for (i, error) in errors.iter_mut().enumerate().take(n) {
+            *error = self.compute_error(i);
         }
 
-        while iter_count < max_iter && alpha_changed > 0 {
+        while (alpha_changed > 0 || examine_all) && iter_count < max_iter {
             alpha_changed = 0;
             for i in 0..n {
                 let e_i = errors[i];
@@ -278,6 +279,12 @@ impl<K: Kernel> SVM<K> {
                     alpha_changed += 1;
                 }
             } // end for i
+
+            if examine_all {
+                examine_all = false;
+            } else if alpha_changed == 0 {
+                examine_all = true;
+            }
             iter_count += 1;
         } // end while
     }
@@ -346,7 +353,7 @@ mod tests {
             -1.0, // sum=2.0
             1.0,  // sum=4.5
             1.0,  // sum=4.5
-            1.0   // sum=6.0
+            1.0,  // sum=6.0
         ];
 
         let config = SVMConfig {

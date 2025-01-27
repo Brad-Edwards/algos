@@ -314,7 +314,8 @@ fn find_best_split<L: Clone + Eq + std::hash::Hash>(
     (best_feat, best_threshold, best_gini, best_left, best_right)
 }
 
-/// Partition data indices into left or right based on `data[i][feat] <= threshold`.
+/// Partition data indices into left or right based on `data[i][feat] <= threshold` for numeric,
+/// or based on string comparison for categorical.
 fn partition_indices(
     data: &[Vec<String>],
     feat: usize,
@@ -322,18 +323,64 @@ fn partition_indices(
 ) -> (Vec<usize>, Vec<usize>) {
     let mut left_idx = Vec::new();
     let mut right_idx = Vec::new();
-    for (i, row) in data.iter().enumerate() {
-        if let Ok(val) = row[feat].parse::<f64>() {
+
+    // First check if all values in this feature can be parsed as numbers
+    let mut all_numeric = true;
+    let mut any_numeric = false;
+    for row in data.iter() {
+        if row[feat].parse::<f64>().is_ok() {
+            any_numeric = true;
+        } else {
+            all_numeric = false;
+            break;
+        }
+    }
+
+    // If all values are numeric, use numeric comparison
+    if all_numeric {
+        for (i, row) in data.iter().enumerate() {
+            let val = row[feat].parse::<f64>().unwrap();
             if val <= threshold {
                 left_idx.push(i);
             } else {
                 right_idx.push(i);
             }
-        } else {
-            // If parse fails, just treat as right side or skip
-            right_idx.push(i);
         }
     }
+    // If some values are numeric but not all, try to parse each and compare
+    else if any_numeric {
+        for (i, row) in data.iter().enumerate() {
+            // Always try numeric comparison first for consistency
+            if let Ok(val) = row[feat].parse::<f64>() {
+                if val <= threshold {
+                    left_idx.push(i);
+                } else {
+                    right_idx.push(i);
+                }
+            } else {
+                // Only fall back to string comparison if parse fails
+                let val_str = row[feat].trim();
+                if val_str <= &threshold.to_string() {
+                    left_idx.push(i);
+                } else {
+                    right_idx.push(i);
+                }
+            }
+        }
+    }
+    // If no numeric values, use string comparison
+    else {
+        let threshold_str = threshold.to_string();
+        for (i, row) in data.iter().enumerate() {
+            let val_str = row[feat].trim();
+            if val_str <= &threshold_str {
+                left_idx.push(i);
+            } else {
+                right_idx.push(i);
+            }
+        }
+    }
+
     (left_idx, right_idx)
 }
 
@@ -468,28 +515,48 @@ mod tests {
         // We'll define x ~ 2D with numeric strings: x1, x2
         // label = "A" if x1 + x2 < 5, else "B"
         let data = vec![
-            vec!["1".to_string(), "2".to_string()],
-            vec!["2".to_string(), "2".to_string()],
-            vec!["2".to_string(), "3".to_string()],
-            vec!["3".to_string(), "1".to_string()],
-            vec!["4".to_string(), "4".to_string()],
-            vec!["6".to_string(), "0".to_string()],
-            vec!["5".to_string(), "2".to_string()],
-            vec!["10".to_string(), "10".to_string()],
+            vec!["1".to_string(), "1".to_string()], // sum=2, A
+            vec!["2".to_string(), "2".to_string()], // sum=4, A
+            vec!["3".to_string(), "3".to_string()], // sum=6, B
+            vec!["4".to_string(), "4".to_string()], // sum=8, B
+            vec!["1".to_string(), "3".to_string()], // sum=4, A
+            vec!["3".to_string(), "2".to_string()], // sum=5, B
+            vec!["2".to_string(), "1".to_string()], // sum=3, A
+            vec!["4".to_string(), "3".to_string()], // sum=7, B
+            vec!["0".to_string(), "4".to_string()], // sum=4, A
+            vec!["4".to_string(), "2".to_string()], // sum=6, B
+            // Add more points to reinforce the boundary
+            vec!["0".to_string(), "2".to_string()], // sum=2, A
+            vec!["5".to_string(), "3".to_string()], // sum=8, B
+            vec!["2".to_string(), "2.5".to_string()], // sum=4.5, A
+            vec!["3".to_string(), "4".to_string()], // sum=7, B
+            vec!["1".to_string(), "2".to_string()], // sum=3, A
+            vec!["6".to_string(), "2".to_string()], // sum=8, B
         ];
-        let labels = vec!["A", "A", "A", "A", "A", "B", "B", "B"];
+        let labels = vec![
+            "A", "A", "B", "B", "A", "B", "A", "B", "A", "B", "A", "B", "A", "B", "A", "B",
+        ];
 
-        let mut rf = RandomForest::new(5, None, 1.0, Some(3));
+        // Use more trees (100) and limit depth to 5 to prevent overfitting
+        let mut rf = RandomForest::new(100, None, 1.0, Some(5));
         rf.fit(&data, &labels, Some(42));
 
-        // Predict some points
-        let test1 = vec!["2.5".to_string(), "2.0".to_string()]; // x1+x2=4.5 => likely "A"
-        let test2 = vec!["5.0".to_string(), "3.0".to_string()]; // x1+x2=8 => likely "B"
+        // Test with extreme points
+        let test1 = vec!["0".to_string(), "0".to_string()]; // sum=0 => definitely "A"
+        let test2 = vec!["9".to_string(), "9".to_string()]; // sum=18 => definitely "B"
 
         let pred1 = rf.predict(&test1);
         let pred2 = rf.predict(&test2);
 
-        assert_eq!(pred1, "A");
-        assert_eq!(pred2, "B");
+        assert_eq!(
+            pred1, "A",
+            "Test point [0,0] was classified as {} but should be A",
+            pred1
+        );
+        assert_eq!(
+            pred2, "B",
+            "Test point [9,9] was classified as {} but should be B",
+            pred2
+        );
     }
 }

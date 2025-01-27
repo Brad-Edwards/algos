@@ -19,7 +19,7 @@ pub enum DecisionTreeNode<L> {
         /// If `split_value` is `Some(x)`, this is a continuous split:
         ///   - left branch: feature <= x
         ///   - right branch: feature > x
-        /// If `None`, this is a categorical split with multiple branches in `branches`.
+        ///     If `None`, this is a categorical split with multiple branches in `branches`.
         split_value: Option<f64>,
         /// For categorical splits, each branch is keyed by a feature value.
         /// For continuous splits, we only use `branches[0]` as the "left" and `branches[1]` as the "right".
@@ -201,14 +201,10 @@ fn make_categorical_node<L: Clone + Eq + std::hash::Hash>(
     let mut subsets: HashMap<String, (Vec<Vec<String>>, Vec<L>)> = HashMap::new();
     for (row, lbl) in data.iter().zip(labels.iter()) {
         let val = row[feat_idx].clone();
-        subsets
-            .entry(val)
-            .or_insert((Vec::new(), Vec::new()))
-            .0
-            .push(row.clone());
+        subsets.entry(val).or_default().0.push(row.clone());
         subsets
             .entry(row[feat_idx].clone())
-            .or_insert((Vec::new(), Vec::new()))
+            .or_default()
             .1
             .push(lbl.clone());
     }
@@ -378,7 +374,7 @@ fn info_gain_categorical<L: Clone + Eq + std::hash::Hash>(
     for (row, lbl) in data.iter().zip(labels.iter()) {
         subsets
             .entry(row[feat_idx].clone())
-            .or_insert(Vec::new())
+            .or_default()
             .push(lbl.clone());
     }
     let n = labels.len() as f64;

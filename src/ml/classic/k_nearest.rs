@@ -32,6 +32,7 @@ impl<L: Eq + Hash + Clone> KNNClassifier<L> {
     pub fn new(k: usize, features: Vec<Vec<f64>>, labels: Vec<L>) -> Self {
         assert!(k > 0, "k must be > 0");
         let n = features.len();
+        assert!(n > 0, "features cannot be empty");
         assert_eq!(n, labels.len(), "features and labels must have same length");
         for f in &features {
             assert!(
@@ -57,7 +58,7 @@ impl<L: Eq + Hash + Clone> KNNClassifier<L> {
     /// # Example
     ///
     /// ```
-    /// use knn::{KNNClassifier};
+    /// use algos::ml::classic::k_nearest::KNNClassifier;
     ///
     /// let features = vec![
     ///     vec![1.0, 2.0],
