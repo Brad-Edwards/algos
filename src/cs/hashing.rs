@@ -1,0 +1,10 @@
+pub mod crc32;
+pub mod cuckoo;
+pub mod fnv;
+pub mod jenkins;
+pub mod murmurhash;
+pub mod open_addressing;
+pub mod perfect;
+pub mod polynomial_rolling;
+pub mod separate;
+pub mod universal;

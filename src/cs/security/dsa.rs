@@ -4,9 +4,9 @@
 //! It is not audited, not vetted, and very likely insecure in practice. If you need DSA or
 //! any cryptographic operations in production, please use a vetted, well-reviewed cryptography library.
 
-use rand::{rngs::StdRng, RngCore, SeedableRng};
 use num_bigint::{BigUint, RandPrime};
 use num_traits::{One, Zero};
+use rand::{rngs::StdRng, RngCore, SeedableRng};
 
 /// DSA domain parameters: prime p, prime q, and g = h^((p-1)/q) mod p.
 #[derive(Debug, Clone)]
@@ -107,7 +107,12 @@ pub fn toy_dsa_generate_keypair(params: &DsaParams, seed: Option<u64>) -> DsaKey
 
 /// Sign a message hash `h_m` with DSA: produce (r, s) in [1..q-1].
 /// In real usage, `h_m` is the output of a secure hash truncated to q bits, ephemeral k is random, etc.
-pub fn toy_dsa_sign(params: &DsaParams, kp: &DsaKeyPair, h_m: &BigUint, seed: Option<u64>) -> DsaSignature {
+pub fn toy_dsa_sign(
+    params: &DsaParams,
+    kp: &DsaKeyPair,
+    h_m: &BigUint,
+    seed: Option<u64>,
+) -> DsaSignature {
     let mut rng = match seed {
         Some(s) => StdRng::seed_from_u64(s),
         None => StdRng::from_entropy(),
@@ -147,7 +152,12 @@ pub fn toy_dsa_sign(params: &DsaParams, kp: &DsaKeyPair, h_m: &BigUint, seed: Op
 
 /// Verify a DSA signature `(r, s)` for message hash `h_m`.
 /// If valid => true, else false.
-pub fn toy_dsa_verify(params: &DsaParams, pub_key: &BigUint, h_m: &BigUint, sig: &DsaSignature) -> bool {
+pub fn toy_dsa_verify(
+    params: &DsaParams,
+    pub_key: &BigUint,
+    h_m: &BigUint,
+    sig: &DsaSignature,
+) -> bool {
     let q = &params.q;
     let p = &params.p;
     let g = &params.g;

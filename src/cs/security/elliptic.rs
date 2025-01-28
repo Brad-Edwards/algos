@@ -64,11 +64,14 @@ pub fn toy_secp256k1_curve() -> ToyCurve {
     // We'll do a smaller toy version just for demonstration.
     use num_bigint::ToBigUint;
 
-    let p = BigUint::parse_bytes(b"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
-        .unwrap_or_else(|| "0".to_biguint().unwrap());
+    let p = BigUint::parse_bytes(
+        b"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F",
+        16,
+    )
+    .unwrap_or_else(|| "0".to_biguint().unwrap());
     let a = BigUint::zero(); // a=0
     let b = BigUint::from(7u64); // b=7
-    // Let's pretend G is some point, we do the real secp256k1 G:
+                                 // Let's pretend G is some point, we do the real secp256k1 G:
     let gx_str = "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798";
     let gy_str = "483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8";
 
@@ -255,7 +258,7 @@ mod tests {
 
     #[test]
     fn test_toy_ecc_basic() {
-        // We'll do a small test with real secp256k1-like params, 
+        // We'll do a small test with real secp256k1-like params,
         // but we won't do huge computations. We'll do a quick check that
         // we can do point add: G+G => 2G, etc. Just to see we don't blow up.
         let curve = toy_secp256k1_curve();
@@ -267,7 +270,10 @@ mod tests {
         // Doubling G: 2G
         let two_g = point_double(&curve, &curve.g);
         // We won't check correctness vs known real 2G, but ensure we get a new point.
-        assert!(two_g != Point::Infinity, "2G shouldn't be Infinity in normal curve usage");
+        assert!(
+            two_g != Point::Infinity,
+            "2G shouldn't be Infinity in normal curve usage"
+        );
 
         // Key pairs
         let kp1 = toy_generate_keypair(&curve, Some(42));
@@ -276,6 +282,10 @@ mod tests {
         let shared1 = toy_ecdh(&curve, &kp1, &kp2);
         let shared2 = toy_ecdh(&curve, &kp2, &kp1);
         assert_eq!(shared1, shared2, "Shared secrets must match");
-        assert_ne!(shared1, Point::Infinity, "Should be a valid point if d1, d2 != 0");
+        assert_ne!(
+            shared1,
+            Point::Infinity,
+            "Should be a valid point if d1, d2 != 0"
+        );
     }
 }

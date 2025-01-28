@@ -6,11 +6,11 @@
 //! If you need RSA or any cryptographic operations in production, please use a
 //! vetted, well-reviewed cryptography library.
 
-use rand::{rngs::StdRng, Rng, SeedableRng};
-use rand_core::RngCore;
 use num_bigint::{BigInt, BigUint, RandPrime, ToBigInt, ToBigUint};
 use num_integer::Integer;
 use num_traits::{One, Zero};
+use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand_core::RngCore;
 
 /// Structure for an RSA public key.
 #[derive(Debug, Clone)]
@@ -73,8 +73,8 @@ impl RSAKeyPair {
 
         let e = BigUint::from(config.public_exponent);
         // Compute d = e^-1 mod phi(n)
-        let d = mod_inverse(&e, &phi)
-            .expect("Could not find modular inverse; invalid e or primes?");
+        let d =
+            mod_inverse(&e, &phi).expect("Could not find modular inverse; invalid e or primes?");
 
         let public_key = RSAPublicKey {
             n: n.clone(),

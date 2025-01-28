@@ -1,7 +1,16 @@
 pub mod bellman_ford;
+pub mod bron_kerbosch;
 pub mod dijkstra;
+pub mod dinic;
+pub mod edmond_karp;
+pub mod floyd_cycle;
 pub mod floyd_warshall;
+pub mod ford_fulkerson;
+pub mod hierholzer;
+pub mod hopcroft_karp;
+pub mod hungarian;
 pub mod johnson;
+pub mod johnson_cycle;
 pub mod kosaraju;
 pub mod kruskal;
 pub mod prim;
@@ -17,9 +26,18 @@ use std::hash::Hash;
 use crate::cs::error::{Error, Result};
 
 pub use bellman_ford::shortest_paths as bellman_ford_shortest_paths;
+pub use bron_kerbosch::BronKerbosch;
 pub use dijkstra::shortest_paths as dijkstra_shortest_paths;
+pub use dinic::Dinic;
+pub use edmond_karp::edmond_karp as edmond_karp_max_flow;
+pub use floyd_cycle::has_cycle as floyd_cycle_detection;
 pub use floyd_warshall::all_pairs_shortest_paths as floyd_warshall_all_pairs_shortest_paths;
+pub use ford_fulkerson::ford_fulkerson as ford_fulkerson_max_flow;
+pub use hierholzer::hierholzer_eulerian_path;
+pub use hopcroft_karp::HopcroftKarp;
+pub use hungarian::hungarian_method;
 pub use johnson::all_pairs_shortest_paths as johnson_all_pairs_shortest_paths;
+pub use johnson_cycle::find_cycles as johnson_cycle_detection;
 pub use kosaraju::kosaraju as kosaraju_strongly_connected_components;
 pub use kruskal::kruskal as kruskal_minimum_spanning_tree;
 pub use prim::minimum_spanning_tree as prim_minimum_spanning_tree;
@@ -74,8 +92,17 @@ where
 
     /// Adds an edge to the graph with the given weight.
     pub fn add_edge(&mut self, from: V, to: V, weight: W) {
+        // Remove any existing edge first
+        if let Some(edges) = self.edges.get_mut(&from) {
+            edges.retain(|(v, _)| v != &to);
+        }
         self.edges.entry(from).or_default().push((to, weight));
+
         if !self.directed {
+            // For undirected graphs, also update the reverse edge
+            if let Some(edges) = self.edges.get_mut(&to) {
+                edges.retain(|(v, _)| v != &from);
+            }
             self.edges.entry(to).or_default().push((from, weight));
         }
     }

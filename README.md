@@ -73,38 +73,76 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Warshall's Algorithm  
 ✅ Topological Sort  
 
-### 🚧 Planned Implementation
+#### Graph Algorithms (Part 2)
+
+✅ Edmond–Karp (max flow)  
+✅ Dinic’s Algorithm (max flow)  
+✅ Ford–Fulkerson (max flow)  
+✅ Hungarian Algorithm (assignment)  
+✅ Hopcroft–Karp (bipartite matching)  
+✅ Bron–Kerbosch (maximal clique)  
+✅ Johnson’s Cycle Detection  
+✅ Floyd’s Cycle Detection (Tortoise and Hare)  
+✅ Euler Tour / Euler Circuit Algorithm  
+✅ Hierholzer’s Algorithm (Euler paths/circuits)
 
 #### Dynamic Programming
 
-[ ] Kadane's Algorithm  
-[ ] Matrix Chain Multiplication  
-[ ] Edit Distance  
-[ ] Coin Change  
-[ ] Longest Common Subsequence  
-[ ] Longest Increasing Subsequence  
-[ ] Weighted Interval Scheduling  
-[ ] Viterbi Algorithm  
-[ ] Bellman Equation-based DP  
-[ ] Knuth Optimization
+✅ Kadane's Algorithm  
+✅ Matrix Chain Multiplication  
+✅ Edit Distance  
+✅ Coin Change  
+✅ Longest Common Subsequence  
+✅ Longest Increasing Subsequence  
+✅ Weighted Interval Scheduling  
+✅ Viterbi Algorithm  
+✅ Bellman Equation-based DP  
+✅ Knuth Optimization  
 
-🚧 RSA  
-🚧 Diffie–Hellman Key Exchange  
-🚧 ElGamal Encryption  
-🚧 AES (Rijndael)  
-🚧 Blowfish  
-🚧 Twofish  
-🚧 SHA-256  
-🚧 MD5 (legacy)  
-🚧 Elliptic Curve Cryptography (ECC)  
-🚧 DSA (Digital Signature Algorithm)  
+#### Hashing
+
+✅ Perfect Hashing  
+✅ Universal Hashing  
+✅ Cuckoo Hashing  
+✅ Separate Chaining  
+✅ Open Addressing (linear/quadratic probing, double hashing)  
+✅ Polynomial Rolling Hash  
+✅ FNV (Fowler–Noll–Vo) Hash  
+✅ CRC32  
+✅ Jenkins Hash  
+✅ MurmurHash  
+
+#### Classic Machine Learning
+
+✅ k-Means Clustering
+✅ k-Nearest Neighbors (k-NN)
+✅ Linear Regression (OLS)
+✅ Logistic Regression
+✅ Decision Tree Learning (ID3, C4.5)
+✅ Random Forest
+✅ Support Vector Machine (SVM)
+✅ Naive Bayes
+✅ Gradient Boosting (GBM family)
+✅ XGBoost
+
+#### ***DO NOT USE*** Cryptography and Security ***DO NOT USE***
+
+✅ RSA  
+✅ Diffie–Hellman Key Exchange  
+✅ ElGamal Encryption  
+✅ AES (Rijndael)  
+✅ Blowfish  
+✅ Twofish  
+✅ SHA-256  
+✅ MD5 (legacy)  
+✅ Elliptic Curve Cryptography (ECC)  
+✅ DSA (Digital Signature Algorithm)  
+
+### 🚧 Planned Implementation
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
-- Graph Algorithms (Part 2)
 - Cryptographic & Security Algorithms
-- Hashing & Hash Tables
-- Machine Learning Algorithms
 - Deep Learning & Neural Networks
 - Reinforcement Learning
 - Approximation Algorithms

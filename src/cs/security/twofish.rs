@@ -35,7 +35,7 @@ pub struct TwofishKey {
     kwords: usize,
 }
 
-/// A toy Twofish block encryption/decryption context. 
+/// A toy Twofish block encryption/decryption context.
 /// Absolutely do not use for real security.
 impl TwofishKey {
     /// Create a new TwofishKey from the raw key bytes and key size info.
@@ -63,10 +63,10 @@ impl TwofishKey {
         // Convert key bytes to words
         let mut key_words = vec![0u32; kwords];
         for i in 0..kwords {
-            // each word is 4 bytes in big-endian or little-endian? 
+            // each word is 4 bytes in big-endian or little-endian?
             // Twofish nominally uses little-endian for word assembly.
             let offset = i * 4;
-            let word_le = u32::from_le_bytes(key_data[offset..offset+4].try_into().unwrap());
+            let word_le = u32::from_le_bytes(key_data[offset..offset + 4].try_into().unwrap());
             key_words[i] = word_le;
         }
 
@@ -98,8 +98,8 @@ impl TwofishKey {
             let t0 = self.g_function(x[0], 0);
             let t1 = self.g_function(rol(x[1], 8), 1);
 
-            let f0 = (t0.wrapping_add(t1)).wrapping_add(self.subkeys[8 + 2*r]);
-            let f1 = (t0.wrapping_add(2 * t1)).wrapping_add(self.subkeys[9 + 2*r]);
+            let f0 = (t0.wrapping_add(t1)).wrapping_add(self.subkeys[8 + 2 * r]);
+            let f1 = (t0.wrapping_add(2 * t1)).wrapping_add(self.subkeys[9 + 2 * r]);
 
             // apply f0, f1 to x[2], x[3]
             x[2] = rol(x[2] ^ f0, 1);
@@ -163,8 +163,8 @@ impl TwofishKey {
             let t0 = self.g_function(x[0], 0);
             let t1 = self.g_function(rol(x[1], 8), 1);
 
-            let f0 = (t0.wrapping_add(t1)).wrapping_add(self.subkeys[8 + 2*r]);
-            let f1 = (t0.wrapping_add(2 * t1)).wrapping_add(self.subkeys[9 + 2*r]);
+            let f0 = (t0.wrapping_add(t1)).wrapping_add(self.subkeys[8 + 2 * r]);
+            let f1 = (t0.wrapping_add(2 * t1)).wrapping_add(self.subkeys[9 + 2 * r]);
 
             x[2] = ror(x[2], 1) ^ f0;
             x[3] = rol(x[3] ^ f1, 1);
@@ -183,7 +183,7 @@ impl TwofishKey {
         block[12..16].copy_from_slice(&x[3].to_le_bytes());
     }
 
-    // The g-function uses the key-dependent s-box, MDS matrix. 
+    // The g-function uses the key-dependent s-box, MDS matrix.
     // We'll do a partial approach here (toy).
     fn g_function(&self, x: u32, start: usize) -> u32 {
         // We'll do a simplified "h" function from Twofish specs, using the s-box keys, etc.
@@ -220,7 +220,7 @@ impl TwofishKey {
         for i in 0..TWOFISH_SUBKEY_COUNT {
             // toy expansion
             self.subkeys[i] = i as u32 ^ 0x9E3779B9; // example: some golden ratio constant
-            // in real code: compute subkey using polynomial-based approach or "RS" matrix, etc.
+                                                     // in real code: compute subkey using polynomial-based approach or "RS" matrix, etc.
         }
         // add something from key
         for (i, &w) in key_words.iter().enumerate() {
@@ -229,8 +229,8 @@ impl TwofishKey {
     }
 }
 
-// Toy MDS multiply with a single function. Real code uses a big matrix or references 
-fn apply_mds(b: &[u8;4]) -> u32 {
+// Toy MDS multiply with a single function. Real code uses a big matrix or references
+fn apply_mds(b: &[u8; 4]) -> u32 {
     // This is a placeholder. Real MDS is a 4x4 matrix over GF(256).
     // We'll do some toy GF manipulation:
     let mut result = 0u32;
@@ -274,6 +274,9 @@ mod tests {
         assert_ne!(block, orig, "Twofish encrypt did not change the block");
 
         tf.decrypt_block(&mut block);
-        assert_eq!(block, orig, "Twofish decrypt did not restore the original block");
+        assert_eq!(
+            block, orig,
+            "Twofish decrypt did not restore the original block"
+        );
     }
 }

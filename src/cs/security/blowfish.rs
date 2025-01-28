@@ -98,7 +98,7 @@ impl BlowfishKey {
         right.copy_from_slice(&xr.to_be_bytes());
     }
 
-    /// Blowfish Key Schedule: 
+    /// Blowfish Key Schedule:
     /// 1) XOR P-array with key bytes repeatedly.
     /// 2) Encrypt zero block, replace P[0..1].
     /// 3) Encrypt updated block, replace P[2..3].
@@ -137,7 +137,7 @@ impl BlowfishKey {
     }
 }
 
-/// Blowfish F-Function: 
+/// Blowfish F-Function:
 /// Takes a 32-bit half-block `x`:
 /// - split into four bytes (a, b, c, d)
 /// - s0[a] + s1[b] ^ s2[c] + s3[d]
@@ -155,24 +155,22 @@ fn f_function(x: u32, s: &[[u32; 256]; 4]) -> u32 {
 
 // Default P-array and S-box constants from the Blowfish specification.
 static DEFAULT_P: [u32; PARRAY_SIZE] = [
-    0x243F6A88, 0x85A308D3, 0x13198A2E, 0x03707344,
-    0xA4093822, 0x299F31D0, 0x082EFA98, 0xEC4E6C89,
-    0x452821E6, 0x38D01377, 0xBE5466CF, 0x34E90C6C,
-    0xC0AC29B7, 0xC97C50DD, 0x3F84D5B5, 0xB5470917,
+    0x243F6A88, 0x85A308D3, 0x13198A2E, 0x03707344, 0xA4093822, 0x299F31D0, 0x082EFA98, 0xEC4E6C89,
+    0x452821E6, 0x38D01377, 0xBE5466CF, 0x34E90C6C, 0xC0AC29B7, 0xC97C50DD, 0x3F84D5B5, 0xB5470917,
     0x9216D5D9, 0x8979FB1B,
 ];
 
 static DEFAULT_SBOX: [[u32; 256]; 4] = [
     [
         0xd1310ba6, 0x98dfb5ac, 0x2ffd72db, 0xd01adfb7,
-        // ... For brevity, we only show the beginning of each S-box array. 
+        // ... For brevity, we only show the beginning of each S-box array.
         // The complete 4x256 array is quite large. In a real toy, we'd replicate it fully.
-        0x00000000,  // we won't fill entire table in snippet
-        // This is incomplete for demonstration.
+        0x00000000, // we won't fill entire table in snippet
+                   // This is incomplete for demonstration.
     ],
-    [ 0; 256 ],
-    [ 0; 256 ],
-    [ 0; 256 ],
+    [0; 256],
+    [0; 256],
+    [0; 256],
 ];
 
 #[cfg(test)]
@@ -198,6 +196,9 @@ mod tests {
         assert_ne!(block, orig);
 
         bf.decrypt_block(&mut block);
-        assert_eq!(block, orig, "Blowfish decrypt did not restore the original block");
+        assert_eq!(
+            block, orig,
+            "Blowfish decrypt did not restore the original block"
+        );
     }
 }

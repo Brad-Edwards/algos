@@ -6,9 +6,9 @@
 //! If you need ElGamal or any cryptographic operations in production, please use a
 //! vetted, well-reviewed cryptography library.
 
-use rand::{rngs::StdRng, Rng, SeedableRng};
 use num_bigint::{BigUint, RandPrime};
 use num_traits::{One, Zero};
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
 /// ElGamal parameters: a large prime `p` and a generator `g`.
 /// In actual practice, these parameters must be carefully selected and validated.
@@ -145,7 +145,7 @@ impl ElGamalParams {
 }
 
 /// Encrypt a message `m` using ElGamal public key and ephemeral exponent `k`.
-/// 
+///
 /// # Arguments
 /// - `public_key`: the ElGamal public key (p, g, y).
 /// - `message`: a `BigUint` representing the message in [1, p-1].
@@ -157,8 +157,8 @@ impl ElGamalParams {
 /// c2 = m * y^k mod p
 ///
 /// # Warnings
-/// - This is a raw ElGamal approach with no padding or advanced encoding. 
-/// - `message` must be < p. 
+/// - This is a raw ElGamal approach with no padding or advanced encoding.
+/// - `message` must be < p.
 /// - DO NOT USE FOR REAL CRYPTOGRAPHY.
 pub fn elgamal_encrypt(
     public_key: &ElGamalPublicKey,
@@ -202,10 +202,13 @@ pub fn elgamal_decrypt(private_key: &ElGamalPrivateKey, ciphertext: &ElGamalCiph
     // s = c1^x mod p
     let s = ciphertext.c1.modpow(&private_key.x, &private_key.p);
     // s_inv = s^(p-2) mod p (Fermat's little theorem) if p is prime
-    let s_inv = s.modpow(&(private_key.p.clone() - BigUint::one() - BigUint::one()), &private_key.p);
+    let s_inv = s.modpow(
+        &(private_key.p.clone() - BigUint::one() - BigUint::one()),
+        &private_key.p,
+    );
 
     // message = c2 * s_inv mod p
-    ( &ciphertext.c2 * &s_inv ) % &private_key.p
+    (&ciphertext.c2 * &s_inv) % &private_key.p
 }
 
 #[cfg(test)]

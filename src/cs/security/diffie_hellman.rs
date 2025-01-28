@@ -55,7 +55,7 @@ pub struct DHKeyGenConfig {
 
 impl DiffieHellmanParams {
     /// Generate toy Diffie-Hellman parameters (prime `p` and generator `g`).
-    /// 
+    ///
     /// # Warnings
     /// - This is a TOY function that picks a prime of the requested size but does no
     ///   advanced primality checks beyond `num-bigint`'s prime generation.
@@ -69,7 +69,7 @@ impl DiffieHellmanParams {
 
         // Generate a random prime of `prime_bits` length
         let p = rng.gen_prime(config.prime_bits);
-        
+
         // For demonstration, pick a small g:
         // In real usage, g must be carefully chosen. We'll do something naive here.
         let g = BigUint::from(2_u64);
@@ -112,7 +112,7 @@ impl DiffieHellmanParams {
 impl DiffieHellmanKeyPair {
     /// Given another party's public key `other_pub`, compute the shared secret:
     ///   `S = other_pub^a mod p`.
-    /// 
+    ///
     /// # Warnings
     /// - This is naive exponentiation with no safety checks for malicious inputs.
     /// - No key derivation function is applied on top. It's purely the raw group element.
@@ -133,17 +133,13 @@ mod tests {
             seed: Some(42),
         };
         let dh_params = DiffieHellmanParams::generate(&dh_config);
-        
+
         // Alice keypair
-        let alice_config = DHKeyGenConfig {
-            seed: Some(100),
-        };
+        let alice_config = DHKeyGenConfig { seed: Some(100) };
         let alice = dh_params.generate_keypair(&alice_config);
 
         // Bob keypair
-        let bob_config = DHKeyGenConfig {
-            seed: Some(200),
-        };
+        let bob_config = DHKeyGenConfig { seed: Some(200) };
         let bob = dh_params.generate_keypair(&bob_config);
 
         // Each side computes shared secret
@@ -151,6 +147,9 @@ mod tests {
         let bob_secret = bob.compute_shared_secret(&alice.public_key);
 
         // Check if they match
-        assert_eq!(alice_secret, bob_secret, "Diffie-Hellman secrets must match");
+        assert_eq!(
+            alice_secret, bob_secret,
+            "Diffie-Hellman secrets must match"
+        );
     }
 }
