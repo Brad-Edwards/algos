@@ -73,6 +73,34 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Warshall's Algorithm  
 ✅ Topological Sort  
 
+#### Graph Algorithms (Part 2)
+
+✅ Edmond–Karp (max flow)  
+✅ Dinic’s Algorithm (max flow)  
+✅ Ford–Fulkerson (max flow)  
+✅ Hungarian Algorithm (assignment)  
+✅ Hopcroft–Karp (bipartite matching)  
+✅ Bron–Kerbosch (maximal clique)  
+✅ Johnson’s Cycle Detection  
+✅ Floyd’s Cycle Detection (Tortoise and Hare)  
+✅ Euler Tour / Euler Circuit Algorithm  
+✅ Hierholzer’s Algorithm (Euler paths/circuits)
+
+#### Dynamic Programming
+
+✅ Kadane's Algorithm  
+✅ Matrix Chain Multiplication  
+✅ Edit Distance  
+✅ Coin Change  
+✅ Longest Common Subsequence  
+✅ Longest Increasing Subsequence  
+✅ Weighted Interval Scheduling  
+✅ Viterbi Algorithm  
+✅ Bellman Equation-based DP  
+✅ Knuth Optimization  
+
+#### Hashing
+
 ✅ Perfect Hashing  
 ✅ Universal Hashing  
 ✅ Cuckoo Hashing  
@@ -84,27 +112,24 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Jenkins Hash  
 ✅ MurmurHash  
 
+#### Classic Machine Learning
+
+✅ k-Means Clustering
+✅ k-Nearest Neighbors (k-NN)
+✅ Linear Regression (OLS)
+✅ Logistic Regression
+✅ Decision Tree Learning (ID3, C4.5)
+✅ Random Forest
+✅ Support Vector Machine (SVM)
+✅ Naive Bayes
+✅ Gradient Boosting (GBM family)
+✅ XGBoost
+
 ### 🚧 Planned Implementation
-
-#### Dynamic Programming
-
-[ ] Kadane's Algorithm  
-[ ] Matrix Chain Multiplication  
-[ ] Edit Distance  
-[ ] Coin Change  
-[ ] Longest Common Subsequence  
-[ ] Longest Increasing Subsequence  
-[ ] Weighted Interval Scheduling  
-[ ] Viterbi Algorithm  
-[ ] Bellman Equation-based DP  
-[ ] Knuth Optimization  
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
-- Graph Algorithms (Part 2)
 - Cryptographic & Security Algorithms
-- Hashing & Hash Tables
-- Machine Learning Algorithms
 - Deep Learning & Neural Networks
 - Reinforcement Learning
 - Approximation Algorithms

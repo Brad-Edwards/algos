@@ -51,6 +51,14 @@ pub enum Error {
     /// A negative cycle was detected in the graph
     #[error("negative cycle detected in graph")]
     NegativeCycle,
+
+    /// Invalid vertex
+    #[error("invalid vertex")]
+    InvalidVertex,
+
+    /// No Eulerian path exists in the graph
+    #[error("no Eulerian path exists")]
+    NoEulerianPath,
 }
 
 /// Result type for algorithm operations
