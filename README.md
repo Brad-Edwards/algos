@@ -99,26 +99,37 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Bellman Equation-based DP  
 ✅ Knuth Optimization  
 
-🚧 k-Means Clustering
-🚧 k-Nearest Neighbors (k-NN)
-🚧 Linear Regression (OLS)
-🚧 Logistic Regression
-🚧 Decision Tree Learning (ID3, C4.5)
-🚧 Random Forest
-🚧 Support Vector Machine (SVM)
-🚧 Naive Bayes
-🚧 Gradient Boosting (GBM family)
-🚧 XGBoost
+#### Hashing
+
+✅ Perfect Hashing  
+✅ Universal Hashing  
+✅ Cuckoo Hashing  
+✅ Separate Chaining  
+✅ Open Addressing (linear/quadratic probing, double hashing)  
+✅ Polynomial Rolling Hash  
+✅ FNV (Fowler–Noll–Vo) Hash  
+✅ CRC32  
+✅ Jenkins Hash  
+✅ MurmurHash  
+
+#### Classic Machine Learning
+
+✅ k-Means Clustering
+✅ k-Nearest Neighbors (k-NN)
+✅ Linear Regression (OLS)
+✅ Logistic Regression
+✅ Decision Tree Learning (ID3, C4.5)
+✅ Random Forest
+✅ Support Vector Machine (SVM)
+✅ Naive Bayes
+✅ Gradient Boosting (GBM family)
+✅ XGBoost
 
 ### 🚧 Planned Implementation
 
-
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
-- Graph Algorithms (Part 2)
 - Cryptographic & Security Algorithms
-- Hashing & Hash Tables
-- Machine Learning Algorithms
 - Deep Learning & Neural Networks
 - Reinforcement Learning
 - Approximation Algorithms
