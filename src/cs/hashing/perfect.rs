@@ -29,7 +29,7 @@
 //! (e.g. [phf], [fst], etc.) may be more efficient or robust.
 
 use std::collections::{HashSet, VecDeque};
-use std::hash::{BuildHasher, Hasher};
+use std::hash::Hasher;
 
 /// A minimal perfect hash function for a static set of distinct keys.
 #[derive(Debug)]
@@ -100,100 +100,132 @@ impl PerfectHash {
 /// returns `Err(())`.
 fn try_build_phf(keys: &[String], seed1: u64, seed2: u64) -> Result<Vec<u64>, ()> {
     let n = keys.len();
-    // Build adjacency list: each key defines an edge from h1(k) to h2(k).
-    // We'll store all edges in a vector of (node1, node2, key_index).
+
+    // Special case for n=1: just map to index 0
+    if n == 1 {
+        return Ok(vec![0]);
+    }
+
+    // Build edges: each key defines an edge from h1(k) to h2(k)
     let mut edges = Vec::with_capacity(n);
     for (k_idx, k) in keys.iter().enumerate() {
         let i1 = hash_str(k, seed1) % (n as u64);
         let i2 = hash_str(k, seed2) % (n as u64);
+        // Only reject self-loops for n>2
+        if n > 2 && i1 == i2 {
+            return Err(());
+        }
         edges.push((i1 as usize, i2 as usize, k_idx));
     }
 
-    // We'll need to track connected components. We'll store adjacency for each node in [0..n].
-    let mut adjacency = vec![Vec::new(); n];
-    for &(u, v, e_idx) in &edges {
-        adjacency[u].push((v, e_idx));
-        adjacency[v].push((u, e_idx));
+    // For n=2, we need to ensure different indices when used in hash_index
+    if n == 2 {
+        // Get hash values for both keys
+        let (i1_0, i2_0) = (hash_str(&keys[0], seed1) % 2, hash_str(&keys[0], seed2) % 2);
+        let (i1_1, i2_1) = (hash_str(&keys[1], seed1) % 2, hash_str(&keys[1], seed2) % 2);
+
+        // Try all possible g values
+        for g0 in 0..2u64 {
+            for g1 in 0..2u64 {
+                let g = vec![g0, g1];
+
+                // Calculate actual indices using same formula as hash_index
+                let idx0 = (i1_0 + g[i1_0 as usize] + g[i2_0 as usize]) % 2;
+                let idx1 = (i1_1 + g[i1_1 as usize] + g[i2_1 as usize]) % 2;
+
+                // If indices are different, we found a solution
+                if idx0 != idx1 {
+                    return Ok(g);
+                }
+            }
+        }
+
+        // No solution found with these seeds
+        return Err(());
     }
 
-    // We want to assign an integer offset g[u] for each node u. We'll initialize them with 0.
+    // For n>2, use the graph-based approach
+    let mut adjacency = vec![Vec::new(); n];
+    for &(u, v, e_idx) in &edges {
+        adjacency[u].push((v, e_idx)); // Only add forward edges
+    }
+
     let mut g = vec![0u64; n];
-
-    // We'll keep track which edges are "used" in BFS once we fix them. We'll process each connected
-    // component in BFS manner, setting g[u] so that each edge in that component yields a unique index.
     let mut visited = vec![false; n];
-    let mut used_edge = vec![false; n]; // track each key by index?
+    let mut used_edge = vec![false; n];
 
-    // BFS over connected components
-    for start_node in 0..n {
-        if adjacency[start_node].is_empty() {
-            // isolated node => no edges => g doesn't matter for it
-            visited[start_node] = true;
-            continue;
-        }
-        if visited[start_node] {
+    // Process each component
+    for start in 0..n {
+        if visited[start] {
             continue;
         }
 
-        // BFS queue
+        visited[start] = true;
         let mut queue = VecDeque::new();
-        visited[start_node] = true;
-        queue.push_back(start_node);
+        queue.push_back(start);
+        let mut used_indices = HashSet::new();
 
         while let Some(u) = queue.pop_front() {
-            // explore edges from u
             for &(v, key_idx) in &adjacency[u] {
                 if used_edge[key_idx] {
                     continue;
                 }
-                // the key with index key_idx connects u..v
-                // We want the resulting index for that key to be distinct.
-                // The formula is index = (u + g[u] + g[v]) mod n => must be key_idx for a perfect mapping.
-                // So we want: (g[u] + g[v]) mod n = (key_idx - u) mod n. (We'll store that difference in e).
-                let required = mod_diff(key_idx as u64, u as u64, n as u64);
 
-                // So g[v] = required - g[u], mod n
-                // => g[v] = (required + n - g[u]) mod n
-                // We'll fix g[v] if we haven't visited v yet, or check consistency otherwise.
-                let needed = mod_diff(required, g[u], n as u64);
+                let i1 = edges[key_idx].0;
+                let i2 = edges[key_idx].1;
+                let mut idx = (i1 as u64 + g[i1] + g[i2]) % (n as u64);
 
-                if !visited[v] {
-                    visited[v] = true;
-                    g[v] = needed;
-                    queue.push_back(v);
-                } else {
-                    // check if it conflicts
-                    if g[v] != needed {
-                        // conflict => can't build
+                if !used_indices.insert(idx) {
+                    let mut found = false;
+                    for new_g in 0..n as u64 {
+                        if !visited[v] {
+                            g[v] = new_g;
+                            idx = (i1 as u64 + g[i1] + g[v]) % (n as u64);
+                            if used_indices.insert(idx) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if !found {
                         return Err(());
                     }
                 }
-                // mark edge used
+
+                if !visited[v] {
+                    visited[v] = true;
+                    queue.push_back(v);
+                }
                 used_edge[key_idx] = true;
             }
         }
     }
 
-    // If we reach here, we assigned g[] consistently with no collisions => success
-    Ok(g)
-}
+    // Final verification using same index calculation as build
+    let mut used = HashSet::new();
+    for k in keys.iter() {
+        let i1 = hash_str(k, seed1) % (n as u64);
+        let i2 = hash_str(k, seed2) % (n as u64);
+        let idx = (i1 + g[i1 as usize] + g[i2 as usize]) % (n as u64);
+        if !used.insert(idx) {
+            return Err(());
+        }
+    }
 
-/// Helper: returns (a - b) mod n in [0..n-1].
-fn mod_diff(a: u64, b: u64, n: u64) -> u64 {
-    ((a + n) - b) % n
+    Ok(g)
 }
 
 /// A basic string hash function using a `seed`, building on a 64-bit hasher approach.
 ///
 /// This is not cryptographically secure, but it suffices to form distinct edges in the bipartite graph.
 fn hash_str(s: &str, seed: u64) -> u64 {
-    // We'll use a simple "Xorshift" or "FNV" style approach for demonstration.
-    // You could do a `std::collections::hash_map::DefaultHasher` plus seed, or a custom approach.
     let mut h = Fnv64 {
         state: 0xcbf29ce484222325 ^ seed,
     };
-    for b in s.as_bytes() {
+    for (shift, b) in s.as_bytes().iter().enumerate() {
         h.write_u8(*b);
+        // Rotate state to mix bits better
+        h.state = h.state.rotate_left((shift & 63) as u32);
     }
     h.finish()
 }

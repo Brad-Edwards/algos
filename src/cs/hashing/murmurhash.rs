@@ -17,7 +17,7 @@
 //!
 //! # Usage Example
 //! ```rust
-//! use murmurhash::{MurmurBuilder, MurmurVariant};
+//! use algos::cs::hashing::murmurhash::{MurmurBuilder, MurmurVariant};
 //! use std::collections::HashMap;
 //!
 //! // Build a 128-bit x64 variant with a custom seed
@@ -30,6 +30,19 @@
 //! let mut map = HashMap::with_hasher(build_hasher);
 //! map.insert("hello", 42);
 //! assert_eq!(map.get("hello"), Some(&42));
+//! ```
+//!
+//! MurmurHash3 implementation.
+//!
+//! Example:
+//! ```rust
+//! use algos::cs::hashing::murmurhash::{MurmurBuilder, MurmurVariant};
+//! use std::hash::BuildHasher;
+//!
+//! let hasher = MurmurBuilder::new()
+//!     .variant(MurmurVariant::Murmur3x64_128)
+//!     .build();
+//! let hash = hasher.hash_one(b"hello");
 //! ```
 
 use std::hash::{BuildHasher, Hasher};
@@ -154,13 +167,13 @@ impl Hasher for MurmurHasher {
     fn finish(&self) -> u64 {
         match self.variant {
             MurmurVariant::Murmur3x86_32 => {
-                let mut s = self.x86_32_state.clone().unwrap();
+                let s = self.x86_32_state.clone().unwrap();
                 let h32 = s.finish();
                 // zero-extend to 64
                 h32 as u64
             }
             MurmurVariant::Murmur3x64_128 => {
-                let mut s = self.x64_128_state.clone().unwrap();
+                let s = self.x64_128_state.clone().unwrap();
                 let (low, _high) = s.finish128();
                 // We'll return low 64 bits for Hasher usage
                 low
@@ -207,11 +220,10 @@ impl Murmur3x86_32 {
 
     fn finish(mut self) -> u32 {
         let leftover = self.buffer.len();
-        let mut k = 0u32;
         if leftover > 0 {
             let mut tail = [0u8; 4];
             tail[..leftover].copy_from_slice(&self.buffer[..leftover]);
-            k = u32::from_le_bytes(tail);
+            let k = u32::from_le_bytes(tail);
             self.length += leftover;
             self.h = murmur3_x86_32_mix_k_partial(self.h, k, leftover as u32);
         }
@@ -243,33 +255,31 @@ fn murmur3_x86_32_mix_k_partial(mut h: u32, mut k: u32, size: u32) -> u32 {
     const C1: u32 = 0xcc9e2d51;
     const C2: u32 = 0x1b873593;
 
-    // rotate, multiply depending on leftover
     k = match size {
         1 => {
-            k = k & 0xff;
+            k &= 0xff;
             k = k.wrapping_mul(C1);
             k = k.rotate_left(15);
-            k = k.wrapping_mul(C2);
-            k
+            k.wrapping_mul(C2)
         }
         2 => {
-            k = k & 0xffff;
+            k &= 0xffff;
             k = k.wrapping_mul(C1);
             k = k.rotate_left(15);
-            k = k.wrapping_mul(C2);
-            k
+            k.wrapping_mul(C2)
         }
         3 => {
-            k = k & 0xffffff;
+            k &= 0xffffff;
             k = k.wrapping_mul(C1);
             k = k.rotate_left(15);
-            k = k.wrapping_mul(C2);
-            k
+            k.wrapping_mul(C2)
         }
         _ => k,
     };
 
     h ^= k;
+    h = h.rotate_left(13);
+    h = h.wrapping_mul(5).wrapping_add(0xe6546b64);
     h
 }
 

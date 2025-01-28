@@ -122,8 +122,8 @@ pub struct FnvHasher {
 impl Hasher for FnvHasher {
     fn finish(&self) -> u64 {
         match self.bits {
-            FnvBits::Fnv64 => self.state64.unwrap().finish(),
-            FnvBits::Fnv32 => self.state32.unwrap().finish() as u64,
+            FnvBits::Fnv64 => self.state64.as_ref().unwrap().finish(),
+            FnvBits::Fnv32 => self.state32.as_ref().unwrap().finish() as u64,
         }
     }
 
@@ -151,14 +151,12 @@ impl Hasher for FnvHasher {
 #[derive(Debug, Clone)]
 struct FnvState64 {
     state: u64,
-    variant: FnvVariant,
 }
 
 impl FnvState64 {
-    fn new(variant: FnvVariant) -> Self {
+    fn new(_: FnvVariant) -> Self {
         Self {
             state: FNV64_OFFSET_BASIS,
-            variant,
         }
     }
 
@@ -187,14 +185,12 @@ impl FnvState64 {
 #[derive(Debug, Clone)]
 struct FnvState32 {
     state: u32,
-    variant: FnvVariant,
 }
 
 impl FnvState32 {
-    fn new(variant: FnvVariant) -> Self {
+    fn new(_: FnvVariant) -> Self {
         Self {
             state: FNV32_OFFSET_BASIS,
-            variant,
         }
     }
 

@@ -16,8 +16,6 @@
 //! substring search or fingerprinting. For security-critical usage, rely on cryptographic hash
 //! functions.
 
-use std::ops::Mul;
-
 /// Default base (multiplier) for polynomial rolling, e.g. ~257 for ASCII or 131542391 for distribution
 const DEFAULT_BASE: u64 = 257;
 /// Default modulus if none specified, e.g. a prime near 2^61 or 2^63. We'll pick 2^61-1 (a Mersenne prime).
@@ -85,6 +83,12 @@ pub struct PolynomialRollingHash {
     current_len: usize,
     /// The current power = base^(current_len) mod modulus, used if we want to remove from front (optional).
     current_power: u64,
+}
+
+impl Default for PolynomialRollingHash {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PolynomialRollingHash {
@@ -167,8 +171,11 @@ impl PolynomialRollingHash {
 #[inline]
 fn add_mod(a: u64, b: u64, m: u64) -> u64 {
     let s = a.wrapping_add(b);
-    let res = if s >= m { s - m } else { s };
-    res
+    if s >= m {
+        s - m
+    } else {
+        s
+    }
 }
 
 #[inline]
@@ -248,7 +255,7 @@ mod tests {
     fn test_remove_front() {
         let mut hasher = PolynomialRollingHash::new();
         hasher.hash_slice(b"abcd");
-        let h1 = hasher.current_hash();
+        let _h1 = hasher.current_hash();
 
         // remove front 'a'
         hasher.remove_front(b'a' as u64);

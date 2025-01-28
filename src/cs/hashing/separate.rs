@@ -10,7 +10,7 @@
 //! This is not a standard library replacement but is designed as a robust demonstration for real usage.
 
 use std::collections::hash_map::RandomState;
-use std::hash::{BuildHasher, Hash, Hasher};
+use std::hash::{BuildHasher, Hash};
 
 /// Default initial capacity if none specified.
 const DEFAULT_INITIAL_CAPACITY: usize = 16;
@@ -210,30 +210,31 @@ impl<K: Hash + Eq, V, S: BuildHasher + Clone> ChainedHashMap<K, V, S> {
 
     /// Internal function computing the bucket index for a given key.
     fn bucket_index(&self, key: &K) -> usize {
-        let mut hasher = self.build_hasher.build_hasher();
-        key.hash(&mut hasher);
-        let h = hasher.finish();
-        (h as usize) % self.bucket_count
+        (self.build_hasher.hash_one(key) as usize) % self.bucket_count
     }
 
     /// Resize the map (roughly doubling the number of buckets) and re-insert existing entries.
     fn resize(&mut self) {
         let new_bucket_count = (self.bucket_count * 2).max(1);
-        let mut new_buckets = Vec::with_capacity(new_bucket_count);
+        let mut new_buckets: Vec<Bucket<K, V>> = Vec::with_capacity(new_bucket_count);
         new_buckets.resize_with(new_bucket_count, Default::default);
 
         // We'll re-insert everything
         for bucket in self.buckets.drain(..) {
             for entry in bucket {
-                let mut hasher = self.build_hasher.build_hasher();
-                entry.key.hash(&mut hasher);
-                let h = hasher.finish() as usize % new_bucket_count;
+                let h = self.build_hasher.hash_one(&entry.key) as usize % new_bucket_count;
                 new_buckets[h].push(entry);
             }
         }
         self.bucket_count = new_bucket_count;
         self.buckets = new_buckets;
         // len remains the same
+    }
+}
+
+impl<K: Hash + Eq, V> Default for ChainedHashMap<K, V> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -16,7 +16,7 @@
 //! **Note**: For concurrency or extremely large data sets, you may need a specialized approach or more advanced data structures.
 
 use std::collections::hash_map::RandomState;
-use std::hash::{BuildHasher, Hash, Hasher};
+use std::hash::{BuildHasher, Hash};
 
 /// Default initial capacity if unspecified.
 const DEFAULT_INITIAL_CAPACITY: usize = 16;
@@ -26,17 +26,12 @@ const DEFAULT_MAX_LOAD_FACTOR: f64 = 0.75;
 const DEFAULT_TOMBSTONE_THRESHOLD: f64 = 0.2;
 
 /// An entry can be `Empty`, `Tombstone` (used to be occupied but removed), or `Occupied(key, value)`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 enum Slot<K, V> {
+    #[default]
     Empty,
     Tombstone,
     Occupied(K, V),
-}
-
-impl<K, V> Default for Slot<K, V> {
-    fn default() -> Self {
-        Slot::Empty
-    }
 }
 
 /// The strategy used for collision resolution in open addressing.
@@ -91,7 +86,10 @@ impl<S: BuildHasher + Clone> OpenAddressingBuilder<S> {
 
     /// Sets the maximum load factor. If (len+1)/capacity > max_load_factor => rehash/grow.
     pub fn with_max_load_factor(mut self, lf: f64) -> Self {
-        assert!(lf > 0.0 && lf < 1.0, "Load factor must be in (0,1)");
+        assert!(
+            (0.0..1.0).contains(&lf),
+            "Load factor must be between 0 and 1"
+        );
         self.max_load_factor = lf;
         self
     }
@@ -99,8 +97,8 @@ impl<S: BuildHasher + Clone> OpenAddressingBuilder<S> {
     /// Sets tombstone threshold ratio. If tombstones exceed that fraction of capacity, we rehash to clean them.
     pub fn with_tombstone_threshold(mut self, ratio: f64) -> Self {
         assert!(
-            ratio >= 0.0 && ratio < 1.0,
-            "Tombstone threshold must be in [0,1)"
+            (0.0..1.0).contains(&ratio),
+            "Tombstone threshold must be between 0 and 1"
         );
         self.tombstone_threshold = ratio;
         self
@@ -113,20 +111,9 @@ impl<S: BuildHasher + Clone> OpenAddressingBuilder<S> {
     }
 
     /// For double hashing, you can optionally provide a second hasher builder.
-    pub fn with_double_hasher<T: BuildHasher + Clone>(
-        mut self,
-        secondary: T,
-    ) -> OpenAddressingBuilder<T> {
-        let old = self.hasher2.take();
-        let new2 = secondary;
-        OpenAddressingBuilder {
-            capacity: self.capacity,
-            max_load_factor: self.max_load_factor,
-            tombstone_threshold: self.tombstone_threshold,
-            strategy: self.strategy,
-            hasher: new2,
-            hasher2: old.map(|_| panic!("Chaining secondary hasher conflicts with new type!")),
-        }
+    pub fn with_double_hasher(mut self, secondary: S) -> Self {
+        self.hasher2 = Some(secondary);
+        self
     }
 
     /// Finalize building the `OpenAddressingMap` with `K: Hash + Eq, V`.
@@ -173,14 +160,15 @@ pub struct OpenAddressingMap<K, V, S> {
     tombstone_threshold: f64,
 }
 
+impl<K: Hash + Eq + Clone, V: Clone> Default for OpenAddressingMap<K, V, RandomState> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<K: Hash + Eq + Clone, V: Clone> OpenAddressingMap<K, V, RandomState> {
-    /// Creates a new map with default parameters and RandomState hasher (linear probing).
     pub fn new() -> Self {
         OpenAddressingBuilder::new().build()
-    }
-    /// Creates with given capacity.
-    pub fn with_capacity(cap: usize) -> Self {
-        OpenAddressingBuilder::new().with_capacity(cap).build()
     }
 }
 
@@ -212,10 +200,11 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
 
         let mut probe_i = 0;
         loop {
-            match &mut self.slots[idx] {
+            let slot = &mut self.slots[idx];
+            match slot {
                 Slot::Empty => {
                     // place new
-                    self.slots[idx] = Slot::Occupied(key, value);
+                    *slot = Slot::Occupied(key, value);
                     self.len += 1;
                     return None;
                 }
@@ -245,12 +234,17 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
             }
 
             probe_i += 1;
-            idx = self.next_index(idx, second_hash, probe_i, capacity_mask);
             if probe_i > self.capacity {
                 // full or infinite loop
                 self.grow();
                 return self.insert(key, value);
             }
+            let next_idx = match self.strategy {
+                ProbingStrategy::Linear => (idx + 1) & capacity_mask,
+                ProbingStrategy::Quadratic => (idx + probe_i * probe_i) & capacity_mask,
+                ProbingStrategy::DoubleHash => (idx + probe_i * second_hash) & capacity_mask,
+            };
+            idx = next_idx;
         }
     }
 
@@ -262,25 +256,23 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
 
         let mut probe_i = 0;
         loop {
-            match &self.slots[idx] {
-                Slot::Empty => {
-                    // no key
-                    return None;
-                }
-                Slot::Occupied(k, v) => {
-                    if k == key {
-                        return Some(v);
-                    }
-                }
-                Slot::Tombstone => {
-                    // keep searching
-                }
+            if let Some(v) = match &self.slots[idx] {
+                Slot::Empty => None,
+                Slot::Occupied(k, v) if k == key => Some(v),
+                _ => None,
+            } {
+                return Some(v);
             }
             probe_i += 1;
             if probe_i > self.capacity {
                 return None;
             }
-            idx = self.next_index(idx, second_hash, probe_i, capacity_mask);
+            let next_idx = match self.strategy {
+                ProbingStrategy::Linear => (idx + 1) & capacity_mask,
+                ProbingStrategy::Quadratic => (idx + probe_i * probe_i) & capacity_mask,
+                ProbingStrategy::DoubleHash => (idx + probe_i * second_hash) & capacity_mask,
+            };
+            idx = next_idx;
         }
     }
 
@@ -290,27 +282,35 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
         let second_hash = self.secondary_hash(key);
         let capacity_mask = self.capacity - 1;
 
+        // First find the index
+        let mut found_idx = None;
         let mut probe_i = 0;
-        loop {
-            match &mut self.slots[idx] {
-                Slot::Empty => {
-                    return None;
+
+        while probe_i <= self.capacity {
+            if let Slot::Occupied(k, _) = &self.slots[idx] {
+                if k == key {
+                    found_idx = Some(idx);
+                    break;
                 }
-                Slot::Occupied(k, v) => {
-                    if k == key {
-                        return Some(v);
-                    }
-                }
-                Slot::Tombstone => {
-                    // keep searching
-                }
-            }
-            probe_i += 1;
-            if probe_i > self.capacity {
+            } else if let Slot::Empty = &self.slots[idx] {
                 return None;
             }
-            idx = self.next_index(idx, second_hash, probe_i, capacity_mask);
+
+            probe_i += 1;
+            idx = match self.strategy {
+                ProbingStrategy::Linear => (idx + 1) & capacity_mask,
+                ProbingStrategy::Quadratic => (idx + probe_i * probe_i) & capacity_mask,
+                ProbingStrategy::DoubleHash => (idx + probe_i * second_hash) & capacity_mask,
+            };
         }
+
+        // Then return a reference to the value if found
+        if let Some(idx) = found_idx {
+            if let Slot::Occupied(_, v) = &mut self.slots[idx] {
+                return Some(v);
+            }
+        }
+        None
     }
 
     /// Removes key from the table, returning the old value if present.
@@ -321,14 +321,15 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
 
         let mut probe_i = 0;
         loop {
-            match &mut self.slots[idx] {
+            let slot = &mut self.slots[idx];
+            match slot {
                 Slot::Empty => {
                     // not found
                     return None;
                 }
                 Slot::Occupied(k, _v) => {
                     if k == key {
-                        let old = match std::mem::replace(&mut self.slots[idx], Slot::Tombstone) {
+                        let old = match std::mem::replace(slot, Slot::Tombstone) {
                             Slot::Occupied(_, v) => v,
                             _ => unreachable!(),
                         };
@@ -345,7 +346,12 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
             if probe_i > self.capacity {
                 return None;
             }
-            idx = self.next_index(idx, second_hash, probe_i, capacity_mask);
+            let next_idx = match self.strategy {
+                ProbingStrategy::Linear => (idx + 1) & capacity_mask,
+                ProbingStrategy::Quadratic => (idx + probe_i * probe_i) & capacity_mask,
+                ProbingStrategy::DoubleHash => (idx + probe_i * second_hash) & capacity_mask,
+            };
+            idx = next_idx;
         }
     }
 
@@ -364,16 +370,6 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
             Slot::Occupied(k, v) => Some((k, v)),
             _ => None,
         })
-    }
-
-    /// Some private helpers:
-
-    fn load_factor_exceeded(&self) -> bool {
-        (self.len as f64) / (self.capacity as f64) > self.max_load_factor
-    }
-
-    fn tombstone_exceeded(&self) -> bool {
-        (self.tombstones as f64) / (self.capacity as f64) > self.tombstone_threshold
     }
 
     /// Grow or rehash if load factor or tombstone ratio is exceeded
@@ -398,10 +394,7 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
 
     /// Return primary index
     fn primary_index(&self, key: &K) -> usize {
-        let mut hasher = self.buildhasher1.build_hasher();
-        key.hash(&mut hasher);
-        let h = hasher.finish() as usize;
-        h & (self.capacity - 1)
+        (self.buildhasher1.hash_one(key) as usize) & (self.capacity - 1)
     }
 
     /// For double hashing, we define a second index increment. For linear/quadratic, we can ignore or define 0.
@@ -410,35 +403,11 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
             ProbingStrategy::DoubleHash => {
                 // use buildhasher2
                 let bh2 = self.buildhasher2.as_ref().unwrap();
-                let mut hasher2 = bh2.build_hasher();
-                key.hash(&mut hasher2);
-                let h2 = hasher2.finish() as usize;
+                let h2 = bh2.hash_one(key) as usize;
                 // we must ensure the increment is not zero => do (h2 | 1) or something
-                let incr = (h2 & (self.capacity - 1)) | 1;
-                incr
+                (h2 & (self.capacity - 1)) | 1
             }
             _ => 0,
-        }
-    }
-
-    /// compute next index based on strategy
-    fn next_index(
-        &self,
-        base_idx: usize,
-        second_hash: usize,
-        i: usize,
-        capacity_mask: usize,
-    ) -> usize {
-        match self.strategy {
-            ProbingStrategy::Linear => (base_idx + 1) & capacity_mask,
-            ProbingStrategy::Quadratic => {
-                // (base_idx + i^2) mod capacity
-                (base_idx + i * i) & capacity_mask
-            }
-            ProbingStrategy::DoubleHash => {
-                // base + i*second_hash mod capacity
-                (base_idx + i * second_hash) & capacity_mask
-            }
         }
     }
 
@@ -453,45 +422,50 @@ impl<K: Hash + Eq + Clone, V: Clone, S: BuildHasher + Clone> OpenAddressingMap<K
         tomb_idx: usize,
     ) -> Option<Option<V>> {
         let capacity_mask = self.capacity - 1;
-        let mut i = start_i + 1;
-        let mut idx = self.next_index(tomb_idx, second_hash, i, capacity_mask);
-        while i <= self.capacity {
-            match &mut self.slots[idx] {
+        let mut idx = match self.strategy {
+            ProbingStrategy::Linear => (tomb_idx + 1) & capacity_mask,
+            ProbingStrategy::Quadratic => {
+                (tomb_idx + (start_i + 1) * (start_i + 1)) & capacity_mask
+            }
+            ProbingStrategy::DoubleHash => (tomb_idx + (start_i + 1) * second_hash) & capacity_mask,
+        };
+
+        for probe_i in (start_i + 1)..self.capacity {
+            let (left, right) = if idx > tomb_idx {
+                let (left, right) = self.slots.split_at_mut(idx);
+                (&mut left[tomb_idx], &mut right[0])
+            } else {
+                let (left, right) = self.slots.split_at_mut(tomb_idx);
+                (&mut right[0], &mut left[idx])
+            };
+
+            match right {
                 Slot::Empty => {
-                    // no occupant => so key not found. Place in tomb_idx
-                    self.slots[tomb_idx] = Slot::Occupied(key, value);
+                    *left = Slot::Occupied(key, value);
                     self.len += 1;
-                    self.tombstones -= 1; // we used up a tombstone
+                    self.tombstones -= 1;
                     return None;
                 }
-                Slot::Occupied(k2, v2) => {
-                    if k2 == &key {
-                        // found existing key => update and place in tomb_idx
-                        let oldv = std::mem::replace(v2, value);
-                        // also we can move the occupant from idx to tomb_idx?
-                        // But typically for correctness, we might do a small rearrangement.
-                        // Let's do a simpler approach: we simply store occupant in tomb_idx, mark idx tombstone => or store new in tomb_idx?
-                        // Actually simpler: we do an approach that we should do a small "swap" approach.
-                        // But that can be complicated. We'll do the simpler approach: "the same key is found => we can do an immediate update."
-                        // Then we can place a tombstone or not. Actually in open addressing, we typically just do an update in place => done.
-                        // But we have a tomb_idx reserved. We are in the middle of an insertion. This is a corner scenario.
-                        // If the key is found further, it's simpler just to put the new value in the found slot, ignoring tomb_idx.
-                        // Then we won't fill the tomb_idx.
-                        // The existing slot remains Occupied, we do not reduce len or anything.
-                        // We effectively do a direct update.
-                        // We'll do that approach:
-                        return Some(Some(oldv));
-                    }
+                Slot::Occupied(k, v) if k == &key => {
+                    let old = v.clone();
+                    *right = Slot::Occupied(key, value);
+                    return Some(Some(old));
                 }
-                Slot::Tombstone => {
-                    // keep searching
-                }
+                _ => {}
             }
-            i += 1;
-            idx = self.next_index(tomb_idx, second_hash, i, capacity_mask);
+
+            idx = match self.strategy {
+                ProbingStrategy::Linear => (idx + 1) & capacity_mask,
+                ProbingStrategy::Quadratic => {
+                    (tomb_idx + (probe_i + 1) * (probe_i + 1)) & capacity_mask
+                }
+                ProbingStrategy::DoubleHash => {
+                    (tomb_idx + (probe_i + 1) * second_hash) & capacity_mask
+                }
+            };
         }
-        // if we can't find an empty or occupant key after full pass => fallback rehash
-        // We'll place in tomb_idx and return None
+
+        // No match found, place at tomb_idx
         self.slots[tomb_idx] = Slot::Occupied(key, value);
         self.len += 1;
         self.tombstones -= 1;
@@ -548,7 +522,6 @@ mod tests {
         let mut map = OpenAddressingBuilder::new()
             .with_capacity(8)
             .with_strategy(ProbingStrategy::DoubleHash)
-            // we must supply a second hasher
             .with_double_hasher(RandomState::new())
             .build::<i32, i32>();
 

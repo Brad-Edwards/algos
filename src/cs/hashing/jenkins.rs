@@ -33,17 +33,11 @@ pub fn jenkins_hash(data: &[u8]) -> u32 {
 /// Currently Jenkins is quite simple, so there aren't many parameters to tweak:
 /// It's basically the standard one-at-a-time approach. We might allow advanced
 /// seeding or variations in the future.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct JenkinsBuilder {
     /// If you'd like a "seed" to perturb the initial state, you can store it here.
     /// By default, we do no seed (0).
     pub seed: u32,
-}
-
-impl Default for JenkinsBuilder {
-    fn default() -> Self {
-        Self { seed: 0 }
-    }
 }
 
 impl JenkinsBuilder {
@@ -152,6 +146,12 @@ impl Hasher for JenkinsHasher {
             self.state = self.state.wrapping_add(self.state << 10);
             self.state ^= self.state >> 6;
         }
+    }
+}
+
+impl Default for JenkinsHasher {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

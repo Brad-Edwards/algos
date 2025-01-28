@@ -105,11 +105,7 @@ impl Crc32Builder {
         for i in 0..256 {
             let mut crc = i as u32;
             if self.reflect_in {
-                // in reflect-in mode, the top byte is reversed in polynomials
-                // but typically we handle it by reversing the byte i if we want consistency
-                // We'll do this approach used by e.g. the "reversed" polynomials.
-                // We'll skip reversing i because the polynomial is reversed already. We'll just do the standard approach:
-                // standard approach for reversed polynomial:
+                // For reflected polynomials, we process LSB to MSB
                 for _ in 0..8 {
                     if (crc & 1) != 0 {
                         crc = (crc >> 1) ^ self.polynomial;
@@ -135,6 +131,7 @@ impl Crc32Builder {
 
         Crc32 {
             table,
+            #[allow(dead_code)]
             polynomial: self.polynomial,
             init: self.init,
             final_xor: self.final_xor,
@@ -149,6 +146,7 @@ impl Crc32Builder {
 #[derive(Debug, Clone)]
 pub struct Crc32 {
     table: [u32; 256],
+    #[allow(dead_code)]
     polynomial: u32,
     init: u32,
     final_xor: u32,
@@ -168,12 +166,12 @@ impl Crc32 {
     pub fn update(&mut self, data: &[u8]) {
         if self.reflect_in {
             // for reversed polynomials, we process from LSB to MSB
-            let mut crc = self.state ^ 0xFFFF_FFFF; // typical approach if reflect_in
+            let mut crc = self.state;
             for &b in data {
                 let idx = (crc ^ (b as u32)) & 0xFF;
                 crc = (crc >> 8) ^ self.table[idx as usize];
             }
-            self.state = crc ^ 0xFFFF_FFFF;
+            self.state = crc;
         } else {
             // non-reflect
             let mut crc = self.state;
@@ -189,17 +187,8 @@ impl Crc32 {
     /// The hasher remains in a consistent state, so subsequent updates continue from the same state.
     pub fn finalize(&self) -> u32 {
         let mut crc = self.state;
-        if self.reflect_in {
-            // after reversed approach, we do the final xor if reflect_out is the same as reflect_in?
-            // Typically we do reflection if reflect_out is true, i.e. we flip the bits. We'll do a small function for that:
-            if self.reflect_out {
-                crc = reflect_32(crc);
-            }
-        } else {
-            if self.reflect_out {
-                // e.g. if we didn't do reflection while computing, but want it out, do reflect
-                crc = reflect_32(crc);
-            }
+        if self.reflect_out != self.reflect_in {
+            crc = reflect_32(crc);
         }
         crc ^ self.final_xor
     }

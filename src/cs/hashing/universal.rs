@@ -3,7 +3,7 @@
 //! This library provides a **universal hash** construction in Rust, following a
 //! polynomial-based (Carter-Wegman style) approach. The goal is to map arbitrary input data to
 //! a numeric hash value in a manner that *minimizes collisions* across different keys, under
-//! random choice of parameters. By “universal,” we mean that for distinct inputs `x` and `y`,
+//! random choice of parameters. By "universal," we mean that for distinct inputs `x` and `y`,
 //! the probability of `hash(x) == hash(y)` is small (assuming a random selection of hashing parameters).
 //!
 //! **Note**: This implementation is designed to be robust, flexible, and perform well in
@@ -35,7 +35,7 @@
 //! # Usage
 //!
 //! ```rust
-//! use universal_hash::{UniversalHash64, UniversalHashBuilder};
+//! use algos::cs::hashing::universal::{UniversalHash64, UniversalHashBuilder};
 //!
 //! // Build a universal hash instance with random parameters (for robust collision distribution).
 //! let hasher = UniversalHashBuilder::new().build_64();
@@ -55,9 +55,28 @@
 //! This code attempts to be efficient by accumulating partial polynomial expansions and using
 //! 128-bit intermediate multiplications carefully. If you need extremely large input or extremely
 //! high performance, consider more specialized solutions or hardware acceleration.
+//!
+//! Universal hashing implementation.
+//!
+//! Example using the streaming interface:
+//! ```rust
+//! use algos::cs::hashing::universal::{UniversalHash64, UniversalHash64State};
+//!
+//! let mut state = UniversalHash64State::new();
+//! state.write(b"hello");
+//! let hash = state.finish();
+//! ```
+//!
+//! Example using the builder:
+//! ```rust
+//! use algos::cs::hashing::universal::{UniversalHash64, UniversalHashBuilder};
+//!
+//! let builder = UniversalHashBuilder::new();
+//! let hasher = builder.build_64();
+//! let hash = hasher.hash(b"hello");
+//! ```
 
 use rand::{rngs::StdRng, Rng, SeedableRng};
-use std::mem::MaybeUninit;
 
 /// A prime just under `2^61`. We use 2^61 - 1 here for convenience (which is not prime),
 /// so let's pick a known prime near 2^61. We'll use 2305843009213693951 = 2^61 - 1 (which is Mersenne),
@@ -68,7 +87,39 @@ use std::mem::MaybeUninit;
 /// (2^61 - 1 is indeed prime.)
 const PRIME_61: u64 = 0x1FFFFFFFFFFFFFFF; // 2^61 - 1
 
-/// A builder to create a universal hasher with user or random parameters.
+/// A 64-bit universal hash state for incremental hashing.
+///
+/// Example:
+/// ```rust
+/// use algos::cs::hashing::universal::UniversalHash64State;
+///
+/// let mut state = UniversalHash64State::new();
+/// state.write(b"hello");
+/// let hash = state.finish();
+/// ```
+pub struct UniversalHash64State {
+    p: u64,
+    a: u64,
+    b: u64,
+    partial: u64,
+}
+
+impl Default for UniversalHash64State {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// A builder for constructing universal hash functions.
+///
+/// Example:
+/// ```rust
+/// use algos::cs::hashing::universal::{UniversalHash64, UniversalHashBuilder};
+///
+/// let builder = UniversalHashBuilder::new();
+/// let hasher = builder.build_64();
+/// let hash = hasher.hash(b"hello");
+/// ```
 pub struct UniversalHashBuilder {
     seed: Option<u64>,
     a: Option<u64>,
@@ -130,7 +181,7 @@ impl UniversalHashBuilder {
             if b >= p {
                 panic!("param b must be in [0..p-1].");
             }
-            (a, b)
+            (a % p, b % p) // Ensure parameters are reduced mod p
         } else {
             // random
             let mut rng = if let Some(s) = self.seed {
@@ -165,9 +216,8 @@ impl UniversalHash64 {
             h = mul_mod(h, self.a, self.p);
             h = add_mod(h, byte as u64, self.p);
         }
-        // add b
-        h = add_mod(h, self.b, self.p);
-        h
+        // add b and ensure final result is reduced mod p
+        add_mod(h, self.b, self.p)
     }
 
     /// Creates a streaming stateful hasher for partial updates. This allows large data sets
@@ -182,27 +232,19 @@ impl UniversalHash64 {
     }
 }
 
-/// A streaming hasher for `UniversalHash64`.
-/// Usage:
-/// ```rust
-/// # use universal_hash::{UniversalHash64, UniversalHash64State};
-/// # let h = UniversalHash64{p:5,a:1,b:2};
-/// let mut st = h.hasher();
-/// st.update(b"Hello,");
-/// st.update(b" world!");
-/// let val = st.finish();
-/// ```
-#[derive(Debug, Clone)]
-pub struct UniversalHash64State {
-    p: u64,
-    a: u64,
-    b: u64,
-    partial: u64,
-}
-
 impl UniversalHash64State {
+    /// Creates a new hash state with default parameters.
+    pub fn new() -> Self {
+        Self {
+            p: PRIME_61,
+            a: 1, // Default multiplier
+            b: 0, // Default offset
+            partial: 0,
+        }
+    }
+
     /// Updates the hash state with the provided `data`.
-    pub fn update(&mut self, data: &[u8]) {
+    pub fn write(&mut self, data: &[u8]) {
         for &byte in data {
             self.partial = mul_mod(self.partial, self.a, self.p);
             self.partial = add_mod(self.partial, byte as u64, self.p);
@@ -210,9 +252,9 @@ impl UniversalHash64State {
     }
 
     /// Finalizes the hash, returning a 64-bit result. This consumes the state.
-    pub fn finish(mut self) -> u64 {
-        self.partial = add_mod(self.partial, self.b, self.p);
-        self.partial
+    pub fn finish(self) -> u64 {
+        // Ensure final result is reduced mod p
+        add_mod(self.partial, self.b, self.p)
     }
 }
 
@@ -220,9 +262,13 @@ impl UniversalHash64State {
 
 #[inline]
 fn add_mod(x: u64, y: u64, p: u64) -> u64 {
+    // First reduce inputs modulo p to handle large values (like ASCII codes)
+    let x = x % p;
+    let y = y % p;
+    // Now do the modular addition
     let s = x.wrapping_add(y);
     if s >= p {
-        s - p
+        s.wrapping_sub(p)
     } else {
         s
     }
@@ -234,9 +280,10 @@ fn add_mod(x: u64, y: u64, p: u64) -> u64 {
 fn mul_mod(x: u64, y: u64, p: u64) -> u64 {
     // We'll do x*y in 128 bits, reduce mod p.
     // We rely on stable 128-bit ops in modern Rust.
+    let x = x % p; // Ensure inputs are reduced
+    let y = y % p;
     let prod = (x as u128) * (y as u128);
-    let r = (prod % (p as u128)) as u64;
-    r
+    (prod % (p as u128)) as u64
 }
 
 // For test usage
@@ -268,8 +315,8 @@ mod tests {
         let direct = uh.hash(data);
 
         let mut st = uh.hasher();
-        st.update(&data[..10]);
-        st.update(&data[10..]);
+        st.write(&data[..10]);
+        st.write(&data[10..]);
         let streaming = st.finish();
 
         assert_eq!(direct, streaming, "Streaming must match one-shot result");

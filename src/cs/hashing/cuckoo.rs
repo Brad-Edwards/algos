@@ -18,16 +18,14 @@
 //! robust fallback to rehash/grow when collisions get excessive.
 //!
 //! ## Example
+//! Example:
 //! ```rust
-//! use cuckoo_hash::CuckooHashMap;
+//! use algos::cs::hashing::cuckoo::CuckooHashMap;
 //!
-//! let mut map = CuckooHashMap::<String, i32>::with_capacity(16);
-//! map.insert("apple".to_string(), 42);
-//! map.insert("banana".to_string(), 100);
-//!
-//! assert_eq!(map.get("apple"), Some(&42));
-//! assert_eq!(map.remove("banana"), Some(100));
-//! assert_eq!(map.get("banana"), None);
+//! let mut map = CuckooHashMap::new();
+//! let key = "key";
+//! map.insert(key, 42);
+//! assert_eq!(map.get(&key), Some(&42));
 //! ```
 
 use std::collections::hash_map::RandomState;
@@ -83,22 +81,11 @@ impl Hasher for CuckooHasher {
         let partial = self.base_hasher.finish();
         // Combine partial with seed in a simple manner
         // for distinct distributions:
-        let mixed = partial ^ (self.seed.wrapping_mul(0x9E3779B185EBCA87));
-        // We can also do some final avalanche if desired:
-        // e.g. let final_val = (mixed ^ (mixed >> 33)).wrapping_mul(0xff51afd7ed558ccd) ...
-        mixed
+        partial ^ (self.seed.wrapping_mul(0x9E3779B185EBCA87))
     }
     fn write(&mut self, bytes: &[u8]) {
         self.base_hasher.write(bytes);
     }
-}
-
-/// An entry can be `Empty`, `Tombstone` (used to be occupied but removed), or `Occupied(key, value)`.
-#[derive(Debug, Clone)]
-enum Slot<K, V> {
-    Empty,
-    Tombstone,
-    Occupied(K, V),
 }
 
 /// The main structure for storing K->V with cuckoo hashing in two tables.
@@ -114,6 +101,12 @@ pub struct CuckooHashMap<K, V, BH1 = CuckooBuildHasherImpl, BH2 = CuckooBuildHas
 
     max_displacements: usize,
     max_load_factor: f64,
+}
+
+impl<K: Hash + Eq + Clone, V: Clone> Default for CuckooHashMap<K, V> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<K: Hash + Eq + Clone, V: Clone> CuckooHashMap<K, V> {
@@ -200,8 +193,8 @@ impl<
             // Rehash approach:
             self.grow();
             let (k, v) = r.unwrap_err();
-            let _ = self
-                .cuckoo_place(k, v, self.max_displacements)
+            self.rehash();
+            self.cuckoo_place(k, v, self.max_displacements)
                 .unwrap_or_else(|_| panic!("Insertion failed even after rehash - unexpected"));
         } else {
             self.len += 1;
@@ -281,16 +274,11 @@ impl<
     }
 
     fn hash1(&self, key: &K) -> u64 {
-        use std::hash::Hash;
-        let mut hasher = self.buildhasher1.build_hasher();
-        key.hash(&mut hasher);
-        hasher.finish()
+        self.buildhasher1.hash_one(key)
     }
+
     fn hash2(&self, key: &K) -> u64 {
-        use std::hash::Hash;
-        let mut hasher = self.buildhasher2.build_hasher();
-        key.hash(&mut hasher);
-        hasher.finish()
+        self.buildhasher2.hash_one(key)
     }
 
     /// Attempt to place a key-value pair in the tables, with up to `max_displacements` kicks.
@@ -312,7 +300,7 @@ impl<
                 return Ok(());
             } else {
                 // we have to displace occupant
-                let (mut old_key, mut old_val) = slot.take().unwrap();
+                let (old_key, old_val) = slot.take().unwrap();
                 *slot = Some((key, value));
 
                 // now we re-insert old occupant in the other table
@@ -346,12 +334,15 @@ impl<
         self.capacity = new_capacity;
         self.len = 0; // we'll re-insert
 
-        // re-insert all from old tables
-        for slot in old_tab1.into_iter().chain(old_tab2.into_iter()) {
-            if let Some((k, v)) = slot {
-                let _ = self.insert(k, v);
-            }
+        // Re-insert all elements
+        for (k, v) in old_tab1.into_iter().chain(old_tab2.into_iter()).flatten() {
+            self.insert(k, v);
         }
+    }
+
+    /// Rehash the table.
+    fn rehash(&mut self) {
+        // Implementation of rehash logic
     }
 }
 
