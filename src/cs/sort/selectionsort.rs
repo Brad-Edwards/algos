@@ -58,7 +58,7 @@ mod tests {
     fn test_empty_slice() {
         let mut arr: Vec<i32> = vec![];
         sort(&mut arr);
-        assert_eq!(arr, vec![]);
+        assert_eq!(arr, Vec::<i32>::new());
     }
 
     #[test]

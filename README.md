@@ -125,6 +125,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Gradient Boosting (GBM family)
 ✅ XGBoost
 
+#### ***DO NOT USE*** Cryptography and Security ***DO NOT USE***
+
+✅ RSA  
+✅ Diffie–Hellman Key Exchange  
+✅ ElGamal Encryption  
+✅ AES (Rijndael)  
+✅ Blowfish  
+✅ Twofish  
+✅ SHA-256  
+✅ MD5 (legacy)  
+✅ Elliptic Curve Cryptography (ECC)  
+✅ DSA (Digital Signature Algorithm)  
+
 ### 🚧 Planned Implementation
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
