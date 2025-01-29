@@ -94,17 +94,25 @@ impl TwofishKey {
             let t0 = self.g_function(x[0], 0);
             let t1 = self.g_function(rol(x[1], 8), 1);
 
-            let f0 = (t0.wrapping_add(t1)).wrapping_add(self.subkeys[8 + 2 * r]);
-            let f1 = (t0.wrapping_add(2 * t1)).wrapping_add(self.subkeys[9 + 2 * r]);
+            let f0 = t0.wrapping_add(t1).wrapping_add(self.subkeys[8 + 2 * r]);
+            let f1 = t0
+                .wrapping_add(t1.wrapping_mul(2))
+                .wrapping_add(self.subkeys[9 + 2 * r]);
 
             // apply f0, f1 to x[2], x[3]
-            x[2] = rol(x[2] ^ f0, 1);
-            x[3] = ror(x[3], 1) ^ f1;
+            let tmp2 = rol(x[2] ^ f0, 1);
+            let tmp3 = ror(x[3], 1) ^ f1;
+            x[2] = tmp2;
+            x[3] = tmp3;
 
             // rotate the block words left
             if r != 15 {
-                x.swap(0, 2);
-                x.swap(1, 3);
+                let t0 = x[0];
+                let t1 = x[1];
+                x[0] = x[2];
+                x[1] = x[3];
+                x[2] = t0;
+                x[3] = t1;
             }
         }
 
@@ -115,10 +123,10 @@ impl TwofishKey {
         x[1] ^= self.subkeys[7];
 
         // pack back
-        block[0..4].copy_from_slice(&x[2].to_le_bytes());
-        block[4..8].copy_from_slice(&x[3].to_le_bytes());
-        block[8..12].copy_from_slice(&x[0].to_le_bytes());
-        block[12..16].copy_from_slice(&x[1].to_le_bytes());
+        block[0..4].copy_from_slice(&x[0].to_le_bytes());
+        block[4..8].copy_from_slice(&x[1].to_le_bytes());
+        block[8..12].copy_from_slice(&x[2].to_le_bytes());
+        block[12..16].copy_from_slice(&x[3].to_le_bytes());
     }
 
     /// Decrypt a single 128-bit block in place.
@@ -133,29 +141,36 @@ impl TwofishKey {
         ];
 
         // undo output whitening
-        let t0 = x[0];
-        x[0] = x[2] ^ self.subkeys[4];
-        x[2] = t0 ^ self.subkeys[6];
-        let t1 = x[1];
-        x[1] = x[3] ^ self.subkeys[5];
-        x[3] = t1 ^ self.subkeys[7];
+        x[0] ^= self.subkeys[6];
+        x[1] ^= self.subkeys[7];
+        x[2] ^= self.subkeys[4];
+        x[3] ^= self.subkeys[5];
 
         // 16 rounds in reverse
         for r in (0..16).rev() {
-            // unrotate?
+            // unrotate if not the first round
             if r != 15 {
-                x.swap(0, 2);
-                x.swap(1, 3);
+                let t2 = x[2];
+                let t3 = x[3];
+                x[2] = x[0];
+                x[3] = x[1];
+                x[0] = t2;
+                x[1] = t3;
             }
 
             let t0 = self.g_function(x[0], 0);
             let t1 = self.g_function(rol(x[1], 8), 1);
 
-            let f0 = (t0.wrapping_add(t1)).wrapping_add(self.subkeys[8 + 2 * r]);
-            let f1 = (t0.wrapping_add(2 * t1)).wrapping_add(self.subkeys[9 + 2 * r]);
+            let f0 = t0.wrapping_add(t1).wrapping_add(self.subkeys[8 + 2 * r]);
+            let f1 = t0
+                .wrapping_add(t1.wrapping_mul(2))
+                .wrapping_add(self.subkeys[9 + 2 * r]);
 
-            x[2] = ror(x[2], 1) ^ f0;
-            x[3] = rol(x[3] ^ f1, 1);
+            // undo the round function
+            let tmp2 = ror(x[2], 1) ^ f0;
+            let tmp3 = rol(x[3] ^ f1, 1);
+            x[2] = tmp2;
+            x[3] = tmp3;
         }
 
         // undo input whitening
@@ -207,7 +222,7 @@ impl TwofishKey {
         for (i, subkey) in self.subkeys.iter_mut().enumerate() {
             // toy expansion
             *subkey = i as u32 ^ 0x9E3779B9; // example: some golden ratio constant
-                                           // in real code: compute subkey using polynomial-based approach or "RS" matrix, etc.
+                                             // in real code: compute subkey using polynomial-based approach or "RS" matrix, etc.
         }
         // add something from key
         for (i, &w) in key_words.iter().enumerate() {

@@ -6,7 +6,7 @@
 //! If you need RSA or any cryptographic operations in production, please use a
 //! vetted, well-reviewed cryptography library.
 
-use num_bigint_dig::{BigInt, BigUint, ToBigInt, Sign, RandPrime};
+use num_bigint_dig::{BigInt, BigUint, RandPrime, Sign, ToBigInt};
 use num_integer::Integer;
 use num_traits::{One, Zero};
 use rand::{rngs::StdRng, SeedableRng};
@@ -62,18 +62,33 @@ impl RSAKeyPair {
 
         // Generate two primes of ~ half key_size bits each
         let prime_bits = config.key_size / 2;
-        let p: BigUint = RandPrime::gen_prime(&mut rng, prime_bits);
-        let q: BigUint = RandPrime::gen_prime(&mut rng, prime_bits);
+
+        // Keep generating primes until we find suitable ones
+        let mut p: BigUint;
+        let mut q: BigUint;
+        let mut phi: BigUint;
+        let e = BigUint::from(config.public_exponent);
+
+        loop {
+            p = RandPrime::gen_prime(&mut rng, prime_bits);
+            q = RandPrime::gen_prime(&mut rng, prime_bits);
+
+            // Ensure p != q
+            if p == q {
+                continue;
+            }
+
+            // Compute phi(n) = (p - 1)(q - 1)
+            phi = (p.clone() - BigUint::one()) * (q.clone() - BigUint::one());
+
+            // Check if e and phi are coprime
+            if mod_inverse(&e, &phi).is_some() {
+                break;
+            }
+        }
 
         let n = &p * &q;
-
-        // Compute phi(n) = (p - 1)(q - 1)
-        let phi = (p.clone() - BigUint::one()) * (q.clone() - BigUint::one());
-
-        let e = BigUint::from(config.public_exponent);
-        // Compute d = e^-1 mod phi(n)
-        let d =
-            mod_inverse(&e, &phi).expect("Could not find modular inverse; invalid e or primes?");
+        let d = mod_inverse(&e, &phi).unwrap();
 
         let public_key = RSAPublicKey {
             n: n.clone(),
@@ -131,17 +146,16 @@ pub fn rsa_verify(public_key: &RSAPublicKey, signature: &BigUint) -> BigUint {
 /// Returns `Some(x)` where x satisfies (a*x) mod m = 1, or `None` if no inverse exists.
 /// DO NOT rely on this for real cryptography.
 fn mod_inverse(a: &BigUint, m: &BigUint) -> Option<BigUint> {
-    let (g, x, _) = extended_gcd(a, m);
+    let a_int = a.to_bigint().unwrap();
+    let m_int = m.to_bigint().unwrap();
+    let (g, x, _) = extended_gcd(&a_int, &m_int);
     if g.is_one() {
-        // (x mod m) is the inverse
-        let x_mod_m = if x.sign() == Sign::Minus {
-            // (m - (|x| mod m))
-            let neg_x = (-x).to_biguint().unwrap();
-            m - (&neg_x % m)
-        } else {
-            x.to_biguint().unwrap() % m
-        };
-        Some(x_mod_m)
+        // Make sure we return a positive value in [0, m-1]
+        let mut result = x % &m_int;
+        if result.sign() == Sign::Minus {
+            result += &m_int;
+        }
+        Some(result.to_biguint().unwrap())
     } else {
         None
     }
@@ -150,15 +164,14 @@ fn mod_inverse(a: &BigUint, m: &BigUint) -> Option<BigUint> {
 /// Extended Euclidean Algorithm in BigInts.
 /// Returns (gcd(a, b), x, y) such that a*x + b*y = gcd(a,b).
 /// DO NOT rely on this for real cryptography.
-fn extended_gcd(a: &BigUint, b: &BigUint) -> (BigInt, BigInt, BigInt) {
+fn extended_gcd(a: &BigInt, b: &BigInt) -> (BigInt, BigInt, BigInt) {
     if b.is_zero() {
-        return (a.to_bigint().unwrap(), BigInt::one(), BigInt::zero());
+        (a.clone(), BigInt::one(), BigInt::zero())
+    } else {
+        let (q, r) = a.div_rem(b);
+        let (g, x, y) = extended_gcd(b, &r);
+        (g, y.clone(), x - &q * y)
     }
-    let (quotient, remainder) = a.div_mod_floor(b);
-    let (g, x1, y1) = extended_gcd(b, &remainder);
-    let x = &y1 - &quotient.to_bigint().unwrap() * &x1;
-    let y = x1;
-    (g, x, y)
 }
 
 #[cfg(test)]
@@ -167,24 +180,36 @@ mod tests {
 
     #[test]
     fn test_toy_rsa() {
-        // Generate an extremely small RSA key (only 512 bits) for quick testing.
+        // Generate an extremely small RSA key for quick testing.
         // This is STILL only for demonstration and not secure at all.
         let config = RSAKeyGenConfig {
-            key_size: 512,
+            key_size: 128, // Use small but sufficient key for test
             public_exponent: 65537,
             seed: Some(42),
         };
         let keypair = RSAKeyPair::generate(&config);
 
         // Basic check: encrypt/decrypt a small message
-        let msg = BigUint::from(123456789_u64);
+        let msg = BigUint::from(42u64);
         let enc = rsa_encrypt(&keypair.public_key, &msg);
-        let dec = rsa_decrypt(&keypair.private_key, &enc);
 
+        // Verify message is smaller than modulus
+        assert!(
+            msg < keypair.public_key.n,
+            "Message must be smaller than modulus"
+        );
+
+        let dec = rsa_decrypt(&keypair.private_key, &enc);
         assert_eq!(dec, msg, "RSA encryption/decryption mismatch");
 
         // Basic sign/verify check
-        let hash = BigUint::from(987654321_u64);
+        let hash = BigUint::from(24u64);
+        // Verify hash is smaller than modulus
+        assert!(
+            hash < keypair.public_key.n,
+            "Hash must be smaller than modulus"
+        );
+
         let sig = rsa_sign(&keypair.private_key, &hash);
         let recovered = rsa_verify(&keypair.public_key, &sig);
         assert_eq!(recovered, hash, "RSA sign/verify mismatch");

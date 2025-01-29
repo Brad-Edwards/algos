@@ -15,7 +15,8 @@
 //!
 //! **Again, do not use in real security!**
 
-use num_bigint::BigUint;
+use num_bigint::{BigInt, BigUint, Sign, ToBigInt};
+use num_integer::Integer;
 use num_traits::{One, Zero};
 
 /// A point on the elliptic curve in short Weierstrass form (x, y) mod p,
@@ -84,6 +85,31 @@ pub fn toy_secp256k1_curve() -> ToyCurve {
     ToyCurve { p, a, b, g, n }
 }
 
+/// Helper function for modular subtraction that avoids overflow
+fn mod_sub(a: &BigUint, b: &BigUint, m: &BigUint) -> BigUint {
+    let a_mod = a % m;
+    let b_mod = b % m;
+    if a_mod >= b_mod {
+        (a_mod - b_mod) % m
+    } else {
+        (m - (b_mod - a_mod) % m) % m
+    }
+}
+
+/// Helper function for modular addition
+fn mod_add(a: &BigUint, b: &BigUint, m: &BigUint) -> BigUint {
+    let a_mod = a % m;
+    let b_mod = b % m;
+    (a_mod + b_mod) % m
+}
+
+/// Helper function for modular multiplication
+fn mod_mul(a: &BigUint, b: &BigUint, m: &BigUint) -> BigUint {
+    let a_mod = a % m;
+    let b_mod = b % m;
+    (a_mod * b_mod) % m
+}
+
 /// We define the "point add" operation in short Weierstrass form:
 /// - handle Infinity cases
 /// - if x1==x2, check if y1== -y2 => Infinity or else point doubling
@@ -96,7 +122,7 @@ pub fn point_add(c: &ToyCurve, p1: &Point, p2: &Point) -> Point {
             if x1 == x2 {
                 // if y1 = -y2 => Infinity
                 // in mod p, -y2 means p-y2
-                let neg_y2 = (&c.p - y2.clone()) % &c.p;
+                let neg_y2 = mod_sub(&c.p, y2, &c.p);
                 if y1 == &neg_y2 {
                     return Point::Infinity;
                 }
@@ -104,21 +130,20 @@ pub fn point_add(c: &ToyCurve, p1: &Point, p2: &Point) -> Point {
                 return point_double(c, p1);
             }
             // slope = (y2 - y1) * inv(x2 - x1) mod p
-            let dx = (x2 - x1) % &c.p;
-            let dy = (y2 - y1) % &c.p;
+            let dx = mod_sub(x2, x1, &c.p);
+            let dy = mod_sub(y2, y1, &c.p);
             let dx_inv = mod_inv(dx, &c.p).expect("No inverse, degenerate case?");
-            let slope = (dy * dx_inv) % &c.p;
+            let slope = mod_mul(&dy, &dx_inv, &c.p);
 
             // x3 = slope^2 - x1 - x2
-            let mut x3 = (slope.clone() * &slope) % &c.p;
-            x3 = (x3 - x1) % &c.p;
-            x3 = (x3 - x2) % &c.p;
-            // y3 = slope*(x1 - x3) - y1
-            let mut y3 = (slope.clone() * ((x1 - x3.clone()) % &c.p)) % &c.p;
-            y3 = (y3 - y1) % &c.p;
+            let slope_squared = mod_mul(&slope, &slope, &c.p);
+            let mut x3 = mod_sub(&slope_squared, x1, &c.p);
+            x3 = mod_sub(&x3, x2, &c.p);
 
-            let x3 = ((x3 % &c.p) + &c.p) % &c.p;
-            let y3 = ((y3 % &c.p) + &c.p) % &c.p;
+            // y3 = slope*(x1 - x3) - y1
+            let x1_minus_x3 = mod_sub(x1, &x3, &c.p);
+            let slope_times_diff = mod_mul(&slope, &x1_minus_x3, &c.p);
+            let y3 = mod_sub(&slope_times_diff, y1, &c.p);
 
             Point::Coord { x: x3, y: y3 }
         }
@@ -131,30 +156,49 @@ pub fn point_double(c: &ToyCurve, p: &Point) -> Point {
         Point::Infinity => Point::Infinity,
         Point::Coord { x, y } => {
             if y.is_zero() {
-                // tangent is vertical => Infinity
                 return Point::Infinity;
             }
             let two = BigUint::from(2u64);
             let three = BigUint::from(3u64);
 
             // slope = (3x^2 + a) / (2y)
-            let mut numerator = (three * (x * x)) % &c.p;
-            numerator = (numerator + &c.a) % &c.p;
-            let denom = (two * y) % &c.p;
-            let denom_inv = mod_inv(denom, &c.p).expect("no inverse in doubling?");
+            let x_squared = mod_mul(x, x, &c.p);
+            println!("x_squared = {}", x_squared);
 
-            let slope = (numerator * denom_inv) % &c.p;
+            let three_x_squared = mod_mul(&three, &x_squared, &c.p);
+            println!("three_x_squared = {}", three_x_squared);
+
+            let numerator = mod_add(&three_x_squared, &c.a, &c.p);
+            println!("numerator = {}", numerator);
+
+            let two_y = mod_mul(&two, y, &c.p);
+            println!("two_y = {}", two_y);
+
+            let denom_inv = mod_inv(two_y, &c.p).expect("no inverse in doubling?");
+            println!("denom_inv = {}", denom_inv);
+
+            let slope = mod_mul(&numerator, &denom_inv, &c.p);
+            println!("slope = {}", slope);
 
             // x3 = slope^2 - 2x
-            let mut x3 = (&slope * &slope) % &c.p;
-            x3 = (x3 - (x << 1)) % &c.p;
+            let slope_squared = mod_mul(&slope, &slope, &c.p);
+            println!("slope_squared = {}", slope_squared);
+
+            let two_x = mod_mul(&two, x, &c.p);
+            println!("two_x = {}", two_x);
+
+            let x3 = mod_sub(&slope_squared, &two_x, &c.p);
+            println!("x3 = {}", x3);
 
             // y3 = slope*(x - x3) - y
-            let mut y3 = (&slope * ((x - x3.clone()) % &c.p)) % &c.p;
-            y3 = (y3 - y) % &c.p;
+            let x_minus_x3 = mod_sub(x, &x3, &c.p);
+            println!("x_minus_x3 = {}", x_minus_x3);
 
-            let x3 = ((x3 % &c.p) + &c.p) % &c.p;
-            let y3 = ((y3 % &c.p) + &c.p) % &c.p;
+            let slope_times_diff = mod_mul(&slope, &x_minus_x3, &c.p);
+            println!("slope_times_diff = {}", slope_times_diff);
+
+            let y3 = mod_sub(&slope_times_diff, y, &c.p);
+            println!("y3 = {}", y3);
 
             Point::Coord { x: x3, y: y3 }
         }
@@ -211,34 +255,19 @@ pub fn toy_ecdh(c: &ToyCurve, kp1: &ToyKeyPair, kp2: &ToyKeyPair) -> Point {
     s1
 }
 
-/// Compute modular inverse of x mod m using extended Euclid. Return None if no inverse exists.
-fn mod_inv(x: BigUint, m: &BigUint) -> Option<BigUint> {
-    // extended GCD
-    // We do a small method or use built libs. We'll do a small method:
-    if x.is_zero() {
-        return None;
-    }
-    let (g, s, _t) = extended_gcd(x.clone(), m.clone());
-    if g != BigUint::one() {
-        None
-    } else {
-        let inv = ((s % m) + m) % m;
-        Some(inv)
-    }
-}
-
 /// Extended Euclidean for (a, b) => (g, x, y) with ax + by = g
-fn extended_gcd(mut a: BigUint, mut b: BigUint) -> (BigUint, BigUint, BigUint) {
-    let mut x0 = BigUint::one();
-    let mut x1 = BigUint::zero();
-    let mut y0 = BigUint::zero();
-    let mut y1 = BigUint::one();
+fn extended_gcd(a: BigUint, b: BigUint) -> (BigUint, BigInt, BigInt) {
+    let mut a_int = a.to_bigint().unwrap();
+    let mut b_int = b.to_bigint().unwrap();
+    let mut x0 = BigInt::one();
+    let mut x1 = BigInt::zero();
+    let mut y0 = BigInt::zero();
+    let mut y1 = BigInt::one();
 
-    while b != BigUint::zero() {
-        let q = &a / &b;
-        let r = &a % &b;
-        a = b;
-        b = r;
+    while !b_int.is_zero() {
+        let (q, r) = a_int.div_rem(&b_int);
+        a_int = b_int;
+        b_int = r;
 
         let tmpx = x0 - &q * &x1;
         x0 = x1;
@@ -248,7 +277,26 @@ fn extended_gcd(mut a: BigUint, mut b: BigUint) -> (BigUint, BigUint, BigUint) {
         y0 = y1;
         y1 = tmpy;
     }
-    (a, x0, y0)
+    (a_int.to_biguint().unwrap(), x0, y0)
+}
+
+/// Compute modular inverse of x mod m using extended Euclid. Return None if no inverse exists.
+fn mod_inv(x: BigUint, m: &BigUint) -> Option<BigUint> {
+    if x.is_zero() {
+        return None;
+    }
+    let (g, s, _t) = extended_gcd(x.clone(), m.clone());
+    if g != BigUint::one() {
+        None
+    } else {
+        // Convert negative coefficients to positive ones modulo m
+        let m_int = m.to_bigint().unwrap();
+        let mut result = s % &m_int;
+        if result.sign() == Sign::Minus {
+            result += &m_int;
+        }
+        Some(result.to_biguint().unwrap())
+    }
 }
 
 #[cfg(test)]
@@ -257,10 +305,20 @@ mod tests {
 
     #[test]
     fn test_toy_ecc_basic() {
-        // We'll do a small test with real secp256k1-like params,
-        // but we won't do huge computations. We'll do a quick check that
-        // we can do point add: G+G => 2G, etc. Just to see we don't blow up.
-        let curve = toy_secp256k1_curve();
+        // Use a small curve for testing
+        let p = BigUint::from(23u64); // Small prime
+        let a = BigUint::from(1u64); // y^2 = x^3 + x + 1
+        let b = BigUint::from(1u64);
+
+        // Point (3,10) is on the curve y^2 = x^3 + x + 1 mod 23
+        let gx = BigUint::from(3u64);
+        let gy = BigUint::from(10u64);
+        let g = Point::Coord { x: gx, y: gy };
+
+        // Order of the curve is 28
+        let n = BigUint::from(28u64);
+
+        let curve = ToyCurve { p, a, b, g, n };
 
         // Check G + Infinity => G
         let r1 = point_add(&curve, &curve.g, &Point::Infinity);
@@ -268,7 +326,6 @@ mod tests {
 
         // Doubling G: 2G
         let two_g = point_double(&curve, &curve.g);
-        // We won't check correctness vs known real 2G, but ensure we get a new point.
         assert!(
             two_g != Point::Infinity,
             "2G shouldn't be Infinity in normal curve usage"

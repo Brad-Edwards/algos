@@ -150,10 +150,7 @@ impl Md5 {
                 (c ^ (b | (!d)), (7 * i) % 16)
             };
 
-            let temp = a
-                .wrapping_add(f)
-                .wrapping_add(w[g])
-                .wrapping_add(K[i]);
+            let temp = a.wrapping_add(f).wrapping_add(w[g]).wrapping_add(K[i]);
             let temp = temp.rotate_left(S[i]).wrapping_add(b);
 
             a = d;
