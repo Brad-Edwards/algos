@@ -62,12 +62,8 @@ impl TwofishKey {
 
         // Convert key bytes to words
         let mut key_words = vec![0u32; kwords];
-        for i in 0..kwords {
-            // each word is 4 bytes in big-endian or little-endian?
-            // Twofish nominally uses little-endian for word assembly.
-            let offset = i * 4;
-            let word_le = u32::from_le_bytes(key_data[offset..offset + 4].try_into().unwrap());
-            key_words[i] = word_le;
+        for (i, chunk) in key_data.chunks_exact(4).enumerate().take(kwords) {
+            key_words[i] = u32::from_le_bytes(chunk.try_into().unwrap());
         }
 
         // Expand the key using the official Twofish approach (simplified here).
@@ -107,12 +103,8 @@ impl TwofishKey {
 
             // rotate the block words left
             if r != 15 {
-                let tmp = x[0];
-                x[0] = x[2];
-                x[2] = tmp;
-                let tmp2 = x[1];
-                x[1] = x[3];
-                x[3] = tmp2;
+                x.swap(0, 2);
+                x.swap(1, 3);
             }
         }
 
@@ -152,12 +144,8 @@ impl TwofishKey {
         for r in (0..16).rev() {
             // unrotate?
             if r != 15 {
-                let tmp = x[0];
-                x[0] = x[2];
-                x[2] = tmp;
-                let tmp2 = x[1];
-                x[1] = x[3];
-                x[3] = tmp2;
+                x.swap(0, 2);
+                x.swap(1, 3);
             }
 
             let t0 = self.g_function(x[0], 0);
@@ -195,12 +183,11 @@ impl TwofishKey {
             ((x >> 24) & 0xFF) as u8,
         ];
         // apply key-based s-box step (toy)
-        for i in 0..b.len() {
-            b[i] = mds_q0q1(b[i]) ^ ((self.sbox_keys[start] as u8) & 0xFF);
+        for b_val in b.iter_mut() {
+            *b_val = mds_q0q1(*b_val) ^ (self.sbox_keys[start] as u8);
         }
         // then MDS multiply (toy)
-        let out = apply_mds(&b);
-        out
+        apply_mds(&b)
     }
 
     /// The core key schedule for subkeys, sbox keys, etc.
@@ -213,14 +200,14 @@ impl TwofishKey {
         // subkeys[8..] as "round subkeys" for 16 rounds => total 32 round subkeys
         // 8 + 32 = 40 => subkeys
 
-        for i in 0..self.kwords {
-            self.sbox_keys[i] = key_words[i].rotate_left(3 * (i as u32)); // toy manip
+        for (i, sbox_key) in self.sbox_keys.iter_mut().enumerate().take(self.kwords) {
+            *sbox_key = key_words[i].rotate_left(3 * (i as u32)); // toy manip
         }
 
-        for i in 0..TWOFISH_SUBKEY_COUNT {
+        for (i, subkey) in self.subkeys.iter_mut().enumerate() {
             // toy expansion
-            self.subkeys[i] = i as u32 ^ 0x9E3779B9; // example: some golden ratio constant
-                                                     // in real code: compute subkey using polynomial-based approach or "RS" matrix, etc.
+            *subkey = i as u32 ^ 0x9E3779B9; // example: some golden ratio constant
+                                           // in real code: compute subkey using polynomial-based approach or "RS" matrix, etc.
         }
         // add something from key
         for (i, &w) in key_words.iter().enumerate() {
@@ -233,11 +220,9 @@ impl TwofishKey {
 fn apply_mds(b: &[u8; 4]) -> u32 {
     // This is a placeholder. Real MDS is a 4x4 matrix over GF(256).
     // We'll do some toy GF manipulation:
-    let mut result = 0u32;
-    for i in 0..4 {
-        result ^= (b[i] as u32) << (8 * i);
-    }
-    result
+    b.iter().enumerate().fold(0u32, |result, (i, &byte)| {
+        result ^ ((byte as u32) << (8 * i))
+    })
 }
 
 // Toy Q-box function for demonstration

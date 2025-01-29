@@ -52,6 +52,12 @@ static S: [u32; 64] = [
     6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 ];
 
+impl Default for Md5 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Md5 {
     /// Creates a new MD5 context.
     pub fn new() -> Self {
@@ -146,7 +152,7 @@ impl Md5 {
 
             let temp = a
                 .wrapping_add(f)
-                .wrapping_add(w[g as usize])
+                .wrapping_add(w[g])
                 .wrapping_add(K[i]);
             let temp = temp.rotate_left(S[i]).wrapping_add(b);
 

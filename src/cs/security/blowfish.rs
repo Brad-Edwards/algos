@@ -5,6 +5,7 @@
 //! in production, please use a vetted, well-reviewed cryptography library.
 
 use core::convert::TryInto;
+use std::mem;
 
 /// Blowfish operates on 64-bit blocks (8 bytes).
 pub const BLOWFISH_BLOCK_SIZE: usize = 8;
@@ -55,14 +56,10 @@ impl BlowfishKey {
             xl ^= self.p[i];
             xr ^= f_function(xl, &self.s);
             // swap
-            let tmp = xl;
-            xl = xr;
-            xr = tmp;
+            mem::swap(&mut xl, &mut xr);
         }
         // undo last swap
-        let tmp = xl;
-        xl = xr;
-        xr = tmp;
+        mem::swap(&mut xl, &mut xr);
 
         xr ^= self.p[16];
         xl ^= self.p[17];
@@ -82,14 +79,10 @@ impl BlowfishKey {
             xl ^= self.p[i];
             xr ^= f_function(xl, &self.s);
             // swap
-            let tmp = xl;
-            xl = xr;
-            xr = tmp;
+            mem::swap(&mut xl, &mut xr);
         }
         // undo last swap
-        let tmp = xl;
-        xl = xr;
-        xr = tmp;
+        mem::swap(&mut xl, &mut xr);
 
         xr ^= self.p[1];
         xl ^= self.p[0];
@@ -99,11 +92,11 @@ impl BlowfishKey {
     }
 
     /// Blowfish Key Schedule:
-    /// 1) XOR P-array with key bytes repeatedly.
-    /// 2) Encrypt zero block, replace P[0..1].
-    /// 3) Encrypt updated block, replace P[2..3].
-    /// ...
-    /// 4) Fill S-boxes similarly.
+    ///    1) XOR P-array with key bytes repeatedly.
+    ///    2) Encrypt zero block, replace P[0..1].
+    ///    3) Encrypt updated block, replace P[2..3].
+    ///       ...
+    ///    4) Fill S-boxes similarly.
     fn key_schedule(&mut self, key_data: &[u8]) {
         // 1) XOR P-array with key
         let key_len = key_data.len();

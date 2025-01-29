@@ -88,10 +88,10 @@ pub fn toy_dsa_generate_keypair(params: &DsaParams, seed: Option<u64>) -> DsaKey
     let g = &params.g;
 
     // pick x in [1..q-1]
-    let mut scalar_bytes = vec![0u8; q.bits() as usize / 8 + 1];
+    let mut scalar_bytes = vec![0u8; q.bits() / 8 + 1];
     rng.fill_bytes(&mut scalar_bytes);
     let mut x = BigUint::from_bytes_be(&scalar_bytes);
-    x = x % q;
+    x %= q;
     if x.is_zero() {
         x = BigUint::one();
     }
@@ -125,7 +125,7 @@ pub fn toy_dsa_sign(
     // ephemeral k in [1..q-1]
     let mut k = BigUint::zero();
     for _ in 0..100 {
-        let mut buf = vec![0u8; q.bits() as usize / 8 + 1];
+        let mut buf = vec![0u8; q.bits() / 8 + 1];
         rng.fill_bytes(&mut buf);
         k = BigUint::from_bytes_be(&buf) % q;
         if !k.is_zero() {

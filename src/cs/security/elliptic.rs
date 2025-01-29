@@ -74,12 +74,12 @@ pub fn toy_secp256k1_curve() -> ToyCurve {
     let gx_str = "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798";
     let gy_str = "483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8";
 
-    let gx = BigUint::parse_bytes(gx_str.as_bytes(), 16).unwrap_or_else(|| BigUint::zero());
-    let gy = BigUint::parse_bytes(gy_str.as_bytes(), 16).unwrap_or_else(|| BigUint::zero());
+    let gx = BigUint::parse_bytes(gx_str.as_bytes(), 16).unwrap_or(BigUint::zero());
+    let gy = BigUint::parse_bytes(gy_str.as_bytes(), 16).unwrap_or(BigUint::zero());
     let g = Point::Coord { x: gx, y: gy };
 
     let n_str = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141";
-    let n = BigUint::parse_bytes(n_str.as_bytes(), 16).unwrap_or_else(|| BigUint::zero());
+    let n = BigUint::parse_bytes(n_str.as_bytes(), 16).unwrap_or(BigUint::zero());
 
     ToyCurve { p, a, b, g, n }
 }
@@ -191,7 +191,7 @@ pub fn toy_generate_keypair(c: &ToyCurve, seed: Option<u64>) -> ToyKeyPair {
     rng.fill_bytes(&mut scalar_bytes);
 
     let mut d = BigUint::from_bytes_be(&scalar_bytes);
-    d = d % &c.n;
+    d %= &c.n;
     if d.is_zero() {
         d = BigUint::one();
     }

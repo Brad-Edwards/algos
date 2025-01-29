@@ -1,6 +1,6 @@
 # Instructions
 
-During your interaction with the user, if you find anything reusable in this project (e.g. version of a library, model name), especially about a fix to a mistake you made or a correction you received, you should take note in the `Lessons` section in the `.cursorrules` file so you will not make the same mistake again. 
+During your interaction with the user, if you find anything reusable in this project (e.g. version of a library, model name), especially about a fix to a mistake you made or a correction you received, you should take note in the `Lessons` section in the `.cursorrules` file so you will not make the same mistake again.
 
 You should always use a package manager to manage dependencies. Your knowledge is a bit outdated, so you should not attempt to specify versions of libraries.
 
@@ -34,3 +34,12 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 - When debugging, especially for tests, keep track of problems and solutions in the scratchpad so you do not make the same mistake again or go in circles.
 
 # Scratchpad
+
+## Current Task: Fix Clippy Warnings
+
+[X] Fixed documentation indentation in blowfish.rs
+
+- Issue: Doc list item without proper indentation
+- Fix: Added proper indentation to the list item continuation
+
+All clippy warnings have been addressed. The codebase is now free of linting issues.
