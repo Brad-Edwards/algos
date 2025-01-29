@@ -6,9 +6,9 @@
 //! If you need ElGamal or any cryptographic operations in production, please use a
 //! vetted, well-reviewed cryptography library.
 
-use num_bigint::{BigUint, RandPrime};
+use num_bigint_dig::{BigUint, RandBigInt, RandPrime};
 use num_traits::{One, Zero};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, SeedableRng};
 
 /// ElGamal parameters: a large prime `p` and a generator `g`.
 /// In actual practice, these parameters must be carefully selected and validated.

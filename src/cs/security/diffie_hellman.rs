@@ -6,9 +6,9 @@
 //! If you need Diffie-Hellman or any cryptographic operations in production, please use a
 //! vetted, well-reviewed cryptography library.
 
-use num_bigint::{BigUint, RandPrime};
+use num_bigint_dig::{BigUint, RandBigInt, RandPrime};
 use num_traits::{One, Zero};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, SeedableRng};
 
 /// DiffieHellmanParams holds the large prime `p` and generator `g`.
 /// In a real system, these should be carefully chosen and possibly validated safe primes.

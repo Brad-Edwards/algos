@@ -161,16 +161,17 @@ static DEFAULT_P: [u32; PARRAY_SIZE] = [
 ];
 
 static DEFAULT_SBOX: [[u32; 256]; 4] = [
-    [
-        0xd1310ba6, 0x98dfb5ac, 0x2ffd72db, 0xd01adfb7,
-        // ... For brevity, we only show the beginning of each S-box array.
-        // The complete 4x256 array is quite large. In a real toy, we'd replicate it fully.
-        0x00000000, // we won't fill entire table in snippet
-                   // This is incomplete for demonstration.
-    ],
-    [0; 256],
-    [0; 256],
-    [0; 256],
+    {
+        let mut s = [0u32; 256];
+        s[0] = 0xd1310ba6;
+        s[1] = 0x98dfb5ac;
+        s[2] = 0x2ffd72db;
+        s[3] = 0xd01adfb7;
+        s
+    },
+    [0u32; 256],
+    [0u32; 256],
+    [0u32; 256],
 ];
 
 #[cfg(test)]

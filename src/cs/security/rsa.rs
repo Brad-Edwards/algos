@@ -6,11 +6,10 @@
 //! If you need RSA or any cryptographic operations in production, please use a
 //! vetted, well-reviewed cryptography library.
 
-use num_bigint::{BigInt, BigUint, RandPrime, ToBigInt, ToBigUint};
+use num_bigint_dig::{BigInt, BigUint, ToBigInt, Sign, RandPrime};
 use num_integer::Integer;
 use num_traits::{One, Zero};
-use rand::{rngs::StdRng, Rng, SeedableRng};
-use rand_core::RngCore;
+use rand::{rngs::StdRng, SeedableRng};
 
 /// Structure for an RSA public key.
 #[derive(Debug, Clone)]
@@ -63,8 +62,8 @@ impl RSAKeyPair {
 
         // Generate two primes of ~ half key_size bits each
         let prime_bits = config.key_size / 2;
-        let p = rng.gen_prime(prime_bits);
-        let q = rng.gen_prime(prime_bits);
+        let p: BigUint = RandPrime::gen_prime(&mut rng, prime_bits);
+        let q: BigUint = RandPrime::gen_prime(&mut rng, prime_bits);
 
         let n = &p * &q;
 
@@ -135,7 +134,7 @@ fn mod_inverse(a: &BigUint, m: &BigUint) -> Option<BigUint> {
     let (g, x, _) = extended_gcd(a, m);
     if g.is_one() {
         // (x mod m) is the inverse
-        let x_mod_m = if x.is_negative() {
+        let x_mod_m = if x.sign() == Sign::Minus {
             // (m - (|x| mod m))
             let neg_x = (-x).to_biguint().unwrap();
             m - (&neg_x % m)

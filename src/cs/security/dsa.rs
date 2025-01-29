@@ -4,7 +4,7 @@
 //! It is not audited, not vetted, and very likely insecure in practice. If you need DSA or
 //! any cryptographic operations in production, please use a vetted, well-reviewed cryptography library.
 
-use num_bigint::{BigUint, RandPrime};
+use num_bigint_dig::{BigUint, RandPrime};
 use num_traits::{One, Zero};
 use rand::{rngs::StdRng, RngCore, SeedableRng};
 
@@ -42,8 +42,7 @@ pub fn toy_generate_dsa_params(p_bits: usize, q_bits: usize, seed: Option<u64>) 
     // 1) generate prime q of q_bits
     let q = rng.gen_prime(q_bits);
 
-    // 2) generate prime p of p_bits, ensuring p-1 divisible by q in a toy manner (not strictly correct).
-    //    We'll attempt a few tries. This is not how real DSA does it, but a toy approach.
+    // 2) generate prime p of p_bits
     let mut p = BigUint::zero();
     for _attempt in 0..1000 {
         let candidate = rng.gen_prime(p_bits);
@@ -244,7 +243,6 @@ fn extended_gcd(mut a: BigUint, mut b: BigUint) -> (BigUint, BigUint, BigUint) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use num_bigint::ToBigUint;
 
     #[test]
     fn test_dsa_toy() {
@@ -257,7 +255,7 @@ mod tests {
         let kp = toy_dsa_generate_keypair(&params, Some(100));
 
         // "Hash" a message by just taking some BigUint (toy). Real usage => a real hash truncated to q bits.
-        let msg_hash = "123456789ABCDEF".to_biguint().unwrap();
+        let msg_hash = BigUint::parse_bytes(b"123456789ABCDEF", 16).unwrap();
 
         // Sign
         let sig = toy_dsa_sign(&params, &kp, &msg_hash, Some(200));

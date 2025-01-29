@@ -60,7 +60,8 @@ impl Sha256 {
             self.length_bits_low = self.length_bits_low.wrapping_add(8);
 
             if self.buffer_len == 64 {
-                self.process_block(&self.buffer);
+                let buffer_copy = self.buffer;
+                self.process_block(&buffer_copy);
                 self.buffer_len = 0;
             }
         }
@@ -83,7 +84,8 @@ impl Sha256 {
             for i in self.buffer_len..64 {
                 self.buffer[i] = 0;
             }
-            self.process_block(&self.buffer);
+            let buffer_copy = self.buffer;
+            self.process_block(&buffer_copy);
             self.buffer_len = 0;
         }
         // fill zeros until the last 8 bytes for length
@@ -93,7 +95,8 @@ impl Sha256 {
         // write bit length in big-endian
         self.buffer[56..64].copy_from_slice(&bit_len.to_be_bytes());
 
-        self.process_block(&self.buffer);
+        let buffer_copy = self.buffer;
+        self.process_block(&buffer_copy);
 
         // produce digest
         let mut output = [0u8; SHA256_OUTPUT_SIZE];

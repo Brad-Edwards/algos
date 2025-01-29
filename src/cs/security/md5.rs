@@ -75,7 +75,8 @@ impl Md5 {
             self.length_bits_low = self.length_bits_low.wrapping_add(8);
 
             if self.buffer_len == 64 {
-                self.process_block(&self.buffer);
+                let buffer_copy = self.buffer;
+                self.process_block(&buffer_copy);
                 self.buffer_len = 0;
             }
         }
@@ -94,7 +95,8 @@ impl Md5 {
             for i in self.buffer_len..64 {
                 self.buffer[i] = 0;
             }
-            self.process_block(&self.buffer);
+            let buffer_copy = self.buffer;
+            self.process_block(&buffer_copy);
             self.buffer_len = 0;
         }
         // fill zero until last 8 bytes
@@ -105,7 +107,8 @@ impl Md5 {
         let length_le = self.length_bits_low.to_le_bytes();
         self.buffer[56..64].copy_from_slice(&length_le);
 
-        self.process_block(&self.buffer);
+        let buffer_copy = self.buffer;
+        self.process_block(&buffer_copy);
 
         // produce digest in little-endian
         let mut output = [0u8; MD5_OUTPUT_SIZE];

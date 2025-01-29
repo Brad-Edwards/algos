@@ -283,7 +283,7 @@ mod tests {
         assert_eq!(sa.find_all("na").unwrap(), vec![2, 4]);
         assert_eq!(sa.find_all("a").unwrap(), vec![1, 3, 5]);
         assert_eq!(sa.find_all("ban").unwrap(), vec![0]);
-        assert_eq!(sa.find_all("xyz").unwrap(), vec![]);
+        assert_eq!(sa.find_all("xyz").unwrap(), Vec::<usize>::new());
     }
 
     #[test]
@@ -312,7 +312,7 @@ mod tests {
         let text = "abc";
         let sa = SuffixArray::new(text);
 
-        assert_eq!(sa.find_all("abcd").unwrap(), vec![]);
+        assert_eq!(sa.find_all("abcd").unwrap(), Vec::<usize>::new());
         assert_eq!(sa.find_first("abcd").unwrap(), None);
     }
 
@@ -372,7 +372,7 @@ mod tests {
         let text = "bAnAnA";
         let sa = SuffixArray::new(text);
 
-        assert_eq!(sa.find_all("ana").unwrap(), vec![]);
+        assert_eq!(sa.find_all("ana").unwrap(), Vec::<usize>::new());
         assert_eq!(sa.find_all("AnA").unwrap(), vec![1, 3]);
     }
 }

@@ -62,13 +62,12 @@ pub fn toy_secp256k1_curve() -> ToyCurve {
     // Gx=79be667ef..., Gy=483ada77...
     // n=FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6AF48A03B BFD25E8CD0364141
     // We'll do a smaller toy version just for demonstration.
-    use num_bigint::ToBigUint;
 
     let p = BigUint::parse_bytes(
         b"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F",
         16,
     )
-    .unwrap_or_else(|| "0".to_biguint().unwrap());
+    .unwrap_or_else(|| BigUint::parse_bytes(b"0", 10).unwrap());
     let a = BigUint::zero(); // a=0
     let b = BigUint::from(7u64); // b=7
                                  // Let's pretend G is some point, we do the real secp256k1 G:
@@ -165,7 +164,7 @@ pub fn point_double(c: &ToyCurve, p: &Point) -> Point {
 /// Scalar multiplication: compute s*P. We use a simple double-and-add here. Not optimized.
 pub fn point_mul(c: &ToyCurve, p: &Point, scalar: &BigUint) -> Point {
     let mut result = Point::Infinity;
-    let mut base = p.clone();
+    let base = p.clone();
     for bit in scalar.to_bytes_be() {
         // process each byte, then each bit
         for i in 0..8 {

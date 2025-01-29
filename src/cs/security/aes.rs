@@ -153,20 +153,22 @@ static INV_SBOX: [u8; 256] = [
 ];
 
 /// Round constant for key expansion
-static RCON: [u8; 255] = [
-    0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36,
-    // not all used, but let's keep them
-    0x6C, 0xD8, 0xAB, 0x4D, 0x9A, 0x2F, 0x5E, 0xBC, 0x63, 0xC6, 0x97, 0x35, 0x6A, 0xD4, 0xB3, 0x7D,
-    0xFA, 0xEF, 0xC5, 0x91, 0x39, 0x72, 0xE4, 0x9B, 0x2D, 0x5A, 0xB4, 0x7B, 0xF6, 0xED, 0xC1, 0x81,
-    0x19, 0x32, 0x64, 0xC8, 0x8B, 0x01, 0x02, 0x04, /* ... */
-    // only the first 11 are strictly needed for 128-bit AES.
-    // For 256-bit, we go further. This array extends to 255 for completeness in toy code.
-    // We'll not fill them all out for brevity in this toy.
-    // This is enough for 14 rounds (AES-256).
-    0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36, 0x6C, 0xD8, 0xAB, 0x4D, 0x9A, 0x2F, 0x5E, 0xBC,
-    0x63,
-    // etc...
-];
+static RCON: [u8; 255] = {
+    let mut rcon = [0u8; 255];
+    rcon[0] = 0x00;
+    rcon[1] = 0x01;
+    rcon[2] = 0x02;
+    rcon[3] = 0x04;
+    rcon[4] = 0x08;
+    rcon[5] = 0x10;
+    rcon[6] = 0x20;
+    rcon[7] = 0x40;
+    rcon[8] = 0x80;
+    rcon[9] = 0x1B;
+    rcon[10] = 0x36;
+    // Only first 11 values are needed for AES-128
+    rcon
+};
 
 fn sub_bytes(state: &mut [u8; AES_BLOCK_SIZE]) {
     for b in state.iter_mut() {
@@ -294,7 +296,6 @@ fn add_round_key(state: &mut [u8; AES_BLOCK_SIZE], round_key: &[u8; AES_BLOCK_SI
 
 // Key Expansion routines
 fn key_expansion(expanded: &mut [u8], nk: usize, nr: usize) {
-    let key_size_bytes = nk * 4;
     let total_words = (nr + 1) * 4; // number of 32-bit words
     let mut i = nk;
     while i < total_words {

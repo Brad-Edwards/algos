@@ -203,7 +203,7 @@ mod tests {
         assert_eq!(sa.find_all("na"), vec![2, 4]);
         assert_eq!(sa.find_all("a"), vec![1, 3, 5]);
         assert_eq!(sa.find_all("ban"), vec![0]);
-        assert_eq!(sa.find_all("xyz"), vec![]);
+        assert_eq!(sa.find_all("xyz"), Vec::<usize>::new());
     }
 
     #[test]
@@ -212,7 +212,7 @@ mod tests {
         let sa = SuffixAutomaton::new(text);
 
         assert!(sa.contains(""));
-        assert_eq!(sa.find_all(""), vec![]);
+        assert_eq!(sa.find_all(""), Vec::<usize>::new());
     }
 
     #[test]
@@ -258,7 +258,7 @@ mod tests {
         assert!(!sa.contains("ana"));
         assert!(sa.contains("AnA"));
 
-        assert_eq!(sa.find_all("ana"), vec![]);
+        assert_eq!(sa.find_all("ana"), Vec::<usize>::new());
         assert_eq!(sa.find_all("AnA"), vec![1, 3]);
     }
 }

@@ -360,7 +360,7 @@ fn partition_indices(
             } else {
                 // Only fall back to string comparison if parse fails
                 let val_str = row[feat].trim();
-                if val_str <= &threshold.to_string() {
+                if val_str <= threshold.to_string().as_str() {
                     left_idx.push(i);
                 } else {
                     right_idx.push(i);
@@ -373,7 +373,7 @@ fn partition_indices(
         let threshold_str = threshold.to_string();
         for (i, row) in data.iter().enumerate() {
             let val_str = row[feat].trim();
-            if val_str <= &threshold_str {
+            if val_str <= threshold_str.as_str() {
                 left_idx.push(i);
             } else {
                 right_idx.push(i);

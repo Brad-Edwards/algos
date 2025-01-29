@@ -348,14 +348,14 @@ mod tests {
         assert_eq!(st.find_all("ana"), vec![1, 3]);
         assert_eq!(st.find_all("na"), vec![2, 4]);
         assert_eq!(st.find_all("ban"), vec![0]);
-        assert_eq!(st.find_all("xyz"), vec![]);
+        assert_eq!(st.find_all("xyz"), Vec::<usize>::new());
     }
 
     #[test]
     fn test_empty_pattern() {
         let mut st = SuffixTree::new("banana");
         st.build();
-        assert_eq!(st.find_all(""), vec![]);
+        assert_eq!(st.find_all(""), Vec::<usize>::new());
     }
 
     #[test]
@@ -365,7 +365,7 @@ mod tests {
 
         assert_eq!(st.find_all("にち"), vec![2]);
         assert_eq!(st.find_all("世界"), vec![5]);
-        assert_eq!(st.find_all("世に"), vec![]);
+        assert_eq!(st.find_all("世に"), Vec::<usize>::new());
     }
 
     #[test]
@@ -385,6 +385,6 @@ mod tests {
 
         assert_eq!(st.find_all("aaa").len(), 997);
         assert_eq!(st.find_all("b"), vec![1000]);
-        assert_eq!(st.find_all("c"), vec![]);
+        assert_eq!(st.find_all("c"), Vec::<usize>::new());
     }
 }
