@@ -28,7 +28,7 @@ num-prime = { version = "0.4.4", features = ["big-int"] }
 [dev-dependencies]
 criterion = "0.5.1"
 rand = "0.8.5"
-cargo-tarpaulin = "0.27.3"
+cargo-tarpaulin = "0.31.5"
 
 [[bench]]
 name = "suffix_array"
