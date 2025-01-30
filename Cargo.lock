@@ -47,7 +47,7 @@ dependencies = [
  "rand",
  "rand_core 0.9.0",
  "rayon",
- "thiserror 1.0.69",
+ "thiserror 2.0.11",
 ]
 
 [[package]]
