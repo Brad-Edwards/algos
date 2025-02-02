@@ -23,7 +23,13 @@ impl Activation {
         match self {
             Activation::Tanh => 1.0 - x.powi(2),
             Activation::Sigmoid => x * (1.0 - x),
-            Activation::ReLU => if x > 0.0 { 1.0 } else { 0.0 },
+            Activation::ReLU => {
+                if x > 0.0 {
+                    1.0
+                } else {
+                    0.0
+                }
+            }
         }
     }
 }
@@ -63,10 +69,18 @@ impl RNNCell {
     pub fn new(input_size: usize, hidden_size: usize, activation: Activation) -> Self {
         // Initialize weights with small random values
         let w_ih = (0..hidden_size)
-            .map(|_| (0..input_size).map(|_| rand::random::<f64>() * 0.01).collect())
+            .map(|_| {
+                (0..input_size)
+                    .map(|_| rand::random::<f64>() * 0.01)
+                    .collect()
+            })
             .collect();
         let w_hh = (0..hidden_size)
-            .map(|_| (0..hidden_size).map(|_| rand::random::<f64>() * 0.01).collect())
+            .map(|_| {
+                (0..hidden_size)
+                    .map(|_| rand::random::<f64>() * 0.01)
+                    .collect()
+            })
             .collect();
         let bias = vec![0.0; hidden_size];
 
@@ -101,11 +115,11 @@ impl RNNCell {
         // Compute linear combination
         for i in 0..self.hidden_size {
             let mut sum = self.bias[i];
-            for j in 0..self.input_size {
-                sum += self.w_ih[i][j] * input[j];
+            for (j, &input_val) in input.iter().enumerate().take(self.input_size) {
+                sum += self.w_ih[i][j] * input_val;
             }
-            for j in 0..self.hidden_size {
-                sum += self.w_hh[i][j] * hidden[j];
+            for (j, &hidden_val) in hidden.iter().enumerate().take(self.hidden_size) {
+                sum += self.w_hh[i][j] * hidden_val;
             }
             pre_activation[i] = sum;
             new_hidden[i] = self.activation.forward(sum);
@@ -134,9 +148,12 @@ impl RNNCell {
     /// * Gradient with respect to input
     /// * Gradient with respect to hidden state
     /// * Gradient with respect to parameters (w_ih, w_hh, bias)
-    pub fn backward(&self, grad_next: &[f64], grad_output: &[f64], cache: &RNNCellCache) 
-        -> (Vec<f64>, Vec<f64>, RNNGradients) 
-    {
+    pub fn backward(
+        &self,
+        grad_next: &[f64],
+        grad_output: &[f64],
+        cache: &RNNCellCache,
+    ) -> (Vec<f64>, Vec<f64>, RNNGradients) {
         let mut grad_input = vec![0.0; self.input_size];
         let mut grad_hidden = vec![0.0; self.hidden_size];
         let mut grad_w_ih = vec![vec![0.0; self.input_size]; self.hidden_size];
@@ -152,21 +169,20 @@ impl RNNCell {
         // Backpropagate through activation
         let mut grad_pre = vec![0.0; self.hidden_size];
         for i in 0..self.hidden_size {
-            grad_pre[i] = total_grad[i] * 
-                         self.activation.backward(cache.new_hidden[i]);
+            grad_pre[i] = total_grad[i] * self.activation.backward(cache.new_hidden[i]);
         }
 
         // Compute gradients
         for i in 0..self.hidden_size {
             grad_bias[i] = grad_pre[i];
-            
-            for j in 0..self.input_size {
-                grad_w_ih[i][j] = grad_pre[i] * cache.input[j];
+
+            for (j, &input_val) in cache.input.iter().enumerate().take(self.input_size) {
+                grad_w_ih[i][j] = grad_pre[i] * input_val;
                 grad_input[j] += grad_pre[i] * self.w_ih[i][j];
             }
-            
-            for j in 0..self.hidden_size {
-                grad_w_hh[i][j] = grad_pre[i] * cache.hidden[j];
+
+            for (j, &hidden_val) in cache.hidden.iter().enumerate().take(self.hidden_size) {
+                grad_w_hh[i][j] = grad_pre[i] * hidden_val;
                 grad_hidden[j] += grad_pre[i] * self.w_hh[i][j];
             }
         }
@@ -179,6 +195,20 @@ impl RNNCell {
 
         (grad_input, grad_hidden, gradients)
     }
+}
+
+/// Parameters for gradient accumulation in LSTM
+struct GradientAccParams<'a> {
+    idx: usize,
+    input: &'a [f64],
+    hidden: &'a [f64],
+    grad_input_gate: f64,
+    grad_forget_gate: f64,
+    grad_output_gate: f64,
+    grad_cell_gate: f64,
+    grad_input: &'a mut [f64],
+    grad_hidden: &'a mut [f64],
+    grads: &'a mut LSTMGradients,
 }
 
 /// LSTM cell implementation
@@ -258,56 +288,59 @@ impl LSTMCell {
     /// * New hidden state
     /// * New cell state
     /// * Cache for backward pass
-    pub fn forward(&self, input: &[f64], hidden: &[f64], cell: &[f64]) 
-        -> (Vec<f64>, Vec<f64>, LSTMCache) 
-    {
+    pub fn forward(
+        &self,
+        input: &[f64],
+        hidden: &[f64],
+        cell: &[f64],
+    ) -> (Vec<f64>, Vec<f64>, LSTMCache) {
         assert_eq!(input.len(), self.input_size, "Input size mismatch");
         assert_eq!(hidden.len(), self.hidden_size, "Hidden size mismatch");
         assert_eq!(cell.len(), self.hidden_size, "Cell size mismatch");
 
         let mut gates = vec![0.0; self.hidden_size * 4];
-        let sigmoid = Activation::Sigmoid;
         let tanh = Activation::Tanh;
+        let _sigmoid = Activation::Sigmoid;
 
         // Compute gates
         for i in 0..self.hidden_size {
             // Input gate
             let mut input_gate = self.bias[i];
-            for j in 0..self.input_size {
-                input_gate += self.w_ii[i][j] * input[j];
+            for (j, &input_val) in input.iter().enumerate().take(self.input_size) {
+                input_gate += self.w_ii[i][j] * input_val;
             }
-            for j in 0..self.hidden_size {
-                input_gate += self.w_hi[i][j] * hidden[j];
+            for (j, &hidden_val) in hidden.iter().enumerate().take(self.hidden_size) {
+                input_gate += self.w_hi[i][j] * hidden_val;
             }
-            gates[i] = sigmoid.forward(input_gate);
+            gates[i] = _sigmoid.forward(input_gate);
 
             // Forget gate
             let mut forget_gate = self.bias[i + self.hidden_size];
-            for j in 0..self.input_size {
-                forget_gate += self.w_if[i][j] * input[j];
+            for (j, &input_val) in input.iter().enumerate().take(self.input_size) {
+                forget_gate += self.w_if[i][j] * input_val;
             }
-            for j in 0..self.hidden_size {
-                forget_gate += self.w_hf[i][j] * hidden[j];
+            for (j, &hidden_val) in hidden.iter().enumerate().take(self.hidden_size) {
+                forget_gate += self.w_hf[i][j] * hidden_val;
             }
-            gates[i + self.hidden_size] = sigmoid.forward(forget_gate);
+            gates[i + self.hidden_size] = _sigmoid.forward(forget_gate);
 
             // Output gate
             let mut output_gate = self.bias[i + 2 * self.hidden_size];
-            for j in 0..self.input_size {
-                output_gate += self.w_io[i][j] * input[j];
+            for (j, &input_val) in input.iter().enumerate().take(self.input_size) {
+                output_gate += self.w_io[i][j] * input_val;
             }
-            for j in 0..self.hidden_size {
-                output_gate += self.w_ho[i][j] * hidden[j];
+            for (j, &hidden_val) in hidden.iter().enumerate().take(self.hidden_size) {
+                output_gate += self.w_ho[i][j] * hidden_val;
             }
-            gates[i + 2 * self.hidden_size] = sigmoid.forward(output_gate);
+            gates[i + 2 * self.hidden_size] = _sigmoid.forward(output_gate);
 
             // Cell gate
             let mut cell_gate = self.bias[i + 3 * self.hidden_size];
-            for j in 0..self.input_size {
-                cell_gate += self.w_ig[i][j] * input[j];
+            for (j, &input_val) in input.iter().enumerate().take(self.input_size) {
+                cell_gate += self.w_ig[i][j] * input_val;
             }
-            for j in 0..self.hidden_size {
-                cell_gate += self.w_hg[i][j] * hidden[j];
+            for (j, &hidden_val) in hidden.iter().enumerate().take(self.hidden_size) {
+                cell_gate += self.w_hg[i][j] * hidden_val;
             }
             gates[i + 3 * self.hidden_size] = tanh.forward(cell_gate);
         }
@@ -317,8 +350,8 @@ impl LSTMCell {
 
         // Compute new cell and hidden states
         for i in 0..self.hidden_size {
-            new_cell[i] = gates[i + self.hidden_size] * cell[i] + 
-                         gates[i] * gates[i + 3 * self.hidden_size];
+            new_cell[i] =
+                gates[i + self.hidden_size] * cell[i] + gates[i] * gates[i + 3 * self.hidden_size];
             new_hidden[i] = gates[i + 2 * self.hidden_size] * tanh.forward(new_cell[i]);
         }
 
@@ -348,16 +381,19 @@ impl LSTMCell {
     /// * Gradient with respect to hidden state
     /// * Gradient with respect to cell state
     /// * Gradient with respect to parameters
-    pub fn backward(&self, grad_next_h: &[f64], grad_next_c: &[f64], cache: &LSTMCache) 
-        -> (Vec<f64>, Vec<f64>, Vec<f64>, LSTMGradients) 
-    {
+    pub fn backward(
+        &self,
+        grad_next_h: &[f64],
+        grad_next_c: &[f64],
+        cache: &LSTMCache,
+    ) -> (Vec<f64>, Vec<f64>, Vec<f64>, LSTMGradients) {
         let mut grad_input = vec![0.0; self.input_size];
         let mut grad_hidden = vec![0.0; self.hidden_size];
         let mut grad_cell = vec![0.0; self.hidden_size];
         let mut grads = LSTMGradients::new(self.input_size, self.hidden_size);
 
         let tanh = Activation::Tanh;
-        let sigmoid = Activation::Sigmoid;
+        let _sigmoid = Activation::Sigmoid;
 
         // Backpropagate through the timestep
         for i in 0..self.hidden_size {
@@ -369,10 +405,9 @@ impl LSTMCell {
             // Gradient of hidden state
             let tanh_new_cell = tanh.forward(cache.new_cell[i]);
             let grad_h = grad_next_h[i];
-            
+
             // Gradient of cell state
-            let grad_c = grad_next_c[i] + 
-                        grad_h * output_gate * tanh.backward(tanh_new_cell);
+            let grad_c = grad_next_c[i] + grad_h * output_gate * tanh.backward(tanh_new_cell);
 
             // Gradient of gates
             let grad_input_gate = grad_c * cell_gate;
@@ -381,11 +416,18 @@ impl LSTMCell {
             let grad_cell_gate = grad_c * input_gate;
 
             // Accumulate gradients
-            self.accumulate_gradients(
-                i, &cache.input, &cache.hidden,
-                grad_input_gate, grad_forget_gate, grad_output_gate, grad_cell_gate,
-                &mut grad_input, &mut grad_hidden, &mut grads
-            );
+            self.accumulate_gradients(GradientAccParams {
+                idx: i,
+                input: &cache.input,
+                hidden: &cache.hidden,
+                grad_input_gate,
+                grad_forget_gate,
+                grad_output_gate,
+                grad_cell_gate,
+                grad_input: &mut grad_input,
+                grad_hidden: &mut grad_hidden,
+                grads: &mut grads,
+            });
 
             grad_cell[i] = grad_c * forget_gate;
         }
@@ -394,56 +436,57 @@ impl LSTMCell {
     }
 
     /// Helper method to accumulate gradients for all gates
-    fn accumulate_gradients(
-        &self,
-        idx: usize,
-        input: &[f64],
-        hidden: &[f64],
-        grad_input_gate: f64,
-        grad_forget_gate: f64,
-        grad_output_gate: f64,
-        grad_cell_gate: f64,
-        grad_input: &mut [f64],
-        grad_hidden: &mut [f64],
-        grads: &mut LSTMGradients,
-    ) {
+    fn accumulate_gradients(&self, params: GradientAccParams) {
+        let GradientAccParams {
+            idx,
+            input,
+            hidden,
+            grad_input_gate,
+            grad_forget_gate,
+            grad_output_gate,
+            grad_cell_gate,
+            grad_input,
+            grad_hidden,
+            grads,
+        } = params;
+
         // Input gate gradients
-        for j in 0..self.input_size {
-            grads.w_ii[idx][j] += grad_input_gate * input[j];
+        for (j, &input_val) in input.iter().enumerate().take(self.input_size) {
+            grads.w_ii[idx][j] += grad_input_gate * input_val;
             grad_input[j] += grad_input_gate * self.w_ii[idx][j];
         }
-        for j in 0..self.hidden_size {
-            grads.w_hi[idx][j] += grad_input_gate * hidden[j];
+        for (j, &hidden_val) in hidden.iter().enumerate().take(self.hidden_size) {
+            grads.w_hi[idx][j] += grad_input_gate * hidden_val;
             grad_hidden[j] += grad_input_gate * self.w_hi[idx][j];
         }
 
         // Forget gate gradients
-        for j in 0..self.input_size {
-            grads.w_if[idx][j] += grad_forget_gate * input[j];
+        for (j, &input_val) in input.iter().enumerate().take(self.input_size) {
+            grads.w_if[idx][j] += grad_forget_gate * input_val;
             grad_input[j] += grad_forget_gate * self.w_if[idx][j];
         }
-        for j in 0..self.hidden_size {
-            grads.w_hf[idx][j] += grad_forget_gate * hidden[j];
+        for (j, &hidden_val) in hidden.iter().enumerate().take(self.hidden_size) {
+            grads.w_hf[idx][j] += grad_forget_gate * hidden_val;
             grad_hidden[j] += grad_forget_gate * self.w_hf[idx][j];
         }
 
         // Output gate gradients
-        for j in 0..self.input_size {
-            grads.w_io[idx][j] += grad_output_gate * input[j];
+        for (j, &input_val) in input.iter().enumerate().take(self.input_size) {
+            grads.w_io[idx][j] += grad_output_gate * input_val;
             grad_input[j] += grad_output_gate * self.w_io[idx][j];
         }
-        for j in 0..self.hidden_size {
-            grads.w_ho[idx][j] += grad_output_gate * hidden[j];
+        for (j, &hidden_val) in hidden.iter().enumerate().take(self.hidden_size) {
+            grads.w_ho[idx][j] += grad_output_gate * hidden_val;
             grad_hidden[j] += grad_output_gate * self.w_ho[idx][j];
         }
 
         // Cell gate gradients
-        for j in 0..self.input_size {
-            grads.w_ig[idx][j] += grad_cell_gate * input[j];
+        for (j, &input_val) in input.iter().enumerate().take(self.input_size) {
+            grads.w_ig[idx][j] += grad_cell_gate * input_val;
             grad_input[j] += grad_cell_gate * self.w_ig[idx][j];
         }
-        for j in 0..self.hidden_size {
-            grads.w_hg[idx][j] += grad_cell_gate * hidden[j];
+        for (j, &hidden_val) in hidden.iter().enumerate().take(self.hidden_size) {
+            grads.w_hg[idx][j] += grad_cell_gate * hidden_val;
             grad_hidden[j] += grad_cell_gate * self.w_hg[idx][j];
         }
 
@@ -522,9 +565,8 @@ pub struct LSTMGradients {
 impl LSTMGradients {
     /// Creates a new LSTMGradients instance with zeroed gradients
     fn new(input_size: usize, hidden_size: usize) -> Self {
-        let create_zeros = |rows: usize, cols: usize| -> Vec<Vec<f64>> {
-            vec![vec![0.0; cols]; rows]
-        };
+        let create_zeros =
+            |rows: usize, cols: usize| -> Vec<Vec<f64>> { vec![vec![0.0; cols]; rows] };
 
         LSTMGradients {
             w_ii: create_zeros(hidden_size, input_size),
@@ -563,9 +605,9 @@ mod tests {
         let rnn = RNNCell::new(2, 3, Activation::Tanh);
         let input = vec![1.0, 2.0];
         let hidden = vec![0.1, 0.2, 0.3];
-        
+
         let (new_hidden, cache) = rnn.forward(&input, &hidden);
-        
+
         assert_eq!(new_hidden.len(), 3);
         assert_eq!(cache.input, input);
         assert_eq!(cache.hidden, hidden);
@@ -577,13 +619,13 @@ mod tests {
         let rnn = RNNCell::new(2, 3, Activation::Tanh);
         let input = vec![1.0, 2.0];
         let hidden = vec![0.1, 0.2, 0.3];
-        
+
         let (_, cache) = rnn.forward(&input, &hidden);
         let grad_next = vec![0.1, 0.2, 0.3];
         let grad_output = vec![0.1, 0.2, 0.3];
-        
+
         let (grad_input, grad_hidden, gradients) = rnn.backward(&grad_next, &grad_output, &cache);
-        
+
         assert_eq!(grad_input.len(), 2);
         assert_eq!(grad_hidden.len(), 3);
         assert_eq!(gradients.w_ih.len(), 3);
@@ -611,9 +653,9 @@ mod tests {
         let input = vec![1.0, 2.0];
         let hidden = vec![0.1, 0.2, 0.3];
         let cell = vec![0.1, 0.2, 0.3];
-        
+
         let (new_hidden, new_cell, cache) = lstm.forward(&input, &hidden, &cell);
-        
+
         assert_eq!(new_hidden.len(), 3);
         assert_eq!(new_cell.len(), 3);
         assert_eq!(cache.input, input);
@@ -628,14 +670,14 @@ mod tests {
         let input = vec![1.0, 2.0];
         let hidden = vec![0.1, 0.2, 0.3];
         let cell = vec![0.1, 0.2, 0.3];
-        
+
         let (_, _, cache) = lstm.forward(&input, &hidden, &cell);
         let grad_next_h = vec![0.1, 0.2, 0.3];
         let grad_next_c = vec![0.1, 0.2, 0.3];
-        
-        let (grad_input, grad_hidden, grad_cell, gradients) = 
+
+        let (grad_input, grad_hidden, grad_cell, gradients) =
             lstm.backward(&grad_next_h, &grad_next_c, &cache);
-        
+
         assert_eq!(grad_input.len(), 2);
         assert_eq!(grad_hidden.len(), 3);
         assert_eq!(grad_cell.len(), 3);

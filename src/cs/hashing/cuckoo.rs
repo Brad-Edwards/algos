@@ -196,9 +196,8 @@ impl<
             self.rehash();
             self.cuckoo_place(k, v, self.max_displacements)
                 .unwrap_or_else(|_| panic!("Insertion failed even after rehash - unexpected"));
-        } else {
-            self.len += 1;
         }
+        self.len += 1;
         None
     }
 

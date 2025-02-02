@@ -23,7 +23,7 @@ impl Adam {
     /// Creates a new Adam optimizer instance.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `learning_rate` - The learning rate.
     /// * `beta1` - The exponential decay rate for the first moment estimates.
     /// * `beta2` - The exponential decay rate for the second moment estimates.
@@ -36,7 +36,13 @@ impl Adam {
     /// use algos::ml::deep::adam::Adam;
     /// let mut adam = Adam::new(0.001, 0.9, 0.999, 1e-8, 10);
     /// ```
-    pub fn new(learning_rate: f64, beta1: f64, beta2: f64, epsilon: f64, param_size: usize) -> Self {
+    pub fn new(
+        learning_rate: f64,
+        beta1: f64,
+        beta2: f64,
+        epsilon: f64,
+        param_size: usize,
+    ) -> Self {
         Adam {
             learning_rate,
             beta1,
@@ -63,10 +69,14 @@ impl Adam {
     /// * `params` - Mutable slice of parameters to be updated.
     /// * `grads` - Slice of gradients corresponding to each parameter.
     pub fn update(&mut self, params: &mut [f64], grads: &[f64]) {
-        assert_eq!(params.len(), grads.len(), "Parameters and gradients must be the same length");
+        assert_eq!(
+            params.len(),
+            grads.len(),
+            "Parameters and gradients must be the same length"
+        );
         self.t += 1;
         let t_f64 = self.t as f64;
-        
+
         for (i, (param, &grad)) in params.iter_mut().zip(grads.iter()).enumerate() {
             // Update biased first moment estimate
             self.m[i] = self.beta1 * self.m[i] + (1.0 - self.beta1) * grad;
@@ -77,7 +87,7 @@ impl Adam {
             let m_hat = self.m[i] / (1.0 - self.beta1.powf(t_f64));
             // Compute bias-corrected second moment estimate
             let v_hat = self.v[i] / (1.0 - self.beta2.powf(t_f64));
-            
+
             // Update parameter
             *param -= self.learning_rate * m_hat / (v_hat.sqrt() + self.epsilon);
         }

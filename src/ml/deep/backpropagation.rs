@@ -1,4 +1,4 @@
-use ndarray::{Array2, Array1, Axis};
+use ndarray::{Array1, Array2, Axis};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand_distr::{Distribution, Normal};
@@ -86,6 +86,12 @@ pub struct Sigmoid {
     output_cache: Option<Array2<f64>>,
 }
 
+impl Default for Sigmoid {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Sigmoid {
     pub fn new() -> Self {
         Self { output_cache: None }
@@ -102,8 +108,8 @@ impl Layer for Sigmoid {
     fn backward(&mut self, grad_output: &Array2<f64>) -> Array2<f64> {
         let out = self.output_cache.as_ref().unwrap();
         // dSigmoid = sigmoid(x) * (1 - sigmoid(x))
-        let grad_input = out * (1.0 - out) * grad_output;
-        grad_input
+
+        out * (1.0 - out) * grad_output
     }
 
     fn update_params(&mut self, _lr: f64) {
@@ -119,7 +125,10 @@ pub struct SequentialNN {
 
 impl SequentialNN {
     pub fn new(layers: Vec<Box<dyn Layer>>, learning_rate: f64) -> Self {
-        Self { layers, learning_rate }
+        Self {
+            layers,
+            learning_rate,
+        }
     }
 
     /// Forward pass through the entire network
@@ -173,9 +182,10 @@ pub fn train_sgd(
         let batch_input = Array2::from_shape_fn((chunk.len(), inputs.len_of(Axis(1))), |(i, j)| {
             inputs[[chunk[i], j]]
         });
-        let batch_target = Array2::from_shape_fn((chunk.len(), targets.len_of(Axis(1))), |(i, j)| {
-            targets[[chunk[i], j]]
-        });
+        let batch_target =
+            Array2::from_shape_fn((chunk.len(), targets.len_of(Axis(1))), |(i, j)| {
+                targets[[chunk[i], j]]
+            });
 
         // Forward
         let preds = net.forward(&batch_input);
@@ -220,7 +230,11 @@ mod tests {
         // Test sigmoid(0) = 0.5
         assert_relative_eq!(output[[0, 0]], 0.5, epsilon = 1e-10);
         // Test sigmoid(1) ≈ 0.731...
-        assert_relative_eq!(output[[0, 1]], 1.0 / (1.0 + (-1.0f64).exp()), epsilon = 1e-10);
+        assert_relative_eq!(
+            output[[0, 1]],
+            1.0 / (1.0 + (-1.0f64).exp()),
+            epsilon = 1e-10
+        );
         // Test sigmoid(-1) ≈ 0.269...
         assert_relative_eq!(output[[0, 2]], 1.0 / (1.0 + 1.0f64.exp()), epsilon = 1e-10);
     }
@@ -277,12 +291,8 @@ mod tests {
         );
 
         // XOR problem inputs and outputs
-        let inputs = Array2::from_shape_vec((4, 2), vec![
-            0.0, 0.0,
-            0.0, 1.0,
-            1.0, 0.0,
-            1.0, 1.0,
-        ]).unwrap();
+        let inputs =
+            Array2::from_shape_vec((4, 2), vec![0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]).unwrap();
 
         let targets = Array2::from_shape_vec((4, 1), vec![0.0, 1.0, 1.0, 0.0]).unwrap();
 

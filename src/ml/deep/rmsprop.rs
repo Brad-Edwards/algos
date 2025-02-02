@@ -1,5 +1,5 @@
 /// RMSprop optimizer implementation
-/// 
+///
 /// RMSprop maintains a moving average of squared gradients and divides the gradient
 /// by the square root of this average. This helps handle different scales of gradients
 /// and can lead to faster convergence than standard SGD.
@@ -32,7 +32,10 @@ impl RMSprop {
     /// ```
     pub fn new(learning_rate: f64, decay_rate: f64, epsilon: f64) -> Self {
         assert!(learning_rate > 0.0, "Learning rate must be positive");
-        assert!(decay_rate > 0.0 && decay_rate < 1.0, "Decay rate must be between 0 and 1");
+        assert!(
+            decay_rate > 0.0 && decay_rate < 1.0,
+            "Decay rate must be between 0 and 1"
+        );
         assert!(epsilon > 0.0, "Epsilon must be positive");
 
         RMSprop {
@@ -63,24 +66,28 @@ impl RMSprop {
     ///
     /// * Updated parameters
     pub fn update(&mut self, params: &[f64], grads: &[f64]) -> Vec<f64> {
-        assert_eq!(params.len(), grads.len(), "Parameters and gradients must have same length");
-        
+        assert_eq!(
+            params.len(),
+            grads.len(),
+            "Parameters and gradients must have same length"
+        );
+
         if self.cache.is_empty() {
             self.initialize(params.len());
         }
 
         let mut updated_params = params.to_vec();
-        
+
         for i in 0..params.len() {
             // Update moving average of squared gradients
-            self.cache[i] = self.decay_rate * self.cache[i] + 
-                           (1.0 - self.decay_rate) * grads[i].powi(2);
-            
+            self.cache[i] =
+                self.decay_rate * self.cache[i] + (1.0 - self.decay_rate) * grads[i].powi(2);
+
             // Update parameters
-            updated_params[i] -= self.learning_rate * grads[i] / 
-                               (self.cache[i] + self.epsilon).sqrt();
+            updated_params[i] -=
+                self.learning_rate * grads[i] / (self.cache[i] + self.epsilon).sqrt();
         }
-        
+
         updated_params
     }
 
@@ -95,8 +102,12 @@ impl RMSprop {
     ///
     /// * Updated 2D parameters
     pub fn update_2d(&mut self, params: &[Vec<f64>], grads: &[Vec<f64>]) -> Vec<Vec<f64>> {
-        assert_eq!(params.len(), grads.len(), "Parameters and gradients must have same dimensions");
-        
+        assert_eq!(
+            params.len(),
+            grads.len(),
+            "Parameters and gradients must have same dimensions"
+        );
+
         let total_params: usize = params.iter().map(|row| row.len()).sum();
         if self.cache.is_empty() {
             self.initialize(total_params);
@@ -104,24 +115,27 @@ impl RMSprop {
 
         let mut updated_params = params.to_vec();
         let mut cache_idx = 0;
-        
+
         for i in 0..params.len() {
-            assert_eq!(params[i].len(), grads[i].len(), 
-                      "Parameter and gradient rows must have same length");
-            
+            assert_eq!(
+                params[i].len(),
+                grads[i].len(),
+                "Parameter and gradient rows must have same length"
+            );
+
             for j in 0..params[i].len() {
                 // Update moving average of squared gradients
-                self.cache[cache_idx] = self.decay_rate * self.cache[cache_idx] + 
-                                      (1.0 - self.decay_rate) * grads[i][j].powi(2);
-                
+                self.cache[cache_idx] = self.decay_rate * self.cache[cache_idx]
+                    + (1.0 - self.decay_rate) * grads[i][j].powi(2);
+
                 // Update parameters
-                updated_params[i][j] -= self.learning_rate * grads[i][j] / 
-                                      (self.cache[cache_idx] + self.epsilon).sqrt();
-                
+                updated_params[i][j] -= self.learning_rate * grads[i][j]
+                    / (self.cache[cache_idx] + self.epsilon).sqrt();
+
                 cache_idx += 1;
             }
         }
-        
+
         updated_params
     }
 
@@ -135,24 +149,31 @@ impl RMSprop {
     /// # Returns
     ///
     /// * Updated 4D parameters
-    pub fn update_4d(&mut self, params: &[Vec<Vec<Vec<f64>>>], grads: &[Vec<Vec<Vec<f64>>>]) 
-        -> Vec<Vec<Vec<Vec<f64>>>> 
-    {
-        assert_eq!(params.len(), grads.len(), "Parameters and gradients must have same dimensions");
-        
-        let total_params: usize = params.iter()
+    pub fn update_4d(
+        &mut self,
+        params: &[Vec<Vec<Vec<f64>>>],
+        grads: &[Vec<Vec<Vec<f64>>>],
+    ) -> Vec<Vec<Vec<Vec<f64>>>> {
+        assert_eq!(
+            params.len(),
+            grads.len(),
+            "Parameters and gradients must have same dimensions"
+        );
+
+        let total_params: usize = params
+            .iter()
             .flat_map(|x| x.iter())
             .flat_map(|x| x.iter())
             .map(|x| x.len())
             .sum();
-            
+
         if self.cache.is_empty() {
             self.initialize(total_params);
         }
 
         let mut updated_params = params.to_vec();
         let mut cache_idx = 0;
-        
+
         for i in 0..params.len() {
             assert_eq!(params[i].len(), grads[i].len());
             for j in 0..params[i].len() {
@@ -161,19 +182,19 @@ impl RMSprop {
                     assert_eq!(params[i][j][k].len(), grads[i][j][k].len());
                     for l in 0..params[i][j][k].len() {
                         // Update moving average of squared gradients
-                        self.cache[cache_idx] = self.decay_rate * self.cache[cache_idx] + 
-                                              (1.0 - self.decay_rate) * grads[i][j][k][l].powi(2);
-                        
+                        self.cache[cache_idx] = self.decay_rate * self.cache[cache_idx]
+                            + (1.0 - self.decay_rate) * grads[i][j][k][l].powi(2);
+
                         // Update parameters
-                        updated_params[i][j][k][l] -= self.learning_rate * grads[i][j][k][l] / 
-                                                    (self.cache[cache_idx] + self.epsilon).sqrt();
-                        
+                        updated_params[i][j][k][l] -= self.learning_rate * grads[i][j][k][l]
+                            / (self.cache[cache_idx] + self.epsilon).sqrt();
+
                         cache_idx += 1;
                     }
                 }
             }
         }
-        
+
         updated_params
     }
 }
@@ -212,9 +233,9 @@ mod tests {
         let mut optimizer = RMSprop::new(0.1, 0.9, 1e-8);
         let params = vec![1.0, 2.0, 3.0];
         let grads = vec![0.1, 0.2, 0.3];
-        
+
         let updated = optimizer.update(&params, &grads);
-        
+
         assert_eq!(updated.len(), params.len());
         for i in 0..params.len() {
             assert!(updated[i] != params[i]); // Parameters should change
@@ -227,9 +248,9 @@ mod tests {
         let mut optimizer = RMSprop::new(0.1, 0.9, 1e-8);
         let params = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
         let grads = vec![vec![0.1, 0.2], vec![0.3, 0.4]];
-        
+
         let updated = optimizer.update_2d(&params, &grads);
-        
+
         assert_eq!(updated.len(), params.len());
         assert_eq!(updated[0].len(), params[0].len());
         for i in 0..params.len() {
@@ -245,14 +266,14 @@ mod tests {
         let mut optimizer = RMSprop::new(0.1, 0.9, 1e-8);
         let params = vec![vec![vec![vec![1.0; 2]; 2]; 2]; 2];
         let grads = vec![vec![vec![vec![0.1; 2]; 2]; 2]; 2];
-        
+
         let updated = optimizer.update_4d(&params, &grads);
-        
+
         assert_eq!(updated.len(), params.len());
         assert_eq!(updated[0].len(), params[0].len());
         assert_eq!(updated[0][0].len(), params[0][0].len());
         assert_eq!(updated[0][0][0].len(), params[0][0][0].len());
-        
+
         // Check that parameters have been updated
         assert!(updated[0][0][0][0] != params[0][0][0][0]);
     }

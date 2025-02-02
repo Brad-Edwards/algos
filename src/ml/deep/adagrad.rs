@@ -1,7 +1,7 @@
 use std::f64;
 
 /// A library-grade implementation of the AdaGrad optimizer.
-/// 
+///
 /// AdaGrad adapts the learning rate to the parameters, performing larger updates
 /// for infrequent parameters and smaller updates for frequent parameters.
 #[derive(Debug, Clone)]
@@ -18,7 +18,7 @@ impl AdaGrad {
     /// Creates a new AdaGrad optimizer instance.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `learning_rate` - The base learning rate.
     /// * `epsilon` - A small constant for numerical stability.
     /// * `param_size` - The number of parameters to optimize.
@@ -40,7 +40,7 @@ impl AdaGrad {
     /// Updates the parameters using the AdaGrad optimization rule.
     ///
     /// The update rule is as follows:
-    /// 
+    ///
     /// acc_grad_sq += grad^2
     /// param = param - learning_rate * grad / sqrt(acc_grad_sq + epsilon)
     ///
@@ -49,15 +49,24 @@ impl AdaGrad {
     /// * `params` - Mutable slice of parameters to be updated.
     /// * `grads` - Slice of gradients corresponding to each parameter.
     pub fn update(&mut self, params: &mut [f64], grads: &[f64]) {
-        assert_eq!(params.len(), grads.len(), "Parameters and gradients must be the same length");
-        assert_eq!(params.len(), self.accumulated_grad_sq.len(), "Parameter size mismatch with initialization");
+        assert_eq!(
+            params.len(),
+            grads.len(),
+            "Parameters and gradients must be the same length"
+        );
+        assert_eq!(
+            params.len(),
+            self.accumulated_grad_sq.len(),
+            "Parameter size mismatch with initialization"
+        );
 
         for (i, (param, &grad)) in params.iter_mut().zip(grads.iter()).enumerate() {
             // Accumulate squared gradient
             self.accumulated_grad_sq[i] += grad * grad;
 
             // Compute adaptive learning rate and update parameter
-            let adaptive_lr = self.learning_rate / (self.accumulated_grad_sq[i].sqrt() + self.epsilon);
+            let adaptive_lr =
+                self.learning_rate / (self.accumulated_grad_sq[i].sqrt() + self.epsilon);
             *param -= adaptive_lr * grad;
         }
     }
@@ -132,7 +141,7 @@ mod tests {
         let mut optimizer = AdaGrad::new(0.1, 1e-8, 1);
         let mut params = vec![1.0];
         let grads = vec![1e-6];
-        
+
         optimizer.update(&mut params, &grads);
         assert!(params[0] != 1.0); // Should still update despite small gradient
     }

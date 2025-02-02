@@ -1,5 +1,5 @@
 /// Stochastic Gradient Descent optimizer implementation with momentum support
-/// 
+///
 /// SGD updates parameters in the direction of the negative gradient, with optional
 /// momentum to help accelerate training and overcome local minima.
 #[derive(Debug, Clone)]
@@ -28,7 +28,10 @@ impl SGD {
     /// ```
     pub fn new(learning_rate: f64, momentum: f64) -> Self {
         assert!(learning_rate > 0.0, "Learning rate must be positive");
-        assert!(momentum >= 0.0 && momentum < 1.0, "Momentum must be between 0 and 1");
+        assert!(
+            (0.0..1.0).contains(&momentum),
+            "Momentum must be between 0 and 1"
+        );
 
         SGD {
             learning_rate,
@@ -57,22 +60,26 @@ impl SGD {
     ///
     /// * Updated parameters
     pub fn update(&mut self, params: &[f64], grads: &[f64]) -> Vec<f64> {
-        assert_eq!(params.len(), grads.len(), "Parameters and gradients must have same length");
-        
+        assert_eq!(
+            params.len(),
+            grads.len(),
+            "Parameters and gradients must have same length"
+        );
+
         if self.velocity.is_empty() {
             self.initialize(params.len());
         }
 
         let mut updated_params = params.to_vec();
-        
+
         for i in 0..params.len() {
             // Update velocity with momentum
             self.velocity[i] = self.momentum * self.velocity[i] - self.learning_rate * grads[i];
-            
+
             // Update parameters
             updated_params[i] += self.velocity[i];
         }
-        
+
         updated_params
     }
 
@@ -87,8 +94,12 @@ impl SGD {
     ///
     /// * Updated 2D parameters
     pub fn update_2d(&mut self, params: &[Vec<f64>], grads: &[Vec<f64>]) -> Vec<Vec<f64>> {
-        assert_eq!(params.len(), grads.len(), "Parameters and gradients must have same dimensions");
-        
+        assert_eq!(
+            params.len(),
+            grads.len(),
+            "Parameters and gradients must have same dimensions"
+        );
+
         let total_params: usize = params.iter().map(|row| row.len()).sum();
         if self.velocity.is_empty() {
             self.initialize(total_params);
@@ -96,23 +107,26 @@ impl SGD {
 
         let mut updated_params = params.to_vec();
         let mut velocity_idx = 0;
-        
+
         for i in 0..params.len() {
-            assert_eq!(params[i].len(), grads[i].len(), 
-                      "Parameter and gradient rows must have same length");
-            
+            assert_eq!(
+                params[i].len(),
+                grads[i].len(),
+                "Parameter and gradient rows must have same length"
+            );
+
             for j in 0..params[i].len() {
                 // Update velocity with momentum
-                self.velocity[velocity_idx] = self.momentum * self.velocity[velocity_idx] - 
-                                           self.learning_rate * grads[i][j];
-                
+                self.velocity[velocity_idx] =
+                    self.momentum * self.velocity[velocity_idx] - self.learning_rate * grads[i][j];
+
                 // Update parameters
                 updated_params[i][j] += self.velocity[velocity_idx];
-                
+
                 velocity_idx += 1;
             }
         }
-        
+
         updated_params
     }
 
@@ -126,24 +140,31 @@ impl SGD {
     /// # Returns
     ///
     /// * Updated 4D parameters
-    pub fn update_4d(&mut self, params: &[Vec<Vec<Vec<f64>>>], grads: &[Vec<Vec<Vec<f64>>>]) 
-        -> Vec<Vec<Vec<Vec<f64>>>> 
-    {
-        assert_eq!(params.len(), grads.len(), "Parameters and gradients must have same dimensions");
-        
-        let total_params: usize = params.iter()
+    pub fn update_4d(
+        &mut self,
+        params: &[Vec<Vec<Vec<f64>>>],
+        grads: &[Vec<Vec<Vec<f64>>>],
+    ) -> Vec<Vec<Vec<Vec<f64>>>> {
+        assert_eq!(
+            params.len(),
+            grads.len(),
+            "Parameters and gradients must have same dimensions"
+        );
+
+        let total_params: usize = params
+            .iter()
             .flat_map(|x| x.iter())
             .flat_map(|x| x.iter())
             .map(|x| x.len())
             .sum();
-            
+
         if self.velocity.is_empty() {
             self.initialize(total_params);
         }
 
         let mut updated_params = params.to_vec();
         let mut velocity_idx = 0;
-        
+
         for i in 0..params.len() {
             assert_eq!(params[i].len(), grads[i].len());
             for j in 0..params[i].len() {
@@ -152,18 +173,18 @@ impl SGD {
                     assert_eq!(params[i][j][k].len(), grads[i][j][k].len());
                     for l in 0..params[i][j][k].len() {
                         // Update velocity with momentum
-                        self.velocity[velocity_idx] = self.momentum * self.velocity[velocity_idx] - 
-                                                   self.learning_rate * grads[i][j][k][l];
-                        
+                        self.velocity[velocity_idx] = self.momentum * self.velocity[velocity_idx]
+                            - self.learning_rate * grads[i][j][k][l];
+
                         // Update parameters
                         updated_params[i][j][k][l] += self.velocity[velocity_idx];
-                        
+
                         velocity_idx += 1;
                     }
                 }
             }
         }
-        
+
         updated_params
     }
 }
@@ -201,9 +222,9 @@ mod tests {
         let mut optimizer = SGD::new(0.1, 0.9);
         let params = vec![1.0, 2.0, 3.0];
         let grads = vec![0.1, 0.2, 0.3];
-        
+
         let updated = optimizer.update(&params, &grads);
-        
+
         assert_eq!(updated.len(), params.len());
         for i in 0..params.len() {
             assert!(updated[i] != params[i]); // Parameters should change
@@ -216,9 +237,9 @@ mod tests {
         let mut optimizer = SGD::new(0.1, 0.9);
         let params = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
         let grads = vec![vec![0.1, 0.2], vec![0.3, 0.4]];
-        
+
         let updated = optimizer.update_2d(&params, &grads);
-        
+
         assert_eq!(updated.len(), params.len());
         assert_eq!(updated[0].len(), params[0].len());
         for i in 0..params.len() {
@@ -234,14 +255,14 @@ mod tests {
         let mut optimizer = SGD::new(0.1, 0.9);
         let params = vec![vec![vec![vec![1.0; 2]; 2]; 2]; 2];
         let grads = vec![vec![vec![vec![0.1; 2]; 2]; 2]; 2];
-        
+
         let updated = optimizer.update_4d(&params, &grads);
-        
+
         assert_eq!(updated.len(), params.len());
         assert_eq!(updated[0].len(), params[0].len());
         assert_eq!(updated[0][0].len(), params[0][0].len());
         assert_eq!(updated[0][0][0].len(), params[0][0][0].len());
-        
+
         // Check that parameters have been updated
         assert!(updated[0][0][0][0] != params[0][0][0][0]);
     }
@@ -252,15 +273,15 @@ mod tests {
         let mut optimizer = SGD::new(0.1, 0.9);
         let params = vec![1.0];
         let grads = vec![1.0];
-        
+
         // First update
         let updated1 = optimizer.update(&params, &grads);
         let velocity1 = optimizer.velocity[0];
-        
+
         // Second update with same gradient
-        let updated2 = optimizer.update(&updated1, &grads);
+        let _updated2 = optimizer.update(&updated1, &grads);
         let velocity2 = optimizer.velocity[0];
-        
+
         // Velocity should increase due to momentum
         assert!(velocity2.abs() > velocity1.abs());
     }

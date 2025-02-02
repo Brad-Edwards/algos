@@ -155,8 +155,6 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
 
-- Cryptographic & Security Algorithms
-- Deep Learning & Neural Networks
 - Reinforcement Learning
 - Approximation Algorithms
 - Linear & Nonlinear Optimization

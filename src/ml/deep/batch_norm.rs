@@ -75,7 +75,11 @@ impl BatchNorm {
     /// * Cache containing intermediate values for backward pass (if in training mode)
     pub fn forward(&mut self, input: &[Vec<f64>]) -> (Vec<Vec<f64>>, Option<BatchNormCache>) {
         assert!(!input.is_empty(), "Input cannot be empty");
-        assert_eq!(input[0].len(), self.num_features, "Input feature dimension mismatch");
+        assert_eq!(
+            input[0].len(),
+            self.num_features,
+            "Input feature dimension mismatch"
+        );
 
         let batch_size = input.len();
         let mut output = vec![vec![0.0; self.num_features]; batch_size];
@@ -86,39 +90,39 @@ impl BatchNorm {
             let mut batch_var = vec![0.0; self.num_features];
 
             // Compute mean
-            for i in 0..batch_size {
-                for j in 0..self.num_features {
-                    batch_mean[j] += input[i][j];
+            for input_batch in input.iter().take(batch_size) {
+                for (j, mean) in batch_mean.iter_mut().enumerate().take(self.num_features) {
+                    *mean += input_batch[j];
                 }
             }
-            for j in 0..self.num_features {
-                batch_mean[j] /= batch_size as f64;
+            for mean in batch_mean.iter_mut().take(self.num_features) {
+                *mean /= batch_size as f64;
             }
 
             // Compute variance
-            for i in 0..batch_size {
-                for j in 0..self.num_features {
-                    let diff = input[i][j] - batch_mean[j];
-                    batch_var[j] += diff * diff;
+            for input_batch in input.iter().take(batch_size) {
+                for (j, var) in batch_var.iter_mut().enumerate().take(self.num_features) {
+                    let diff = input_batch[j] - batch_mean[j];
+                    *var += diff * diff;
                 }
             }
-            for j in 0..self.num_features {
-                batch_var[j] /= batch_size as f64;
+            for var in batch_var.iter_mut().take(self.num_features) {
+                *var /= batch_size as f64;
             }
 
             // Update running statistics
             for j in 0..self.num_features {
-                self.running_mean[j] = self.momentum * self.running_mean[j] + 
-                                     (1.0 - self.momentum) * batch_mean[j];
-                self.running_var[j] = self.momentum * self.running_var[j] + 
-                                    (1.0 - self.momentum) * batch_var[j];
+                self.running_mean[j] =
+                    self.momentum * self.running_mean[j] + (1.0 - self.momentum) * batch_mean[j];
+                self.running_var[j] =
+                    self.momentum * self.running_var[j] + (1.0 - self.momentum) * batch_var[j];
             }
 
             // Normalize and scale
             for i in 0..batch_size {
                 for j in 0..self.num_features {
-                    let normalized = (input[i][j] - batch_mean[j]) / 
-                                   (batch_var[j] + self.epsilon).sqrt();
+                    let normalized =
+                        (input[i][j] - batch_mean[j]) / (batch_var[j] + self.epsilon).sqrt();
                     output[i][j] = self.gamma[j] * normalized + self.beta[j];
                 }
             }
@@ -136,8 +140,8 @@ impl BatchNorm {
             // Use running statistics for inference
             for i in 0..batch_size {
                 for j in 0..self.num_features {
-                    let normalized = (input[i][j] - self.running_mean[j]) / 
-                                   (self.running_var[j] + self.epsilon).sqrt();
+                    let normalized = (input[i][j] - self.running_mean[j])
+                        / (self.running_var[j] + self.epsilon).sqrt();
                     output[i][j] = self.gamma[j] * normalized + self.beta[j];
                 }
             }
@@ -157,20 +161,22 @@ impl BatchNorm {
     /// * Gradient with respect to input
     /// * Gradient with respect to gamma
     /// * Gradient with respect to beta
-    pub fn backward(&self, grad_output: &[Vec<f64>], cache: &BatchNormCache) 
-        -> (Vec<Vec<f64>>, Vec<f64>, Vec<f64>) 
-    {
+    pub fn backward(
+        &self,
+        grad_output: &[Vec<f64>],
+        cache: &BatchNormCache,
+    ) -> (Vec<Vec<f64>>, Vec<f64>, Vec<f64>) {
         let batch_size = grad_output.len();
         let mut grad_input = vec![vec![0.0; self.num_features]; batch_size];
         let mut grad_gamma = vec![0.0; self.num_features];
         let mut grad_beta = vec![0.0; self.num_features];
 
-        // Compute gradients for beta and gamma
-        for i in 0..batch_size {
+        // Compute gradients
+        for (i, grad_output_batch) in grad_output.iter().enumerate().take(batch_size) {
             for j in 0..self.num_features {
-                grad_beta[j] += grad_output[i][j];
-                grad_gamma[j] += grad_output[i][j] * 
-                                (cache.normalized[i][j] - self.beta[j]) / self.gamma[j];
+                grad_beta[j] += grad_output_batch[j];
+                grad_gamma[j] +=
+                    grad_output_batch[j] * (cache.normalized[i][j] - self.beta[j]) / self.gamma[j];
             }
         }
 
@@ -179,14 +185,15 @@ impl BatchNorm {
             for j in 0..self.num_features {
                 let std = (cache.batch_var[j] + self.epsilon).sqrt();
                 let centered = cache.input[i][j] - cache.batch_mean[j];
-                
+
                 let grad_norm = grad_output[i][j] * self.gamma[j];
-                let grad_var = -0.5 * grad_norm * centered / (cache.batch_var[j] + self.epsilon).powf(1.5);
+                let grad_var =
+                    -0.5 * grad_norm * centered / (cache.batch_var[j] + self.epsilon).powf(1.5);
                 let grad_mean = -grad_norm / std;
 
-                grad_input[i][j] = grad_norm / std + 
-                                 2.0 * grad_var * centered / batch_size as f64 +
-                                 grad_mean / batch_size as f64;
+                grad_input[i][j] = grad_norm / std
+                    + 2.0 * grad_var * centered / batch_size as f64
+                    + grad_mean / batch_size as f64;
             }
         }
 
@@ -226,20 +233,16 @@ mod tests {
     #[test]
     fn test_batch_norm_forward_train() {
         let mut bn = BatchNorm::new(2, 1e-5, 0.1);
-        let input = vec![
-            vec![1.0, 2.0],
-            vec![3.0, 4.0],
-            vec![5.0, 6.0],
-        ];
-        
+        let input = vec![vec![1.0, 2.0], vec![3.0, 4.0], vec![5.0, 6.0]];
+
         let (output, cache) = bn.forward(&input);
-        
+
         assert!(cache.is_some());
         assert_eq!(output.len(), input.len());
         assert_eq!(output[0].len(), input[0].len());
-        
+
         // Check that output is normalized
-        let cache = cache.unwrap();
+        let _cache = cache.unwrap();
         for j in 0..bn.num_features {
             let mut mean = 0.0;
             let mut var = 0.0;
@@ -251,7 +254,7 @@ mod tests {
                 var += (output[i][j] - mean).powi(2);
             }
             var /= output.len() as f64;
-            
+
             // Due to gamma and beta, mean might not be exactly 0 and var might not be exactly 1
             assert!((mean - bn.beta[j]).abs() < 1e-5);
             assert!((var - bn.gamma[j].powi(2)).abs() < 1e-5);
@@ -263,13 +266,10 @@ mod tests {
     fn test_batch_norm_forward_eval() {
         let mut bn = BatchNorm::new(2, 1e-5, 0.1);
         bn.eval();
-        let input = vec![
-            vec![1.0, 2.0],
-            vec![3.0, 4.0],
-        ];
-        
+        let input = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
+
         let (output, cache) = bn.forward(&input);
-        
+
         assert!(cache.is_none());
         assert_eq!(output.len(), input.len());
         assert_eq!(output[0].len(), input[0].len());
@@ -279,19 +279,13 @@ mod tests {
     #[test]
     fn test_batch_norm_backward() {
         let mut bn = BatchNorm::new(2, 1e-5, 0.1);
-        let input = vec![
-            vec![1.0, 2.0],
-            vec![3.0, 4.0],
-        ];
-        
+        let input = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
+
         let (_, cache) = bn.forward(&input);
-        let grad_output = vec![
-            vec![0.1, 0.2],
-            vec![0.3, 0.4],
-        ];
-        
+        let grad_output = vec![vec![0.1, 0.2], vec![0.3, 0.4]];
+
         let (grad_input, grad_gamma, grad_beta) = bn.backward(&grad_output, &cache.unwrap());
-        
+
         assert_eq!(grad_input.len(), input.len());
         assert_eq!(grad_input[0].len(), input[0].len());
         assert_eq!(grad_gamma.len(), bn.num_features);

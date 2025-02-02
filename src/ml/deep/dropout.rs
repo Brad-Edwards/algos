@@ -23,11 +23,11 @@ impl Dropout {
     /// let dropout = Dropout::new(0.5);
     /// ```
     pub fn new(p: f64) -> Self {
-        assert!(p >= 0.0 && p < 1.0, "Dropout probability must be between 0 and 1");
-        Dropout {
-            p,
-            training: true,
-        }
+        assert!(
+            (0.0..1.0).contains(&p),
+            "Dropout probability must be between 0 and 1"
+        );
+        Dropout { p, training: true }
     }
 
     /// Sets the layer's mode to training or evaluation
@@ -49,18 +49,18 @@ impl Dropout {
     ///
     /// * Output tensor
     /// * Cache for backward pass
-    pub fn forward(&self, input: &Vec<Vec<f64>>) -> (Vec<Vec<f64>>, DropoutCache) {
+    pub fn forward(&self, input: &[Vec<f64>]) -> (Vec<Vec<f64>>, DropoutCache) {
         let mut rng = rand::thread_rng();
         let batch_size = input.len();
         let features = input[0].len();
-        
+
         // Initialize mask and output
         let mut mask = vec![vec![1.0; features]; batch_size];
-        let mut output = input.clone();
-        
+        let mut output = input.to_owned();
+
         if self.training {
             let scale = 1.0 / (1.0 - self.p); // Scale factor for training
-            
+
             // Generate dropout mask and apply it
             for i in 0..batch_size {
                 for j in 0..features {
@@ -73,12 +73,16 @@ impl Dropout {
                 }
             }
         }
-        
+
         let cache = DropoutCache {
             mask,
-            scale: if self.training { 1.0 / (1.0 - self.p) } else { 1.0 },
+            scale: if self.training {
+                1.0 / (1.0 - self.p)
+            } else {
+                1.0
+            },
         };
-        
+
         (output, cache)
     }
 
@@ -92,22 +96,23 @@ impl Dropout {
     ///
     /// * Output tensor
     /// * Cache for backward pass
-    pub fn forward_4d(&self, input: &Vec<Vec<Vec<Vec<f64>>>>) 
-        -> (Vec<Vec<Vec<Vec<f64>>>>, Dropout4DCache) 
-    {
+    pub fn forward_4d(
+        &self,
+        input: &[Vec<Vec<Vec<f64>>>],
+    ) -> (Vec<Vec<Vec<Vec<f64>>>>, Dropout4DCache) {
         let mut rng = rand::thread_rng();
         let batch_size = input.len();
         let channels = input[0].len();
         let height = input[0][0].len();
         let width = input[0][0][0].len();
-        
+
         // Initialize mask and output
         let mut mask = vec![vec![vec![vec![1.0; width]; height]; channels]; batch_size];
-        let mut output = input.clone();
-        
+        let mut output = input.to_owned();
+
         if self.training {
             let scale = 1.0 / (1.0 - self.p);
-            
+
             // Generate dropout mask and apply it
             for b in 0..batch_size {
                 for c in 0..channels {
@@ -124,12 +129,16 @@ impl Dropout {
                 }
             }
         }
-        
+
         let cache = Dropout4DCache {
             mask,
-            scale: if self.training { 1.0 / (1.0 - self.p) } else { 1.0 },
+            scale: if self.training {
+                1.0 / (1.0 - self.p)
+            } else {
+                1.0
+            },
         };
-        
+
         (output, cache)
     }
 
@@ -143,9 +152,9 @@ impl Dropout {
     /// # Returns
     ///
     /// * Gradient with respect to input
-    pub fn backward(&self, grad_output: &Vec<Vec<f64>>, cache: &DropoutCache) -> Vec<Vec<f64>> {
-        let mut grad_input = grad_output.clone();
-        
+    pub fn backward(&self, grad_output: &[Vec<f64>], cache: &DropoutCache) -> Vec<Vec<f64>> {
+        let mut grad_input = grad_output.to_owned();
+
         if self.training {
             // Apply dropout mask and scaling to gradients
             for i in 0..grad_input.len() {
@@ -154,7 +163,7 @@ impl Dropout {
                 }
             }
         }
-        
+
         grad_input
     }
 
@@ -168,11 +177,13 @@ impl Dropout {
     /// # Returns
     ///
     /// * Gradient with respect to input
-    pub fn backward_4d(&self, grad_output: &Vec<Vec<Vec<Vec<f64>>>>, cache: &Dropout4DCache) 
-        -> Vec<Vec<Vec<Vec<f64>>>> 
-    {
-        let mut grad_input = grad_output.clone();
-        
+    pub fn backward_4d(
+        &self,
+        grad_output: &[Vec<Vec<Vec<f64>>>],
+        cache: &Dropout4DCache,
+    ) -> Vec<Vec<Vec<Vec<f64>>>> {
+        let mut grad_input = grad_output.to_owned();
+
         if self.training {
             // Apply dropout mask and scaling to gradients
             for b in 0..grad_input.len() {
@@ -185,7 +196,7 @@ impl Dropout {
                 }
             }
         }
-        
+
         grad_input
     }
 }
@@ -233,13 +244,13 @@ mod tests {
         let dropout = Dropout::new(0.5);
         let input = vec![vec![1.0; 10]; 5];
         let (output, cache) = dropout.forward(&input);
-        
+
         // Check dimensions
         assert_eq!(output.len(), input.len());
         assert_eq!(output[0].len(), input[0].len());
         assert_eq!(cache.mask.len(), input.len());
         assert_eq!(cache.mask[0].len(), input[0].len());
-        
+
         // Check scaling
         assert!((cache.scale - 2.0).abs() < 1e-6);
     }
@@ -249,10 +260,10 @@ mod tests {
     fn test_forward_eval() {
         let mut dropout = Dropout::new(0.5);
         dropout.set_training(false);
-        
+
         let input = vec![vec![1.0; 10]; 5];
         let (output, cache) = dropout.forward(&input);
-        
+
         // In eval mode, output should equal input
         assert_eq!(output, input);
         assert_eq!(cache.scale, 1.0);
@@ -264,10 +275,10 @@ mod tests {
         let dropout = Dropout::new(0.5);
         let input = vec![vec![1.0; 10]; 5];
         let (_, cache) = dropout.forward(&input);
-        
+
         let grad_output = vec![vec![1.0; 10]; 5];
         let grad_input = dropout.backward(&grad_output, &cache);
-        
+
         assert_eq!(grad_input.len(), input.len());
         assert_eq!(grad_input[0].len(), input[0].len());
     }
@@ -278,12 +289,12 @@ mod tests {
         let dropout = Dropout::new(0.5);
         let input = vec![vec![vec![vec![1.0; 32]; 32]; 3]; 1];
         let (output, cache) = dropout.forward_4d(&input);
-        
+
         assert_eq!(output.len(), input.len());
         assert_eq!(output[0].len(), input[0].len());
         assert_eq!(output[0][0].len(), input[0][0].len());
         assert_eq!(output[0][0][0].len(), input[0][0][0].len());
-        
+
         assert_eq!(cache.mask.len(), input.len());
         assert!((cache.scale - 2.0).abs() < 1e-6);
     }
@@ -294,10 +305,10 @@ mod tests {
         let dropout = Dropout::new(0.5);
         let input = vec![vec![vec![vec![1.0; 32]; 32]; 3]; 1];
         let (_, cache) = dropout.forward_4d(&input);
-        
+
         let grad_output = vec![vec![vec![vec![1.0; 32]; 32]; 3]; 1];
         let grad_input = dropout.backward_4d(&grad_output, &cache);
-        
+
         assert_eq!(grad_input.len(), input.len());
         assert_eq!(grad_input[0].len(), input[0].len());
         assert_eq!(grad_input[0][0].len(), input[0][0].len());
