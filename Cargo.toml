@@ -17,13 +17,16 @@ edition = "2021"
 thiserror = "2.0.11"
 num-traits = "0.2.17"
 rayon = "1.8.1"
-rand = "0.8.5"
 hex = "0.4.3"
 num-bigint = { version = "0.4.6", features = ["rand"] }
 num-integer = "0.1.46"
-rand_core = "0.9.0"
 num-bigint-dig = { version = "0.8.4", features = ["prime", "rand", "u64_digit"] }
 num-prime = { version = "0.4.4", features = ["big-int"] }
+approx = "0.5.1"
+ndarray = "0.16.1"
+rand = "0.8.5"
+rand_core = "0.6.4"
+rand_distr = "0.4.3"
 
 [dev-dependencies]
 criterion = "0.5.1"
