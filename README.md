@@ -138,6 +138,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Elliptic Curve Cryptography (ECC)  
 ✅ DSA (Digital Signature Algorithm)  
 
+#### Deep Learning & Neural Network Training
+
+✅ Backpropagation  
+✅ Stochastic Gradient Descent (SGD)  
+✅ Adam Optimizer  
+✅ RMSProp  
+✅ AdaGrad  
+✅ RProp (resilient propagation)  
+✅ Dropout (regularization)  
+✅ Batch Normalization  
+✅ Convolution (core of CNNs)  
+✅ BPTT (Backprop Through Time, RNNs/LSTMs)  
+
 ### 🚧 Planned Implementation
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
