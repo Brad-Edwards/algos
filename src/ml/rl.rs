@@ -1,0 +1,21 @@
+pub mod actor_critic;
+pub mod alphazero_style_mcts_rl;
+pub mod deep_q_net;
+pub mod double_q_learning;
+pub mod monte_carlo_exploring_starts;
+pub mod policy_gradients;
+pub mod ppo;
+pub mod q_learning;
+pub mod sarsa;
+pub mod trpo;
+
+pub use actor_critic::ActorCritic;
+pub use alphazero_style_mcts_rl::AlphaZeroStyleMCTS;
+pub use deep_q_net::DQN;
+pub use double_q_learning::DoubleQLearning;
+pub use monte_carlo_exploring_starts::MonteCarloES;
+pub use policy_gradients::PolicyGradients;
+pub use ppo::PPO;
+pub use q_learning::QLearning;
+pub use sarsa::SARSA;
+pub use trpo::TRPO;

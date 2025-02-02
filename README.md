@@ -151,6 +151,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Convolution (core of CNNs)  
 ✅ BPTT (Backprop Through Time, RNNs/LSTMs)  
 
+#### Reinforcement Learning
+
+✅ Q-Learning  
+✅ SARSA  
+✅ Double Q-Learning  
+✅ Deep Q-Network (DQN)  
+✅ Monte Carlo Exploring Starts  
+✅ Policy Gradients (REINFORCE)  
+✅ Actor–Critic Methods  
+✅ Proximal Policy Optimization (PPO)  
+✅ Trust Region Policy Optimization (TRPO)  
+✅ AlphaZero-Style MCTS + RL  
+
 ### 🚧 Planned Implementation
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
