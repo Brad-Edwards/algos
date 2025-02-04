@@ -164,6 +164,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Trust Region Policy Optimization (TRPO)  
 ✅ AlphaZero-Style MCTS + RL  
 
+#### Approximation Algorithms
+
+✅ Greedy Set Cover  
+✅ 2-Approximation for Vertex Cover  
+✅ PTAS for Knapsack  
+✅ Christofides’ Algorithm (TSP)  
+✅ Johnson’s Algorithm for MAX-SAT  
+✅ FPTAS for Subset Sum  
+✅ Local-Ratio Theorem  
+✅ Primal–Dual Approximation (for covering problems)  
+✅ LP Rounding (generic approach)  
+✅ Goemans–Williamson (Max-Cut)  
+
 ### 🚧 Planned Implementation
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
