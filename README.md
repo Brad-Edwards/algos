@@ -177,6 +177,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ LP Rounding (generic approach)  
 ✅ Goemans–Williamson (Max-Cut)  
 
+#### Linear & Nonlinear Optimization
+
+✅ Gradient Descent  
+✅ Newton’s Method  
+✅ Conjugate Gradient  
+✅ BFGS  
+✅ L-BFGS  
+✅ Simplex Method (linear programming)  
+✅ Interior Point Method (LP/NLP)  
+✅ Nelder–Mead  
+✅ Genetic Algorithm  
+✅ Simulated Annealing  
+
 ### 🚧 Planned Implementation
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
