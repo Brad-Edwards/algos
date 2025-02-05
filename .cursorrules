@@ -31,15 +31,80 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 - Add debug information to stderr while keeping the main output clean in stdout for better pipeline integration
 - When using seaborn styles in matplotlib, use 'seaborn-v0_8' instead of 'seaborn' as the style name due to recent seaborn version changes
 - Use 'gpt-4o' as the model name for OpenAI's GPT-4 with vision capabilities
-- When debugging, especially for tests, keep track of problems and solutions in the scratchpad so you do not make the same mistake again or go in circles.
+- When debugging, especially for tests, keep track of problems and solutions in the scratchpad so you do not make the same mistake again or go in circles
+- When testing stochastic optimization algorithms (like simulated annealing), use multiple trials and statistical success criteria (e.g., success rate) instead of single deterministic tests
 
 # Scratchpad
 
-## Current Task: Fix Clippy Warnings
+## Current Task: Fix Optimization Algorithm Tests
 
-[X] Fixed documentation indentation in blowfish.rs
+### Analysis of Test Failures
 
-- Issue: Doc list item without proper indentation
-- Fix: Added proper indentation to the list item continuation
+1. Convergence Issues:
+   - BFGS (Rosenbrock)
+   - Genetic Algorithm (all tests)
+   - Interior Point (all tests)
+
+2. Precision/Accuracy Issues:
+   - Nelder-Mead (quadratic tests)
+   - Simplex (all LP tests)
+   - Simulated Annealing (all tests)
+
+### Action Plan
+
+[ ] Phase 1: Fix Deterministic Algorithms
+    [ ] 1.1 BFGS Rosenbrock
+        - Analyze convergence criteria
+        - Check Hessian approximation
+        - Verify line search parameters
+    [ ] 1.2 Interior Point
+        - Debug numerical stability issues
+        - Review barrier parameter updates
+        - Check step size calculations
+    [ ] 1.3 Simplex
+        - Fix precision issues in pivot operations
+        - Review optimality conditions
+        - Add numerical stability safeguards
+
+[ ] Phase 2: Fix Direct Search Methods
+    [ ] 2.1 Nelder-Mead
+        - Adjust reflection/expansion parameters
+        - Review shrink operations
+        - Improve termination criteria
+    [ ] 2.2 Simulated Annealing
+        - Tune cooling schedule
+        - Adjust acceptance probability
+        - Improve neighborhood generation
+
+[ ] Phase 3: Fix Population-based Methods
+    [ ] 3.1 Genetic Algorithm
+        - Review selection mechanism
+        - Adjust mutation rates
+        - Improve crossover operator
+        - Enhance population diversity
+
+### Implementation Strategy
+
+1. For each algorithm:
+   - Read and understand current implementation
+   - Add debug logging for key operations
+   - Run tests with detailed output
+   - Identify specific failure points
+   - Implement fixes
+   - Verify with tests
+   - Document changes
+
+2. Priority Order:
+   1. Simplex (foundation for LP)
+   2. Interior Point (depends on stable LP)
+   3. BFGS (key for nonlinear optimization)
+   4. Nelder-Mead
+   5. Simulated Annealing
+   6. Genetic Algorithm
+
+### Progress Tracking
+
+Current Phase: Planning
+Next Action: Begin with Simplex Method fixes
 
 All clippy warnings have been addressed. The codebase is now free of linting issues.
