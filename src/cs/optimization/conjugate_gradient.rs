@@ -83,9 +83,10 @@ where
 
         // Simple backtracking line search
         for _ in 0..20 {
-            for i in 0..n {
-                new_point[i] = current_point[i] + alpha * direction[i];
-            }
+            new_point
+                .iter_mut()
+                .zip(current_point.iter().zip(direction.iter()))
+                .for_each(|(new, (&curr, &dir))| *new = curr + alpha * dir);
             let new_value = f.evaluate(&new_point);
             if new_value < current_value {
                 break;
@@ -123,9 +124,10 @@ where
         let beta = (beta_numerator / prev_gradient_norm_sq).max(T::zero());
 
         // Update direction using conjugate gradient formula
-        for i in 0..n {
-            direction[i] = -new_gradient[i] + beta * direction[i];
-        }
+        direction
+            .iter_mut()
+            .zip(new_gradient.iter())
+            .for_each(|(d, &g)| *d = -g + beta * *d);
 
         // Update for next iteration
         gradient = new_gradient;

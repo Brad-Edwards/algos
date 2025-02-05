@@ -91,11 +91,11 @@ where
 
         // Solve H * delta = -gradient using Gaussian elimination
         let mut augmented = vec![vec![T::zero(); n + 1]; n];
-        for i in 0..n {
-            for j in 0..n {
-                augmented[i][j] = hessian[i][j];
+        for (i, row) in augmented.iter_mut().enumerate().take(n) {
+            for (j, val) in row.iter_mut().enumerate().take(n) {
+                *val = hessian[i][j];
             }
-            augmented[i][n] = -gradient[i];
+            row[n] = -gradient[i];
         }
 
         // Gaussian elimination with partial pivoting
@@ -103,8 +103,8 @@ where
             // Find pivot
             let mut max_idx = i;
             let mut max_val = augmented[i][i].abs();
-            for j in (i + 1)..n {
-                let val = augmented[j][i].abs();
+            for (j, row) in augmented.iter().enumerate().skip(i + 1).take(n - i - 1) {
+                let val = row[i].abs();
                 if val > max_val {
                     max_idx = j;
                     max_val = val;
@@ -126,22 +126,22 @@ where
             let pivot = pivot_row_vals[i];
 
             // Update lower triangular part
-            for j in (i + 1)..n {
-                let factor = augmented[j][i] / pivot;
-                for k in i..(n + 1) {
-                    augmented[j][k] = augmented[j][k] - factor * pivot_row_vals[k];
+            for (_j, row) in augmented.iter_mut().enumerate().skip(i + 1).take(n - i - 1) {
+                let factor = row[i] / pivot;
+                for (k, val) in row.iter_mut().enumerate().skip(i).take(n - i + 1) {
+                    *val = *val - factor * pivot_row_vals[k];
                 }
             }
         }
 
         // Back substitution
         let mut delta = vec![T::zero(); n];
-        for i in (0..n).rev() {
-            let mut sum = augmented[i][n];
-            for j in (i + 1)..n {
-                sum = sum - augmented[i][j] * delta[j];
+        for (i, row) in augmented.iter().enumerate().rev().take(n) {
+            let mut sum = row[n];
+            for (j, &val) in row.iter().enumerate().skip(i + 1).take(n - i - 1) {
+                sum = sum - val * delta[j];
             }
-            delta[i] = sum / augmented[i][i];
+            delta[i] = sum / row[i];
         }
 
         // Update point using Newton step with line search
@@ -151,8 +151,8 @@ where
 
         // Simple backtracking line search
         for _ in 0..20 {
-            for i in 0..n {
-                new_point[i] = current_point[i] + step_size * delta[i];
+            for (i, new_val) in new_point.iter_mut().enumerate() {
+                *new_val = current_point[i] + step_size * delta[i];
             }
             let new_value = f.evaluate(&new_point);
             if new_value < current_value {

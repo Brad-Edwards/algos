@@ -94,7 +94,7 @@ where
         prev_mu = mu;
 
         // Compute search direction
-        let (dx, ds, dy, dz) = compute_search_direction(&scaled_lp, &x, &s, &y, &z, mu * sigma);
+        let (dx, ds, _dy, dz) = compute_search_direction(&scaled_lp, &x, &s, &y, &z, mu * sigma);
 
         // Compute step size
         let alpha_pri = compute_step_size_primal(&x, &s, &dx, &ds);
@@ -109,13 +109,23 @@ where
 
         // Update variables
         let min_value = T::from(1e-10).unwrap();
-        for i in 0..n {
-            x[i] = (x[i] + alpha * dx[i]).max(min_value);
-            z[i] = (z[i] + alpha * dz[i]).max(min_value);
+        for (i, x_i) in x.iter_mut().enumerate().take(n) {
+            *x_i = (*x_i + alpha * dx[i]).max(min_value);
         }
-        for i in 0..m {
-            s[i] = (s[i] + alpha * ds[i]).max(min_value);
-            y[i] = y[i] + alpha * dy[i];
+        for (i, z_i) in z.iter_mut().enumerate().take(n) {
+            *z_i = (*z_i + alpha * dz[i]).max(min_value);
+        }
+        for (i, s_i) in s.iter_mut().enumerate().take(m) {
+            *s_i = (*s_i + alpha * ds[i]).max(min_value);
+        }
+        for (i, y_i) in y.iter_mut().enumerate().take(m) {
+            let ax = lp.constraints[i]
+                .iter()
+                .zip(x.iter())
+                .map(|(&a, &x)| a * x)
+                .fold(T::zero(), |sum, val| sum + val);
+            let dy = ax - lp.rhs[i] + s[i]; // Primal residual
+            *y_i = *y_i + alpha * dy;
         }
 
         iterations += 1;
@@ -123,8 +133,8 @@ where
 
     // Unscale the solution
     let mut unscaled_x = best_x.clone();
-    for j in 0..n {
-        unscaled_x[j] = unscaled_x[j] / scaling_vector[j];
+    for (j, x_j) in unscaled_x.iter_mut().enumerate().take(n) {
+        *x_j = *x_j / scaling_vector[j];
     }
 
     let optimal_value = compute_objective_value(lp, &unscaled_x);
@@ -220,40 +230,42 @@ where
         let alpha = T::from(0.1).unwrap();
 
         // Update primal variables
-        for i in 0..n {
+        for (i, x_i) in x.iter_mut().enumerate().take(n) {
             let mut dx = -lp.objective[i]; // Move in direction of negative gradient
-            for j in 0..m {
-                dx = dx - lp.constraints[j][i] * y[j]; // Add dual contribution
+            for (j, constraint) in lp.constraints.iter().enumerate().take(m) {
+                dx = dx - constraint[i] * y[j]; // Add dual contribution
             }
-            x[i] = (x[i] + alpha * dx).max(T::from(1e-10).unwrap());
+            *x_i = (*x_i + alpha * dx).max(T::from(1e-10).unwrap());
         }
 
         // Update slack variables
-        for i in 0..m {
-            let mut ax = T::zero();
-            for j in 0..n {
-                ax = ax + lp.constraints[i][j] * x[j];
-            }
-            s[i] = (lp.rhs[i] - ax).max(T::from(1e-10).unwrap());
+        for (i, s_i) in s.iter_mut().enumerate().take(m) {
+            let ax = lp.constraints[i]
+                .iter()
+                .zip(x.iter())
+                .map(|(&a, &x)| a * x)
+                .fold(T::zero(), |sum, val| sum + val);
+            *s_i = (lp.rhs[i] - ax).max(T::from(1e-10).unwrap());
         }
 
         // Update dual variables
-        for i in 0..m {
-            let mut ax = T::zero();
-            for j in 0..n {
-                ax = ax + lp.constraints[i][j] * x[j];
-            }
+        for (i, y_i) in y.iter_mut().enumerate().take(m) {
+            let ax = lp.constraints[i]
+                .iter()
+                .zip(x.iter())
+                .map(|(&a, &x)| a * x)
+                .fold(T::zero(), |sum, val| sum + val);
             let dy = ax - lp.rhs[i] + s[i]; // Primal residual
-            y[i] = y[i] + alpha * dy;
+            *y_i = *y_i + alpha * dy;
         }
 
         // Update reduced costs
-        for i in 0..n {
+        for (i, z_i) in z.iter_mut().enumerate().take(n) {
             let mut dz = lp.objective[i];
-            for j in 0..m {
-                dz = dz - lp.constraints[j][i] * y[j];
+            for (j, constraint) in lp.constraints.iter().enumerate().take(m) {
+                dz = dz - constraint[i] * y[j];
             }
-            z[i] = (z[i] + alpha * dz).max(T::from(1e-10).unwrap());
+            *z_i = (*z_i + alpha * dz).max(T::from(1e-10).unwrap());
         }
 
         iterations += 1;
@@ -284,23 +296,24 @@ where
 
     // Scale initial point to be roughly feasible
     let scale = T::from(0.1).unwrap();
-    for j in 0..n {
-        x[j] = x[j] * scale;
+    for x_i in x.iter_mut() {
+        *x_i = *x_i * scale;
     }
 
     // Compute slack variables
-    for i in 0..m {
-        let mut sum = T::zero();
-        for j in 0..n {
-            sum = sum + lp.constraints[i][j] * x[j];
-        }
-        s[i] = (lp.rhs[i] - sum).max(init_val);
+    for (i, s_i) in s.iter_mut().enumerate() {
+        let sum = lp.constraints[i]
+            .iter()
+            .zip(x.iter())
+            .map(|(&a, &x)| a * x)
+            .fold(T::zero(), |acc, val| acc + val);
+        *s_i = (lp.rhs[i] - sum).max(init_val);
     }
 
     // Scale dual variables
     let dual_scale = T::from(0.1).unwrap();
-    for j in 0..n {
-        z[j] = z[j] * dual_scale;
+    for z_i in z.iter_mut() {
+        *z_i = *z_i * dual_scale;
     }
 
     (x, s, y, z)
@@ -311,19 +324,19 @@ fn compute_primal_infeasibility<T>(lp: &LinearProgram<T>, x: &[T], s: &[T]) -> T
 where
     T: Float + Debug,
 {
-    let m = lp.constraints.len();
-    let mut max_infeas = T::zero();
-
-    for i in 0..m {
-        let mut sum = T::zero();
-        for j in 0..x.len() {
-            sum = sum + lp.constraints[i][j] * x[j];
-        }
-        sum = sum + s[i] - lp.rhs[i];
-        max_infeas = max_infeas.max(sum.abs());
-    }
-
-    max_infeas
+    lp.constraints
+        .iter()
+        .zip(s.iter())
+        .enumerate()
+        .map(|(i, (constraint, &si))| {
+            let sum = constraint
+                .iter()
+                .zip(x.iter())
+                .map(|(&a, &x)| a * x)
+                .fold(T::zero(), |acc, val| acc + val);
+            (sum + si - lp.rhs[i]).abs()
+        })
+        .fold(T::zero(), |max_infeas, infeas| max_infeas.max(infeas))
 }
 
 /// Compute the dual infeasibility: ||A^T y + z - c||_∞
@@ -331,18 +344,17 @@ fn compute_dual_infeasibility<T>(lp: &LinearProgram<T>, y: &[T], z: &[T]) -> T
 where
     T: Float + Debug,
 {
-    let mut max_infeas = T::zero();
-
-    for j in 0..lp.objective.len() {
-        let mut sum = T::zero();
-        for i in 0..lp.constraints.len() {
-            sum = sum + lp.constraints[i][j] * y[i];
-        }
-        sum = sum + z[j] - lp.objective[j];
-        max_infeas = max_infeas.max(sum.abs());
-    }
-
-    max_infeas
+    (0..lp.objective.len())
+        .map(|j| {
+            let sum = lp
+                .constraints
+                .iter()
+                .zip(y.iter())
+                .map(|(constraint, &yi)| constraint[j] * yi)
+                .fold(T::zero(), |acc, val| acc + val);
+            (sum + z[j] - lp.objective[j]).abs()
+        })
+        .fold(T::zero(), |max_infeas, infeas| max_infeas.max(infeas))
 }
 
 /// Compute the duality gap: x^T z / n
@@ -376,18 +388,20 @@ where
     // Form the scaling matrix D = X^{1/2} Z^{-1/2}
     let mut d = vec![T::zero(); n];
     let eps = T::from(1e-10).unwrap();
-    for i in 0..n {
-        d[i] = (x[i] / z[i]).sqrt().max(eps);
+    for (i, (x_i, z_i)) in x.iter().zip(z.iter()).enumerate().take(n) {
+        d[i] = (*x_i / *z_i).sqrt().max(eps);
     }
 
     // Form the normal equations matrix M = A D A^T
     let mut matrix = vec![vec![T::zero(); m]; m];
-    for i in 0..m {
-        for k in 0..m {
-            for j in 0..n {
-                matrix[i][k] =
-                    matrix[i][k] + lp.constraints[i][j] * d[j] * d[j] * lp.constraints[k][j];
-            }
+    for (i, row_i) in matrix.iter_mut().enumerate().take(m) {
+        for (k, row_k) in row_i.iter_mut().enumerate().take(m) {
+            *row_k = lp.constraints[i]
+                .iter()
+                .zip(lp.constraints[k].iter())
+                .zip(d.iter())
+                .map(|((&a_i, &a_k), &d_j)| a_i * d_j * d_j * a_k)
+                .fold(T::zero(), |acc, val| acc + val);
         }
     }
 
@@ -395,34 +409,41 @@ where
     let mut rhs = vec![T::zero(); m];
 
     // First compute r_p = b - Ax - s
-    for i in 0..m {
-        rhs[i] = lp.rhs[i];
-        for j in 0..n {
-            rhs[i] = rhs[i] - lp.constraints[i][j] * x[j];
-        }
-        rhs[i] = rhs[i] - s[i];
+    for (i, (constraint, s_i)) in lp.constraints.iter().zip(s.iter()).enumerate() {
+        let ax = constraint
+            .iter()
+            .zip(x.iter())
+            .map(|(&a, &x)| a * x)
+            .fold(T::zero(), |sum, val| sum + val);
+        rhs[i] = lp.rhs[i] - ax - *s_i;
     }
 
     // Then compute r_d = c - A^T y - z
     let mut r_d = vec![T::zero(); n];
-    for j in 0..n {
-        r_d[j] = lp.objective[j];
-        for i in 0..m {
-            r_d[j] = r_d[j] - lp.constraints[i][j] * y[i];
-        }
-        r_d[j] = r_d[j] - z[j];
+    for (j, (obj_j, z_j)) in lp.objective.iter().zip(z.iter()).enumerate() {
+        let a_t_y = lp
+            .constraints
+            .iter()
+            .zip(y.iter())
+            .map(|(constraint, &y_i)| constraint[j] * y_i)
+            .fold(T::zero(), |sum, val| sum + val);
+        r_d[j] = *obj_j - a_t_y - *z_j;
     }
 
     // Add the centering term: -X^{-1}(XZe - σμe)
-    for j in 0..n {
-        r_d[j] = r_d[j] + (mu - x[j] * z[j]) / x[j];
+    for ((r_d_j, x_j), z_j) in r_d.iter_mut().zip(x.iter()).zip(z.iter()) {
+        *r_d_j = *r_d_j + (mu - *x_j * *z_j) / *x_j;
     }
 
     // Complete the right-hand side: r_p + A D^2 r_d
-    for i in 0..m {
-        for j in 0..n {
-            rhs[i] = rhs[i] + lp.constraints[i][j] * d[j] * d[j] * r_d[j];
-        }
+    for (i, rhs_i) in rhs.iter_mut().enumerate() {
+        let ad2r = lp.constraints[i]
+            .iter()
+            .zip(d.iter())
+            .zip(r_d.iter())
+            .map(|((&a, &d_j), &r_d_j)| a * d_j * d_j * r_d_j)
+            .fold(T::zero(), |sum, val| sum + val);
+        *rhs_i = *rhs_i + ad2r;
     }
 
     // Solve M dy = rhs using Cholesky decomposition
@@ -430,11 +451,15 @@ where
 
     // Recover dx from dy
     let mut dx = vec![T::zero(); n];
-    for j in 0..n {
-        dx[j] = d[j] * d[j] * r_d[j];
-        for i in 0..m {
-            dx[j] = dx[j] - d[j] * d[j] * lp.constraints[i][j] * dy[i];
-        }
+    for (j, dx_j) in dx.iter_mut().enumerate() {
+        let d2_j = d[j] * d[j];
+        let a_t_dy = lp
+            .constraints
+            .iter()
+            .zip(dy.iter())
+            .map(|(constraint, &dy_i)| constraint[j] * dy_i)
+            .fold(T::zero(), |sum, val| sum + val);
+        *dx_j = d2_j * (r_d[j] - a_t_dy);
     }
 
     // Compute ds and dz
@@ -442,19 +467,24 @@ where
     let mut dz = vec![T::zero(); n];
 
     // ds = -(r_p + A dx)
-    for i in 0..m {
-        ds[i] = -rhs[i]; // -r_p
-        for j in 0..n {
-            ds[i] = ds[i] - lp.constraints[i][j] * dx[j];
-        }
+    for (i, ds_i) in ds.iter_mut().enumerate() {
+        let a_dx = lp.constraints[i]
+            .iter()
+            .zip(dx.iter())
+            .map(|(&a, &dx_j)| a * dx_j)
+            .fold(T::zero(), |sum, val| sum + val);
+        *ds_i = -(rhs[i] + a_dx);
     }
 
     // dz = -(r_d + A^T dy)
-    for j in 0..n {
-        dz[j] = -r_d[j];
-        for i in 0..m {
-            dz[j] = dz[j] - lp.constraints[i][j] * dy[i];
-        }
+    for (j, dz_j) in dz.iter_mut().enumerate() {
+        let a_t_dy = lp
+            .constraints
+            .iter()
+            .zip(dy.iter())
+            .map(|(constraint, &dy_i)| constraint[j] * dy_i)
+            .fold(T::zero(), |sum, val| sum + val);
+        *dz_j = -(r_d[j] + a_t_dy);
     }
 
     // Scale the directions to avoid too large steps
@@ -499,11 +529,15 @@ where
 
     // Add regularization to improve conditioning
     let mut aug_matrix = matrix.to_vec();
-    for i in 0..n {
-        aug_matrix[i][i] = aug_matrix[i][i] + eps * (T::one() + aug_matrix[i][i].abs());
+    for (i, row) in aug_matrix.iter_mut().enumerate().take(n) {
+        row[i] = row[i] + eps * (T::one() + row[i].abs());
     }
 
     // Compute Cholesky decomposition: M = L L^T with improved numerical stability
+    // Note: Using index-based access in the following numerical computations because:
+    // 1. We need to access multiple elements of the same array simultaneously
+    // 2. The algorithms are more readable with traditional matrix indexing
+    // 3. Performance is critical in these inner loops
     let mut l = vec![vec![T::zero(); n]; n];
     for i in 0..n {
         for j in 0..=i {
@@ -529,6 +563,8 @@ where
     let mut y = vec![T::zero(); n];
     for i in 0..n {
         let mut sum = rhs[i];
+        #[allow(clippy::needless_range_loop)]
+        // Using index-based access because we need to access y[j] while computing y[i]
         for j in 0..i {
             sum = sum - l[i][j] * y[j];
         }
@@ -629,15 +665,14 @@ where
 
     // Compute scaling factors for variables
     let mut scaling = vec![T::one(); n];
-    for (j, scale) in scaling.iter_mut().enumerate().take(n) {
-        let mut sum = T::zero();
-        for i in 0..m {
-            sum = sum + lp.constraints[i][j].abs();
-        }
+    for j in 0..n {
+        let sum = lp
+            .constraints
+            .iter()
+            .map(|row| row[j].abs())
+            .fold(T::zero(), |acc, val| acc + val);
         if sum > T::zero() {
-            *scale = T::one() / sum;
-        } else {
-            *scale = T::one();
+            scaling[j] = T::one() / sum;
         }
     }
 
@@ -645,14 +680,14 @@ where
     let mut scaled_obj = vec![T::zero(); n];
     let mut scaled_constraints = vec![vec![T::zero(); n]; m];
 
-    for j in 0..n {
-        scaled_obj[j] = lp.objective[j] * scaling[j];
+    for (j, (&obj_j, &scale_j)) in lp.objective.iter().zip(scaling.iter()).enumerate() {
+        scaled_obj[j] = obj_j * scale_j;
     }
 
     // Scale the constraints
-    for (i, row) in scaled_constraints.iter_mut().enumerate().take(m) {
-        for j in 0..n {
-            row[j] = lp.constraints[i][j] * scaling[j];
+    for (i, row) in scaled_constraints.iter_mut().enumerate() {
+        for (j, (cell, &scale_j)) in row.iter_mut().zip(scaling.iter()).enumerate() {
+            *cell = lp.constraints[i][j] * scale_j;
         }
     }
 

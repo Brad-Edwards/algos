@@ -98,9 +98,10 @@ where
         // Compute search direction: p = -H⁻¹∇f
         let mut direction = vec![T::zero(); n];
         for i in 0..n {
-            for j in 0..n {
-                direction[i] = direction[i] - h_inv[i][j] * gradient[j];
-            }
+            direction[i] = gradient
+                .iter()
+                .enumerate()
+                .fold(T::zero(), |acc, (j, &g)| acc - h_inv[i][j] * g);
         }
 
         // Line search with Wolfe conditions
@@ -194,14 +195,15 @@ where
 
         // Then multiply by (I - ρys^T)
         for i in 0..n {
-            for j in 0..n {
-                let ys_term = y
-                    .iter()
-                    .enumerate()
-                    .fold(T::zero(), |acc, (k, &y_k)| acc + y_k * temp_matrix[i][k])
-                    * s[j];
-                new_h_inv[i][j] = temp_matrix[i][j] - rho * ys_term;
-            }
+            let row_sum = y
+                .iter()
+                .enumerate()
+                .fold(T::zero(), |acc, (k, &y_k)| acc + y_k * temp_matrix[i][k]);
+            new_h_inv[i] = s
+                .iter()
+                .enumerate()
+                .map(|(j, &s_j)| temp_matrix[i][j] - rho * row_sum * s_j)
+                .collect();
         }
 
         // Add ρss^T

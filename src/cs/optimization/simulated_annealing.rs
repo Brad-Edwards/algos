@@ -104,7 +104,6 @@ where
 
     // Minimum temperature for numerical stability
     let min_temp = T::from(1e-10).unwrap();
-    let min_step = T::from(1e-8).unwrap();
 
     // Initial scale for the problem
     let mut scale = T::one();
@@ -125,8 +124,6 @@ where
                 temperature,
                 &sa_config.lower_bounds,
                 &sa_config.upper_bounds,
-                scale,
-                min_step,
                 &mut rng,
             );
             let neighbor_value = f.evaluate(&neighbor);
@@ -141,7 +138,7 @@ where
             let accept = if delta <= T::zero() {
                 true
             } else {
-                let scale = (current_value.abs() + T::one()).max(min_step);
+                let scale = (current_value.abs() + T::one()).max(T::from(1e-8).unwrap());
                 let scaled_delta = delta / scale;
                 let probability = (-scaled_delta / (temperature.max(min_temp)))
                     .exp()
@@ -212,8 +209,6 @@ fn generate_neighbor<T, R: Rng>(
     temperature: T,
     lower_bounds: &[T],
     upper_bounds: &[T],
-    _scale: T,
-    _min_step: T,
     rng: &mut R,
 ) -> Vec<T>
 where

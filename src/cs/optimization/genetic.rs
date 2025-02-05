@@ -267,7 +267,7 @@ fn mutate<T, R: Rng>(individual: &mut [T], config: &GeneticConfig<T>, rng: &mut 
 where
     T: Float + Debug,
 {
-    for i in 0..individual.len() {
+    individual.iter_mut().enumerate().for_each(|(i, gene)| {
         if rng.gen::<f64>() < config.mutation_rate.to_f64().unwrap() {
             let lower = config.lower_bounds[i.min(config.lower_bounds.len() - 1)]
                 .to_f64()
@@ -276,7 +276,7 @@ where
                 .to_f64()
                 .unwrap();
             let range = upper - lower;
-            let current = individual[i].to_f64().unwrap();
+            let current = gene.to_f64().unwrap();
 
             // Gaussian mutation with adaptive step size
             let step_size = range * 0.1; // 10% of range
@@ -285,9 +285,9 @@ where
 
             // Apply mutation and clamp to bounds
             let new_value = (current + mutation).max(lower).min(upper);
-            individual[i] = T::from(new_value).unwrap();
+            *gene = T::from(new_value).unwrap();
         }
-    }
+    });
 }
 
 // Compute convergence metric based on best fitness history

@@ -142,10 +142,10 @@ where
         // Find leaving variable (minimum ratio test)
         let mut leaving_row = None;
         let mut min_ratio = T::infinity();
-        for i in 1..=m {
-            let coef = tableau[i][entering_col];
+        for (i, row) in tableau.iter().enumerate().skip(1).take(m) {
+            let coef = row[entering_col];
             if coef > eps {
-                let ratio = tableau[i][n + m] / coef;
+                let ratio = row[n + m] / coef;
                 if ratio < min_ratio - eps {
                     min_ratio = ratio;
                     leaving_row = Some(i);
@@ -197,7 +197,7 @@ where
 
 // Helper function to print tableau for debugging
 #[cfg(test)]
-fn print_tableau<T>(tableau: &Vec<Vec<T>>)
+fn print_tableau<T>(tableau: &[Vec<T>])
 where
     T: Float + Debug,
 {
@@ -256,7 +256,7 @@ where
 }
 
 // Perform pivot operation with numerical stability
-fn pivot<T>(tableau: &mut Vec<Vec<T>>, leaving_row: usize, entering_col: usize)
+fn pivot<T>(tableau: &mut [Vec<T>], leaving_row: usize, entering_col: usize)
 where
     T: Float + Debug,
 {
@@ -275,16 +275,19 @@ where
         }
     }
 
+    // Store the pivot row values
+    let pivot_row: Vec<T> = tableau[leaving_row].clone();
+
     // Then update all other rows including objective row
-    for i in 0..=m {
+    for (i, row) in tableau.iter_mut().enumerate().take(m + 1) {
         if i != leaving_row {
-            let factor = tableau[i][entering_col];
+            let factor = row[entering_col];
             if factor.abs() > eps {
                 for j in 0..=n {
-                    tableau[i][j] = tableau[i][j] - factor * tableau[leaving_row][j];
+                    row[j] = row[j] - factor * pivot_row[j];
                     // Clean up small values
-                    if tableau[i][j].abs() < eps {
-                        tableau[i][j] = T::zero();
+                    if row[j].abs() < eps {
+                        row[j] = T::zero();
                     }
                 }
             }
@@ -292,30 +295,29 @@ where
     }
 
     // Ensure the pivot column is exactly as it should be
-    for i in 0..=m {
+    for (i, row) in tableau.iter_mut().enumerate().take(m + 1) {
         if i == leaving_row {
-            tableau[i][entering_col] = T::one();
+            row[entering_col] = T::one();
         } else {
-            tableau[i][entering_col] = T::zero();
+            row[entering_col] = T::zero();
         }
     }
 }
 
 // Check if current solution is feasible
-fn is_feasible<T>(tableau: &Vec<Vec<T>>, m: usize, n: usize) -> bool
+fn is_feasible<T>(tableau: &[Vec<T>], m: usize, n: usize) -> bool
 where
     T: Float + Debug,
 {
-    for i in 1..=m {
-        if tableau[i][n + m] < -T::from(EPSILON).unwrap() {
-            return false;
-        }
-    }
-    true
+    tableau
+        .iter()
+        .skip(1)
+        .take(m)
+        .all(|row| row[n + m] >= T::zero())
 }
 
 // Add artificial variables for Phase I
-fn add_artificial_variables<T>(tableau: &Vec<Vec<T>>, m: usize, n: usize) -> Vec<Vec<T>>
+fn add_artificial_variables<T>(tableau: &[Vec<T>], m: usize, n: usize) -> Vec<Vec<T>>
 where
     T: Float + Debug,
 {
@@ -343,7 +345,7 @@ where
 }
 
 // Solve Phase I to find initial basic feasible solution
-fn solve_phase_one<T>(tableau: &mut Vec<Vec<T>>, m: usize, n: usize, config: &OptimizationConfig<T>)
+fn solve_phase_one<T>(tableau: &mut [Vec<T>], m: usize, n: usize, config: &OptimizationConfig<T>)
 where
     T: Float + Debug,
 {
@@ -389,10 +391,10 @@ where
         // Find leaving variable (minimum ratio test)
         let mut leaving_row = None;
         let mut min_ratio = T::infinity();
-        for i in 1..=m {
-            let coef = tableau[i][entering_col];
+        for (i, row) in tableau.iter().enumerate().skip(1).take(m) {
+            let coef = row[entering_col];
             if coef > eps {
-                let ratio = tableau[i][total_vars] / coef;
+                let ratio = row[total_vars] / coef;
                 if ratio < min_ratio - eps {
                     min_ratio = ratio;
                     leaving_row = Some(i);
@@ -438,8 +440,8 @@ where
 
 // Remove artificial variables and restore original objective
 fn remove_artificial_variables<T>(
-    art_tableau: &Vec<Vec<T>>,
-    tableau: &mut Vec<Vec<T>>,
+    art_tableau: &[Vec<T>],
+    tableau: &mut [Vec<T>],
     m: usize,
     n: usize,
 ) where
@@ -454,7 +456,7 @@ fn remove_artificial_variables<T>(
 }
 
 // Extract solution from tableau
-fn extract_solution<T>(tableau: &Vec<Vec<T>>, m: usize, n: usize) -> Vec<T>
+fn extract_solution<T>(tableau: &[Vec<T>], m: usize, n: usize) -> Vec<T>
 where
     T: Float + Debug,
 {
@@ -464,20 +466,20 @@ where
 
     // First identify basic variables
     let mut basic_vars = vec![None; m];
-    for i in 1..=m {
+    for (i, basic_var) in basic_vars.iter_mut().enumerate() {
         for j in 0..total_cols {
-            if (tableau[i][j] - T::one()).abs() < eps
-                && (0..m + 1).all(|r| r == i || tableau[r][j].abs() < eps)
+            if (tableau[i + 1][j] - T::one()).abs() < eps
+                && (0..m + 1).all(|r| r == i + 1 || tableau[r][j].abs() < eps)
             {
-                basic_vars[i - 1] = Some(j);
+                *basic_var = Some(j);
                 break;
             }
         }
     }
 
     // Extract values for original variables
-    for i in 0..m {
-        if let Some(j) = basic_vars[i] {
+    for (i, &basic_var) in basic_vars.iter().enumerate() {
+        if let Some(j) = basic_var {
             if j < n {
                 // Only if it's an original variable
                 solution[j] = tableau[i + 1][total_cols];
@@ -489,18 +491,18 @@ where
     }
 
     // Handle degenerate cases where variables might be zero
-    for j in 0..n {
-        if solution[j].abs() < eps {
+    for (j, sol_j) in solution.iter_mut().enumerate().take(n) {
+        if sol_j.abs() < eps {
             let mut is_basic = false;
-            for i in 1..=m {
-                if (tableau[i][j] - T::one()).abs() < eps {
+            for row in tableau.iter().skip(1).take(m) {
+                if (row[j] - T::one()).abs() < eps {
                     is_basic = true;
-                    solution[j] = tableau[i][total_cols];
+                    *sol_j = row[total_cols];
                     break;
                 }
             }
             if !is_basic {
-                solution[j] = T::zero();
+                *sol_j = T::zero();
             }
         }
     }

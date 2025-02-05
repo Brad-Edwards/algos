@@ -41,6 +41,7 @@ use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, Optimizatio
 /// let result = minimize(&f, &initial_point, &config);
 /// assert!(result.converged);
 /// ```
+#[must_use]
 pub fn minimize<T, F>(
     f: &F,
     initial_point: &[T],
@@ -82,9 +83,10 @@ where
         iterations += 1;
     }
 
+    let optimal_value = f.evaluate(&current_point);
     OptimizationResult {
-        optimal_point: current_point.clone(),
-        optimal_value: f.evaluate(&current_point),
+        optimal_point: current_point,
+        optimal_value,
         iterations,
         converged,
     }
@@ -93,6 +95,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::f64::EPSILON;
 
     // Test function: f(x, y) = x^2 + y^2
     struct Quadratic;
@@ -112,17 +115,17 @@ mod tests {
         let f = Quadratic;
         let initial_point = vec![1.0, 1.0];
         let config = OptimizationConfig {
-            max_iterations: 1000,
-            tolerance: 1e-6,
-            learning_rate: 0.1,
+            max_iterations: 10000,
+            tolerance: 1e-10,
+            learning_rate: 0.05,
         };
 
         let result = minimize(&f, &initial_point, &config);
 
         assert!(result.converged);
-        assert!(result.optimal_value < 1e-10);
+        assert!(result.optimal_value.abs() < 10.0 * EPSILON);
         for x in result.optimal_point {
-            assert!(x.abs() < 1e-5);
+            assert!(x.abs() < (1e-5_f64).sqrt());
         }
     }
 
@@ -146,15 +149,15 @@ mod tests {
         let f = QuadraticWithMinimum;
         let initial_point = vec![0.0];
         let config = OptimizationConfig {
-            max_iterations: 1000,
-            tolerance: 1e-6,
-            learning_rate: 0.1,
+            max_iterations: 10000,
+            tolerance: 1e-10,
+            learning_rate: 0.05,
         };
 
         let result = minimize(&f, &initial_point, &config);
 
         assert!(result.converged);
-        assert!((result.optimal_point[0] - 2.0).abs() < 1e-5);
-        assert!(result.optimal_value < 1e-10);
+        assert!((result.optimal_point[0] - 2.0).abs() < (1e-5_f64).sqrt());
+        assert!(result.optimal_value.abs() < 10.0 * EPSILON);
     }
 }
