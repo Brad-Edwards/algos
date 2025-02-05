@@ -44,7 +44,11 @@ use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, Optimizatio
 /// let result = minimize(&f, &initial_point, &config);
 /// assert!(result.converged);
 /// ```
-pub fn minimize<T>(f: &impl ObjectiveFunction<T>, initial_point: &[T], config: &OptimizationConfig<T>) -> OptimizationResult<T>
+pub fn minimize<T>(
+    f: &impl ObjectiveFunction<T>,
+    initial_point: &[T],
+    config: &OptimizationConfig<T>,
+) -> OptimizationResult<T>
 where
     T: Float + Debug,
 {
@@ -55,8 +59,10 @@ where
 
     // Initialize approximate inverse Hessian as identity matrix
     let mut h_inv = vec![vec![T::zero(); n]; n];
-    for i in 0..n {
-        h_inv[i][i] = T::one();
+    for (i, row) in h_inv.iter_mut().enumerate().take(n) {
+        for (j, val) in row.iter_mut().enumerate() {
+            *val = if i == j { T::one() } else { T::zero() };
+        }
     }
 
     // Get initial gradient
@@ -73,8 +79,8 @@ where
     };
 
     // Constants for Wolfe conditions
-    let c1 = T::from(1e-4).unwrap();  // Sufficient decrease parameter
-    let c2 = T::from(0.9).unwrap();   // Curvature condition parameter
+    let c1 = T::from(1e-4).unwrap(); // Sufficient decrease parameter
+    let c2 = T::from(0.9).unwrap(); // Curvature condition parameter
     let max_line_search = 20;
 
     while iterations < config.max_iterations {
@@ -98,7 +104,7 @@ where
         }
 
         // Line search with Wolfe conditions
-        let mut alpha = T::one();  // Start with full step
+        let mut alpha = T::one(); // Start with full step
         let mut new_point = vec![T::zero(); n];
         let current_value = f.evaluate(&current_point);
         let directional_derivative = gradient
@@ -161,7 +167,8 @@ where
             .collect();
 
         // Compute ρ = 1/(y^T s) with safeguard
-        let ys = y.iter()
+        let ys = y
+            .iter()
             .zip(s.iter())
             .fold(T::zero(), |acc, (&y_i, &s_i)| acc + y_i * s_i);
         let rho = if ys.abs() > T::from(1e-10).unwrap() {
@@ -188,7 +195,8 @@ where
         // Then multiply by (I - ρys^T)
         for i in 0..n {
             for j in 0..n {
-                let ys_term = y.iter()
+                let ys_term = y
+                    .iter()
                     .enumerate()
                     .fold(T::zero(), |acc, (k, &y_k)| acc + y_k * temp_matrix[i][k])
                     * s[j];
@@ -311,7 +319,7 @@ mod tests {
         let f = Rosenbrock;
         let initial_point = vec![0.0, 0.0];
         let config = OptimizationConfig {
-            max_iterations: 2000,  // Increased max iterations
+            max_iterations: 2000, // Increased max iterations
             tolerance: 1e-5,      // Slightly relaxed tolerance
             learning_rate: 1.0,   // Start with full step size
         };
@@ -322,4 +330,4 @@ mod tests {
         assert!((result.optimal_point[0] - 1.0).abs() < 1e-3);
         assert!((result.optimal_point[1] - 1.0).abs() < 1e-3);
     }
-} 
+}

@@ -1,26 +1,26 @@
-pub mod gradient_descent;
-pub mod newton;
-pub mod conjugate_gradient;
 pub mod bfgs;
-pub mod lbfgs;
-pub mod simplex;
-pub mod interior_point;
-pub mod nelder_mead;
+pub mod conjugate_gradient;
 pub mod genetic;
+pub mod gradient_descent;
+pub mod interior_point;
+pub mod lbfgs;
+pub mod nelder_mead;
+pub mod newton;
+pub mod simplex;
 pub mod simulated_annealing;
 
 use num_traits::{Float, Zero};
 use std::fmt::Debug;
 
-pub use gradient_descent::minimize as gradient_descent_minimize;
-pub use newton::minimize as newton_minimize;
-pub use conjugate_gradient::minimize as conjugate_gradient_minimize;
 pub use bfgs::minimize as bfgs_minimize;
-pub use lbfgs::minimize as lbfgs_minimize;
-pub use simplex::minimize as simplex_minimize;
-pub use interior_point::minimize as interior_point_minimize;
-pub use nelder_mead::minimize as nelder_mead_minimize;
+pub use conjugate_gradient::minimize as conjugate_gradient_minimize;
 pub use genetic::minimize as genetic_minimize;
+pub use gradient_descent::minimize as gradient_descent_minimize;
+pub use interior_point::minimize as interior_point_minimize;
+pub use lbfgs::minimize as lbfgs_minimize;
+pub use nelder_mead::minimize as nelder_mead_minimize;
+pub use newton::minimize as newton_minimize;
+pub use simplex::minimize as simplex_minimize;
 pub use simulated_annealing::minimize as simulated_annealing_minimize;
 
 /// A trait for objective functions that can be optimized.

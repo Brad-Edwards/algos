@@ -40,16 +40,20 @@ use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, Optimizatio
 /// let result = minimize(&f, &initial_point, &config);
 /// assert!(result.converged);
 /// ```
-pub fn minimize<T, F>(f: &F, initial_point: &[T], config: &OptimizationConfig<T>) -> OptimizationResult<T>
+pub fn minimize<T, F>(
+    f: &F,
+    initial_point: &[T],
+    config: &OptimizationConfig<T>,
+) -> OptimizationResult<T>
 where
     T: Float + Debug,
     F: ObjectiveFunction<T>,
 {
     // Nelder-Mead parameters (adjusted for better performance)
-    let alpha = T::from(1.0).unwrap();  // reflection coefficient
-    let gamma = T::from(2.0).unwrap();  // expansion coefficient
-    let rho = T::from(0.5).unwrap();    // contraction coefficient
-    let sigma = T::from(0.5).unwrap();  // shrink coefficient
+    let alpha = T::from(1.0).unwrap(); // reflection coefficient
+    let gamma = T::from(2.0).unwrap(); // expansion coefficient
+    let rho = T::from(0.5).unwrap(); // contraction coefficient
+    let sigma = T::from(0.5).unwrap(); // shrink coefficient
 
     let n = initial_point.len();
     let mut iterations = 0;
@@ -77,7 +81,7 @@ where
         // Check for convergence using multiple criteria
         let size_measure = compute_simplex_size(&simplex);
         let value_range = values[n] - values[0];
-        
+
         if size_measure < config.tolerance && value_range < config.tolerance {
             converged = true;
             break;
@@ -113,12 +117,19 @@ where
                 values[n] = contracted_value;
             } else {
                 // Shrink towards best point
-                let best = simplex[0].clone();
-                for i in 1..=n {
-                    for j in 0..n {
-                        simplex[i][j] = best[j] + sigma * (simplex[i][j] - best[j]);
+                let mut best = simplex[0].clone();
+                let mut best_value = values[0];
+                for i in 1..n + 1 {
+                    if values[i] < best_value {
+                        best = simplex[i].clone();
+                        best_value = values[i];
                     }
-                    values[i] = f.evaluate(&simplex[i]);
+                }
+                for i in 1..=n {
+                    for (j, val) in best.iter_mut().enumerate().take(n) {
+                        *val = centroid[j] + sigma * (centroid[j] - simplex[i][j]);
+                    }
+                    values[i] = f.evaluate(&best);
                 }
             }
         }
@@ -144,7 +155,7 @@ where
     let mut simplex = vec![initial_point.to_vec()];
 
     // Create n additional vertices with better scaling
-    let scale = T::from(0.1).unwrap();  // Increased scale for better exploration
+    let scale = T::from(0.1).unwrap(); // Increased scale for better exploration
     for i in 0..n {
         let mut vertex = initial_point.to_vec();
         if vertex[i] == T::zero() {
@@ -322,4 +333,4 @@ mod tests {
         assert!((result.optimal_point[0] - 1.0).abs() < 1e-3);
         assert!((result.optimal_point[1] - 1.0).abs() < 1e-3);
     }
-} 
+}

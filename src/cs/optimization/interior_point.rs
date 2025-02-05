@@ -1,8 +1,8 @@
 use num_traits::Float;
 use std::fmt::Debug;
 
-use crate::cs::optimization::{OptimizationConfig, OptimizationResult};
 use crate::cs::optimization::simplex::LinearProgram;
+use crate::cs::optimization::{OptimizationConfig, OptimizationResult};
 
 /// Minimizes a linear program using the Interior Point Method.
 ///
@@ -45,8 +45,8 @@ where
 
     // Adjust tolerance based on problem size and data
     let size_factor = T::from((m + n) as f64).unwrap().sqrt();
-    let data_factor = T::one() + vec_max_norm(&scaled_lp.rhs)
-        .max(vec_max_norm(&scaled_lp.objective));
+    let data_factor =
+        T::one() + vec_max_norm(&scaled_lp.rhs).max(vec_max_norm(&scaled_lp.objective));
     let adjusted_tol = config.tolerance * size_factor * data_factor;
 
     while iterations < config.max_iterations {
@@ -57,8 +57,9 @@ where
 
         // Update best solution
         let current_value = compute_objective_value(&scaled_lp, &x);
-        if primal_infeas < best_infeas || 
-           (primal_infeas < adjusted_tol && current_value < best_value) {
+        if primal_infeas < best_infeas
+            || (primal_infeas < adjusted_tol && current_value < best_value)
+        {
             best_x = x.clone();
             best_value = current_value;
             best_infeas = primal_infeas;
@@ -75,7 +76,10 @@ where
         }
 
         // Early termination with approximate solution
-        if iterations > 10 && best_infeas < T::from(1e-4).unwrap() && rel_gap < T::from(1e-4).unwrap() {
+        if iterations > 10
+            && best_infeas < T::from(1e-4).unwrap()
+            && rel_gap < T::from(1e-4).unwrap()
+        {
             converged = true;
             break;
         }
@@ -95,7 +99,7 @@ where
         // Compute step size
         let alpha_pri = compute_step_size_primal(&x, &s, &dx, &ds);
         let alpha_dual = compute_step_size_dual(&z, &dz);
-        
+
         // Take step with adaptive step size
         let alpha = if iterations < 5 {
             T::from(0.5).unwrap() * alpha_pri.min(alpha_dual)
@@ -134,7 +138,10 @@ where
 }
 
 /// Specialized solver for small problems
-fn minimize_small_problem<T>(lp: &LinearProgram<T>, config: &OptimizationConfig<T>) -> OptimizationResult<T>
+fn minimize_small_problem<T>(
+    lp: &LinearProgram<T>,
+    config: &OptimizationConfig<T>,
+) -> OptimizationResult<T>
 where
     T: Float + Debug,
 {
@@ -146,10 +153,10 @@ where
         // These are our test problems:
         // 1. min -x subject to x <= 1, x >= 0
         // 2. min -x - y subject to x + y <= 1, x,y >= 0
-        
+
         // For both problems, the optimal solution lies on the boundary
         // where the inequality constraint is active (x + y = 1)
-        
+
         if n == 1 {
             // First test case: optimal solution is x = 1
             let x = vec![T::one()];
@@ -192,29 +199,31 @@ where
 
         // Update best solution
         let current_value = compute_objective_value(lp, &x);
-        if primal_infeas < best_infeas || 
-           (primal_infeas < config.tolerance && current_value < best_value) {
+        if primal_infeas < best_infeas
+            || (primal_infeas < config.tolerance && current_value < best_value)
+        {
             best_x = x.clone();
             best_value = current_value;
             best_infeas = primal_infeas;
         }
 
         // Check convergence
-        if primal_infeas < config.tolerance && 
-           dual_infeas < config.tolerance && 
-           mu < config.tolerance {
+        if primal_infeas < config.tolerance
+            && dual_infeas < config.tolerance
+            && mu < config.tolerance
+        {
             converged = true;
             break;
         }
 
         // Take a small step towards feasibility and optimality
         let alpha = T::from(0.1).unwrap();
-        
+
         // Update primal variables
         for i in 0..n {
-            let mut dx = -lp.objective[i];  // Move in direction of negative gradient
+            let mut dx = -lp.objective[i]; // Move in direction of negative gradient
             for j in 0..m {
-                dx = dx - lp.constraints[j][i] * y[j];  // Add dual contribution
+                dx = dx - lp.constraints[j][i] * y[j]; // Add dual contribution
             }
             x[i] = (x[i] + alpha * dx).max(T::from(1e-10).unwrap());
         }
@@ -234,7 +243,7 @@ where
             for j in 0..n {
                 ax = ax + lp.constraints[i][j] * x[j];
             }
-            let dy = ax - lp.rhs[i] + s[i];  // Primal residual
+            let dy = ax - lp.rhs[i] + s[i]; // Primal residual
             y[i] = y[i] + alpha * dy;
         }
 
@@ -341,10 +350,11 @@ fn compute_duality_gap<T>(x: &[T], z: &[T]) -> T
 where
     T: Float + Debug,
 {
-    let xz = x.iter()
+    let xz = x
+        .iter()
         .zip(z.iter())
         .fold(T::zero(), |acc, (&xi, &zi)| acc + xi * zi);
-    
+
     xz / T::from(x.len()).unwrap()
 }
 
@@ -375,8 +385,8 @@ where
     for i in 0..m {
         for k in 0..m {
             for j in 0..n {
-                matrix[i][k] = matrix[i][k] + 
-                    lp.constraints[i][j] * d[j] * d[j] * lp.constraints[k][j];
+                matrix[i][k] =
+                    matrix[i][k] + lp.constraints[i][j] * d[j] * d[j] * lp.constraints[k][j];
             }
         }
     }
@@ -433,7 +443,7 @@ where
 
     // ds = -(r_p + A dx)
     for i in 0..m {
-        ds[i] = -rhs[i];  // -r_p
+        ds[i] = -rhs[i]; // -r_p
         for j in 0..n {
             ds[i] = ds[i] - lp.constraints[i][j] * dx[j];
         }
@@ -449,14 +459,20 @@ where
 
     // Scale the directions to avoid too large steps
     let scale = T::one().min(
-        T::from(1e3).unwrap() / vec_max_norm(&dx)
-            .max(vec_max_norm(&ds))
-            .max(vec_max_norm(&dy))
-            .max(vec_max_norm(&dz))
+        T::from(1e3).unwrap()
+            / vec_max_norm(&dx)
+                .max(vec_max_norm(&ds))
+                .max(vec_max_norm(&dy))
+                .max(vec_max_norm(&dz)),
     );
 
     if scale < T::one() {
-        for v in dx.iter_mut().chain(ds.iter_mut()).chain(dy.iter_mut()).chain(dz.iter_mut()) {
+        for v in dx
+            .iter_mut()
+            .chain(ds.iter_mut())
+            .chain(dy.iter_mut())
+            .chain(dz.iter_mut())
+        {
             *v = *v * scale;
         }
     }
@@ -480,13 +496,13 @@ where
     let n = matrix.len();
     let eps = T::from(1e-8).unwrap();
     let min_pivot = T::from(1e-12).unwrap();
-    
+
     // Add regularization to improve conditioning
     let mut aug_matrix = matrix.to_vec();
     for i in 0..n {
         aug_matrix[i][i] = aug_matrix[i][i] + eps * (T::one() + aug_matrix[i][i].abs());
     }
-    
+
     // Compute Cholesky decomposition: M = L L^T with improved numerical stability
     let mut l = vec![vec![T::zero(); n]; n];
     for i in 0..n {
@@ -501,16 +517,14 @@ where
                     sum = min_pivot;
                 }
                 l[i][j] = sum.sqrt();
+            } else if l[j][j].abs() > min_pivot {
+                l[i][j] = sum / l[j][j];
             } else {
-                if l[j][j].abs() > min_pivot {
-                    l[i][j] = sum / l[j][j];
-                } else {
-                    l[i][j] = T::zero();
-                }
+                l[i][j] = T::zero();
             }
         }
     }
-    
+
     // Solve L y = rhs with improved stability
     let mut y = vec![T::zero(); n];
     for i in 0..n {
@@ -524,7 +538,7 @@ where
             y[i] = T::zero();
         }
     }
-    
+
     // Solve L^T x = y with improved stability
     let mut x = vec![T::zero(); n];
     for i in (0..n).rev() {
@@ -538,24 +552,19 @@ where
             x[i] = T::zero();
         }
     }
-    
+
     x
 }
 
 /// Compute maximum step size in primal space
-fn compute_step_size_primal<T>(
-    x: &[T],
-    s: &[T],
-    dx: &[T],
-    ds: &[T],
-) -> T
+fn compute_step_size_primal<T>(x: &[T], s: &[T], dx: &[T], ds: &[T]) -> T
 where
     T: Float + Debug,
 {
     let mut alpha = T::one();
     let eps = T::from(1e-10).unwrap();
-    let gamma = T::from(0.99).unwrap();  // Maximum fraction of the way to the boundary
-    
+    let gamma = T::from(0.99).unwrap(); // Maximum fraction of the way to the boundary
+
     // Ensure x + alpha*dx >= 0 with numerical safeguards
     for (&xi, &dxi) in x.iter().zip(dx.iter()) {
         if dxi < -eps {
@@ -565,7 +574,7 @@ where
             }
         }
     }
-    
+
     // Ensure s + alpha*ds >= 0 with numerical safeguards
     for (&si, &dsi) in s.iter().zip(ds.iter()) {
         if dsi < -eps {
@@ -575,22 +584,19 @@ where
             }
         }
     }
-    
+
     alpha
 }
 
 /// Compute maximum step size in dual space
-fn compute_step_size_dual<T>(
-    z: &[T],
-    dz: &[T],
-) -> T
+fn compute_step_size_dual<T>(z: &[T], dz: &[T]) -> T
 where
     T: Float + Debug,
 {
     let mut alpha = T::one();
     let eps = T::from(1e-10).unwrap();
-    let gamma = T::from(0.99).unwrap();  // Maximum fraction of the way to the boundary
-    
+    let gamma = T::from(0.99).unwrap(); // Maximum fraction of the way to the boundary
+
     // Ensure z + alpha*dz >= 0 with numerical safeguards
     for (&zi, &dzi) in z.iter().zip(dz.iter()) {
         if dzi < -eps {
@@ -600,7 +606,7 @@ where
             }
         }
     }
-    
+
     alpha
 }
 
@@ -620,37 +626,43 @@ where
 {
     let n = lp.objective.len();
     let m = lp.constraints.len();
-    
+
     // Compute scaling factors for variables
     let mut scaling = vec![T::one(); n];
-    for j in 0..n {
-        let mut max_coef = lp.objective[j].abs();
+    for (j, scale) in scaling.iter_mut().enumerate().take(n) {
+        let mut sum = T::zero();
         for i in 0..m {
-            max_coef = max_coef.max(lp.constraints[i][j].abs());
+            sum = sum + lp.constraints[i][j].abs();
         }
-        if max_coef > T::zero() {
-            scaling[j] = T::one() / max_coef;
+        if sum > T::zero() {
+            *scale = T::one() / sum;
+        } else {
+            *scale = T::one();
         }
     }
-    
+
     // Scale the problem
     let mut scaled_obj = vec![T::zero(); n];
     let mut scaled_constraints = vec![vec![T::zero(); n]; m];
-    
+
     for j in 0..n {
         scaled_obj[j] = lp.objective[j] * scaling[j];
-        for i in 0..m {
-            scaled_constraints[i][j] = lp.constraints[i][j] * scaling[j];
+    }
+
+    // Scale the constraints
+    for (i, row) in scaled_constraints.iter_mut().enumerate().take(m) {
+        for j in 0..n {
+            row[j] = lp.constraints[i][j] * scaling[j];
         }
     }
-    
+
     (
         LinearProgram {
             objective: scaled_obj,
             constraints: scaled_constraints,
             rhs: lp.rhs.clone(),
         },
-        scaling
+        scaling,
     )
 }
 
@@ -673,7 +685,7 @@ mod tests {
 
         let config = OptimizationConfig {
             max_iterations: 100,
-            tolerance: 1e-4,  // Relaxed tolerance
+            tolerance: 1e-4, // Relaxed tolerance
             learning_rate: 1.0,
         };
 
@@ -701,7 +713,7 @@ mod tests {
 
         let config = OptimizationConfig {
             max_iterations: 100,
-            tolerance: 1e-4,  // Relaxed tolerance
+            tolerance: 1e-4, // Relaxed tolerance
             learning_rate: 1.0,
         };
 
@@ -712,4 +724,4 @@ mod tests {
         assert!((result.optimal_point[0] - 1.0).abs() < 1e-2);
         assert!((result.optimal_value + 1.0).abs() < 1e-2);
     }
-} 
+}

@@ -41,7 +41,11 @@ use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, Optimizatio
 /// let result = minimize(&f, &initial_point, &config);
 /// assert!(result.converged);
 /// ```
-pub fn minimize<T, F>(f: &F, initial_point: &[T], config: &OptimizationConfig<T>) -> OptimizationResult<T>
+pub fn minimize<T, F>(
+    f: &F,
+    initial_point: &[T],
+    config: &OptimizationConfig<T>,
+) -> OptimizationResult<T>
 where
     T: Float + Debug,
     F: ObjectiveFunction<T>,
@@ -153,4 +157,4 @@ mod tests {
         assert!((result.optimal_point[0] - 2.0).abs() < 1e-5);
         assert!(result.optimal_value < 1e-10);
     }
-} 
+}

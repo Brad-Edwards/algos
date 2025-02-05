@@ -44,7 +44,11 @@ use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, Optimizatio
 /// let result = minimize(&f, &initial_point, &config);
 /// assert!(result.converged);
 /// ```
-pub fn minimize<T, F>(f: &F, initial_point: &[T], config: &OptimizationConfig<T>) -> OptimizationResult<T>
+pub fn minimize<T, F>(
+    f: &F,
+    initial_point: &[T],
+    config: &OptimizationConfig<T>,
+) -> OptimizationResult<T>
 where
     T: Float + Debug,
     F: ObjectiveFunction<T>,
@@ -113,7 +117,9 @@ where
         let beta_numerator = new_gradient
             .iter()
             .zip(gradient.iter())
-            .fold(T::zero(), |acc, (&new_g, &old_g)| acc + new_g * (new_g - old_g));
+            .fold(T::zero(), |acc, (&new_g, &old_g)| {
+                acc + new_g * (new_g - old_g)
+            });
         let beta = (beta_numerator / prev_gradient_norm_sq).max(T::zero());
 
         // Update direction using conjugate gradient formula
@@ -239,4 +245,4 @@ mod tests {
         assert!((result.optimal_point[0] - 1.0).abs() < 1e-3);
         assert!((result.optimal_point[1] - 1.0).abs() < 1e-3);
     }
-} 
+}

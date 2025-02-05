@@ -45,7 +45,11 @@ use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, Optimizatio
 /// let result = minimize(&f, &initial_point, &config);
 /// assert!(result.converged);
 /// ```
-pub fn minimize<T, F>(f: &F, initial_point: &[T], config: &OptimizationConfig<T>) -> OptimizationResult<T>
+pub fn minimize<T, F>(
+    f: &F,
+    initial_point: &[T],
+    config: &OptimizationConfig<T>,
+) -> OptimizationResult<T>
 where
     T: Float + Debug,
     F: ObjectiveFunction<T>,
@@ -105,15 +109,12 @@ where
         // Scale the initial Hessian approximation
         let mut r = if !s_list.is_empty() {
             let i = s_list.len() - 1;
-            let yy = y_list[i]
-                .iter()
-                .fold(T::zero(), |acc, &y| acc + y * y);
+            let yy = y_list[i].iter().fold(T::zero(), |acc, &y| acc + y * y);
             let ys = y_list[i]
                 .iter()
                 .zip(s_list[i].iter())
                 .fold(T::zero(), |acc, (&y, &s)| acc + y * s);
-            q.iter_mut()
-                .for_each(|r_j| *r_j = *r_j * (ys / yy));
+            q.iter_mut().for_each(|r_j| *r_j = *r_j * (ys / yy));
             q
         } else {
             q.iter_mut()
@@ -172,7 +173,8 @@ where
             .map(|(&g_new, &g_old)| g_new - g_old)
             .collect::<Vec<T>>();
 
-        let ys = y.iter()
+        let ys = y
+            .iter()
             .zip(s.iter())
             .fold(T::zero(), |acc, (&y_i, &s_i)| acc + y_i * s_i);
         let rho = T::one() / ys;
@@ -310,15 +312,21 @@ mod tests {
 
     impl ObjectiveFunction<f64> for HighDimensionalQuadratic {
         fn evaluate(&self, point: &[f64]) -> f64 {
-            point.iter().enumerate().map(|(i, &x)| (i + 1) as f64 * x * x).sum()
+            point
+                .iter()
+                .enumerate()
+                .map(|(i, &x)| (i + 1) as f64 * x * x)
+                .sum()
         }
 
         fn gradient(&self, point: &[f64]) -> Option<Vec<f64>> {
-            Some(point
-                .iter()
-                .enumerate()
-                .map(|(i, &x)| 2.0 * (i + 1) as f64 * x)
-                .collect())
+            Some(
+                point
+                    .iter()
+                    .enumerate()
+                    .map(|(i, &x)| 2.0 * (i + 1) as f64 * x)
+                    .collect(),
+            )
         }
     }
 
@@ -340,4 +348,4 @@ mod tests {
             assert!(x.abs() < 1e-3);
         }
     }
-} 
+}

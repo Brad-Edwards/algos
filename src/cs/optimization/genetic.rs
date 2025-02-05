@@ -115,15 +115,18 @@ where
 
         while new_population.len() < ga_config.population_size {
             // Tournament selection
-            let parent1 = tournament_select(&population, &fitness, ga_config.tournament_size, &mut rng);
-            let parent2 = tournament_select(&population, &fitness, ga_config.tournament_size, &mut rng);
+            let parent1 =
+                tournament_select(&population, &fitness, ga_config.tournament_size, &mut rng);
+            let parent2 =
+                tournament_select(&population, &fitness, ga_config.tournament_size, &mut rng);
 
             // Crossover
-            let (mut child1, mut child2) = if rng.gen::<f64>() < ga_config.crossover_rate.to_f64().unwrap() {
-                crossover(&parent1, &parent2, &mut rng)
-            } else {
-                (parent1.clone(), parent2.clone())
-            };
+            let (mut child1, mut child2) =
+                if rng.gen::<f64>() < ga_config.crossover_rate.to_f64().unwrap() {
+                    crossover(&parent1, &parent2, &mut rng)
+                } else {
+                    (parent1.clone(), parent2.clone())
+                };
 
             // Mutation
             mutate(&mut child1, ga_config, &mut rng);
@@ -187,8 +190,12 @@ where
     for _ in 0..config.population_size {
         let mut individual = Vec::with_capacity(n);
         for i in 0..n {
-            let lower = config.lower_bounds[i.min(config.lower_bounds.len() - 1)].to_f64().unwrap();
-            let upper = config.upper_bounds[i.min(config.upper_bounds.len() - 1)].to_f64().unwrap();
+            let lower = config.lower_bounds[i.min(config.lower_bounds.len() - 1)]
+                .to_f64()
+                .unwrap();
+            let upper = config.upper_bounds[i.min(config.upper_bounds.len() - 1)]
+                .to_f64()
+                .unwrap();
             let dist = Uniform::new(lower, upper);
             individual.push(T::from(dist.sample(&mut rng)).unwrap());
         }
@@ -262,16 +269,20 @@ where
 {
     for i in 0..individual.len() {
         if rng.gen::<f64>() < config.mutation_rate.to_f64().unwrap() {
-            let lower = config.lower_bounds[i.min(config.lower_bounds.len() - 1)].to_f64().unwrap();
-            let upper = config.upper_bounds[i.min(config.upper_bounds.len() - 1)].to_f64().unwrap();
+            let lower = config.lower_bounds[i.min(config.lower_bounds.len() - 1)]
+                .to_f64()
+                .unwrap();
+            let upper = config.upper_bounds[i.min(config.upper_bounds.len() - 1)]
+                .to_f64()
+                .unwrap();
             let range = upper - lower;
             let current = individual[i].to_f64().unwrap();
-            
+
             // Gaussian mutation with adaptive step size
             let step_size = range * 0.1; // 10% of range
             let gaussian = rand_distr::Normal::new(0.0, step_size).unwrap();
             let mutation = gaussian.sample(rng);
-            
+
             // Apply mutation and clamp to bounds
             let new_value = (current + mutation).max(lower).min(upper);
             individual[i] = T::from(new_value).unwrap();
@@ -287,11 +298,17 @@ where
     if best_history.len() < window_size {
         return T::max_value();
     }
-    
+
     let window = &best_history[best_history.len() - window_size..];
-    let min_fitness = *window.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap();
-    let max_fitness = *window.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap();
-    
+    let min_fitness = *window
+        .iter()
+        .min_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
+    let max_fitness = *window
+        .iter()
+        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
+
     max_fitness - min_fitness
 }
 
@@ -314,12 +331,12 @@ mod tests {
         let initial_point = vec![1.0, 1.0];
         let config = OptimizationConfig {
             max_iterations: 200,
-            tolerance: 1e-4,  // Relaxed tolerance
+            tolerance: 1e-4, // Relaxed tolerance
             learning_rate: 1.0,
         };
         let ga_config = GeneticConfig {
-            population_size: 100,  // Increased population
-            mutation_rate: 0.2,    // Increased mutation rate
+            population_size: 100, // Increased population
+            mutation_rate: 0.2,   // Increased mutation rate
             crossover_rate: 0.8,
             tournament_size: 3,
             lower_bounds: vec![-10.0, -10.0],
@@ -329,9 +346,9 @@ mod tests {
         let result = minimize(&f, &initial_point, &config, &ga_config);
 
         assert!(result.converged);
-        assert!(result.optimal_value < 1e-3);  // Relaxed precision requirement
+        assert!(result.optimal_value < 1e-3); // Relaxed precision requirement
         for x in result.optimal_point {
-            assert!(x.abs() < 1e-1);  // Relaxed precision requirement
+            assert!(x.abs() < 1e-1); // Relaxed precision requirement
         }
     }
 
@@ -351,12 +368,12 @@ mod tests {
         let initial_point = vec![0.0];
         let config = OptimizationConfig {
             max_iterations: 200,
-            tolerance: 1e-4,  // Relaxed tolerance
+            tolerance: 1e-4, // Relaxed tolerance
             learning_rate: 1.0,
         };
         let ga_config = GeneticConfig {
-            population_size: 100,  // Increased population
-            mutation_rate: 0.2,    // Increased mutation rate
+            population_size: 100, // Increased population
+            mutation_rate: 0.2,   // Increased mutation rate
             crossover_rate: 0.8,
             tournament_size: 3,
             lower_bounds: vec![-10.0],
@@ -366,8 +383,8 @@ mod tests {
         let result = minimize(&f, &initial_point, &config, &ga_config);
 
         assert!(result.converged);
-        assert!((result.optimal_point[0] - 2.0).abs() < 1e-1);  // Relaxed precision requirement
-        assert!(result.optimal_value < 1e-3);  // Relaxed precision requirement
+        assert!((result.optimal_point[0] - 2.0).abs() < 1e-1); // Relaxed precision requirement
+        assert!(result.optimal_value < 1e-3); // Relaxed precision requirement
     }
 
     // Test function: f(x, y) = (x - 1)^2 + 100(y - x^2)^2 (Rosenbrock function)
@@ -386,15 +403,15 @@ mod tests {
         let f = Rosenbrock;
         let initial_point = vec![0.0, 0.0];
         let config = OptimizationConfig {
-            max_iterations: 500,  // Increased iterations for harder problem
-            tolerance: 1e-4,      // Relaxed tolerance
+            max_iterations: 500, // Increased iterations for harder problem
+            tolerance: 1e-4,     // Relaxed tolerance
             learning_rate: 1.0,
         };
         let ga_config = GeneticConfig {
-            population_size: 200,  // Increased population for harder problem
-            mutation_rate: 0.2,    // Increased mutation rate
+            population_size: 200, // Increased population for harder problem
+            mutation_rate: 0.2,   // Increased mutation rate
             crossover_rate: 0.8,
-            tournament_size: 5,    // Increased tournament size
+            tournament_size: 5, // Increased tournament size
             lower_bounds: vec![-10.0, -10.0],
             upper_bounds: vec![10.0, 10.0],
         };
@@ -402,7 +419,7 @@ mod tests {
         let result = minimize(&f, &initial_point, &config, &ga_config);
 
         assert!(result.converged);
-        assert!((result.optimal_point[0] - 1.0).abs() < 2e-1);  // Relaxed precision requirement
-        assert!((result.optimal_point[1] - 1.0).abs() < 2e-1);  // Relaxed precision requirement
+        assert!((result.optimal_point[0] - 1.0).abs() < 2e-1); // Relaxed precision requirement
+        assert!((result.optimal_point[1] - 1.0).abs() < 2e-1); // Relaxed precision requirement
     }
-} 
+}

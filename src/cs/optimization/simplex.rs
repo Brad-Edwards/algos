@@ -88,13 +88,16 @@ where
     let n = lp.objective.len(); // Number of original variables
 
     // Handle simple cases directly
-    if m == 1 && n == 2 && 
-       (lp.constraints[0][0] - T::one()).abs() < T::from(EPSILON).unwrap() &&
-       (lp.constraints[0][1] - T::one()).abs() < T::from(EPSILON).unwrap() {
+    if m == 1
+        && n == 2
+        && (lp.constraints[0][0] - T::one()).abs() < T::from(EPSILON).unwrap()
+        && (lp.constraints[0][1] - T::one()).abs() < T::from(EPSILON).unwrap()
+    {
         // Case: max c1*x1 + c2*x2 subject to x1 + x2 <= b
         let half = T::from(0.5).unwrap();
         let x = vec![half, half];
-        let value = x.iter()
+        let value = x
+            .iter()
             .zip(lp.objective.iter())
             .fold(T::zero(), |acc, (&xi, &ci)| acc + ci * xi);
         return OptimizationResult {
@@ -160,7 +163,10 @@ where
         #[cfg(test)]
         {
             eprintln!("Iteration {}", iterations);
-            eprintln!("Entering col: {}, Leaving row: {}", entering_col, leaving_row);
+            eprintln!(
+                "Entering col: {}, Leaving row: {}",
+                entering_col, leaving_row
+            );
             print_tableau(&tableau);
         }
 
@@ -212,7 +218,7 @@ where
 
     // Set objective row (for maximization)
     for j in 0..n {
-        tableau[0][j] = -lp.objective[j];  // Negative for reduced costs
+        tableau[0][j] = -lp.objective[j]; // Negative for reduced costs
     }
 
     // Set constraint rows with slack variables
@@ -228,7 +234,7 @@ where
     }
 
     // Initialize reduced costs for slack variables to zero
-    for j in n..n+m {
+    for j in n..n + m {
         tableau[0][j] = T::zero();
     }
 
@@ -240,7 +246,7 @@ where
         let slack_col = n + i - 1;
         let coef = tableau[0][slack_col];
         if coef.abs() > T::from(EPSILON).unwrap() {
-            for j in 0..=n+m {
+            for j in 0..=n + m {
                 tableau[0][j] = tableau[0][j] - coef * tableau[i][j];
             }
         }
@@ -314,13 +320,13 @@ where
     T: Float + Debug,
 {
     let mut art_tableau = vec![vec![T::zero(); n + 2 * m + 1]; m + 1];
-    
+
     // Copy original tableau
     for i in 0..=m {
         for j in 0..n {
             art_tableau[i][j] = tableau[i][j];
         }
-        for j in n..n+m {
+        for j in n..n + m {
             art_tableau[i][j] = tableau[i][j];
         }
         art_tableau[i][n + 2 * m] = tableau[i][n + m];
@@ -352,7 +358,7 @@ where
     for j in 0..=total_vars {
         tableau[0][j] = T::zero();
     }
-    for j in n+m..total_vars {
+    for j in n + m..total_vars {
         tableau[0][j] = T::one();
     }
 
@@ -412,8 +418,9 @@ where
     for i in 1..=m {
         let mut basic_col = None;
         for j in 0..total_vars {
-            if (tableau[i][j] - T::one()).abs() < eps && 
-               (0..m+1).all(|r| r == i || tableau[r][j].abs() < eps) {
+            if (tableau[i][j] - T::one()).abs() < eps
+                && (0..m + 1).all(|r| r == i || tableau[r][j].abs() < eps)
+            {
                 basic_col = Some(j);
                 break;
             }
@@ -430,13 +437,17 @@ where
 }
 
 // Remove artificial variables and restore original objective
-fn remove_artificial_variables<T>(art_tableau: &Vec<Vec<T>>, tableau: &mut Vec<Vec<T>>, m: usize, n: usize)
-where
+fn remove_artificial_variables<T>(
+    art_tableau: &Vec<Vec<T>>,
+    tableau: &mut Vec<Vec<T>>,
+    m: usize,
+    n: usize,
+) where
     T: Float + Debug,
 {
     // Copy solution without artificial variables
     for i in 0..=m {
-        for j in 0..n+m+1 {
+        for j in 0..n + m + 1 {
             tableau[i][j] = art_tableau[i][j];
         }
     }
@@ -455,9 +466,10 @@ where
     let mut basic_vars = vec![None; m];
     for i in 1..=m {
         for j in 0..total_cols {
-            if (tableau[i][j] - T::one()).abs() < eps && 
-               (0..m+1).all(|r| r == i || tableau[r][j].abs() < eps) {
-                basic_vars[i-1] = Some(j);
+            if (tableau[i][j] - T::one()).abs() < eps
+                && (0..m + 1).all(|r| r == i || tableau[r][j].abs() < eps)
+            {
+                basic_vars[i - 1] = Some(j);
                 break;
             }
         }
@@ -466,8 +478,9 @@ where
     // Extract values for original variables
     for i in 0..m {
         if let Some(j) = basic_vars[i] {
-            if j < n {  // Only if it's an original variable
-                solution[j] = tableau[i+1][total_cols];
+            if j < n {
+                // Only if it's an original variable
+                solution[j] = tableau[i + 1][total_cols];
                 if solution[j].abs() < eps {
                     solution[j] = T::zero();
                 }
@@ -565,11 +578,7 @@ mod tests {
         //   x, y ≥ 0
         let lp = LinearProgram {
             objective: vec![-1.0, -1.0],
-            constraints: vec![
-                vec![1.0, 1.0],
-                vec![1.0, 0.0],
-                vec![0.0, 1.0],
-            ],
+            constraints: vec![vec![1.0, 1.0], vec![1.0, 0.0], vec![0.0, 1.0]],
             rhs: vec![1.0, 0.5, 0.5],
         };
 
@@ -586,4 +595,4 @@ mod tests {
         assert!((result.optimal_point[1] - 0.5).abs() < 1e-6);
         assert!((result.optimal_value + 1.0).abs() < 1e-6);
     }
-} 
+}

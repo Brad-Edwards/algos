@@ -45,11 +45,11 @@ pub use hashing::{
 };
 
 pub use optimization::{
-    ObjectiveFunction, OptimizationConfig, OptimizationResult,
-    gradient_descent_minimize, newton_minimize, conjugate_gradient_minimize,
-    bfgs_minimize, lbfgs_minimize, simplex_minimize, interior_point_minimize,
-    nelder_mead_minimize, genetic_minimize, simulated_annealing_minimize,
-    simplex::LinearProgram, genetic::GeneticConfig, simulated_annealing::AnnealingConfig,
+    bfgs_minimize, conjugate_gradient_minimize, genetic::GeneticConfig, genetic_minimize,
+    gradient_descent_minimize, interior_point_minimize, lbfgs_minimize, nelder_mead_minimize,
+    newton_minimize, simplex::LinearProgram, simplex_minimize,
+    simulated_annealing::AnnealingConfig, simulated_annealing_minimize, ObjectiveFunction,
+    OptimizationConfig, OptimizationResult,
 };
 
 pub use search::{bfs::Graph as BfsGraph, dfs::Graph as DfsGraph, fibonacci_search};

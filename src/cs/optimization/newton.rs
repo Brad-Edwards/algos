@@ -53,7 +53,11 @@ use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, Optimizatio
 /// let result = minimize(&f, &initial_point, &config);
 /// assert!(result.converged);
 /// ```
-pub fn minimize<T, F>(f: &F, initial_point: &[T], config: &OptimizationConfig<T>) -> OptimizationResult<T>
+pub fn minimize<T, F>(
+    f: &F,
+    initial_point: &[T],
+    config: &OptimizationConfig<T>,
+) -> OptimizationResult<T>
 where
     T: Float + Debug,
     F: ObjectiveFunction<T>,
@@ -117,11 +121,15 @@ where
                 break;
             }
 
-            // Eliminate column i
+            // Store the i-th row values we need
+            let pivot_row_vals: Vec<T> = augmented[i].clone();
+            let pivot = pivot_row_vals[i];
+
+            // Update lower triangular part
             for j in (i + 1)..n {
-                let factor = augmented[j][i] / augmented[i][i];
+                let factor = augmented[j][i] / pivot;
                 for k in i..(n + 1) {
-                    augmented[j][k] = augmented[j][k] - factor * augmented[i][k];
+                    augmented[j][k] = augmented[j][k] - factor * pivot_row_vals[k];
                 }
             }
         }
@@ -245,4 +253,4 @@ mod tests {
         assert!((result.optimal_point[0] - 2.0).abs() < 1e-5);
         assert!(result.optimal_value < 1e-10);
     }
-} 
+}
