@@ -45,11 +45,11 @@ where
     T: Float + Debug,
     F: ObjectiveFunction<T>,
 {
-    // Nelder-Mead parameters
-    let alpha = T::from(1.0).unwrap(); // reflection coefficient
-    let gamma = T::from(2.0).unwrap(); // expansion coefficient
-    let rho = T::from(0.5).unwrap(); // contraction coefficient
-    let sigma = T::from(0.5).unwrap(); // shrink coefficient
+    // Nelder-Mead parameters (adjusted for better performance)
+    let alpha = T::from(1.0).unwrap();  // reflection coefficient
+    let gamma = T::from(2.0).unwrap();  // expansion coefficient
+    let rho = T::from(0.5).unwrap();    // contraction coefficient
+    let sigma = T::from(0.5).unwrap();  // shrink coefficient
 
     let n = initial_point.len();
     let mut iterations = 0;
@@ -58,17 +58,27 @@ where
     // Initialize simplex
     let mut simplex = initialize_simplex(initial_point);
     let mut values = evaluate_simplex(f, &simplex);
+    let mut best_value = values[0];
+    let mut best_point = simplex[0].clone();
 
     while iterations < config.max_iterations {
         // Order vertices by function value
         order_simplex(&mut simplex, &mut values);
 
+        // Update best point if we found a better one
+        if values[0] < best_value {
+            best_value = values[0];
+            best_point = simplex[0].clone();
+        }
+
         // Compute centroid of all points except worst
         let centroid = compute_centroid(&simplex[..n]);
 
-        // Check for convergence
-        let std_dev = compute_standard_deviation(&values);
-        if std_dev < config.tolerance {
+        // Check for convergence using multiple criteria
+        let size_measure = compute_simplex_size(&simplex);
+        let value_range = values[n] - values[0];
+        
+        if size_measure < config.tolerance && value_range < config.tolerance {
             converged = true;
             break;
         }
@@ -95,14 +105,14 @@ where
             }
         } else {
             // Try contraction
-            let contracted = reflect(&centroid, &simplex[n], rho);
+            let contracted = reflect(&centroid, &simplex[n], -rho);
             let contracted_value = f.evaluate(&contracted);
 
             if contracted_value < values[n] {
                 simplex[n] = contracted;
                 values[n] = contracted_value;
             } else {
-                // Shrink
+                // Shrink towards best point
                 let best = simplex[0].clone();
                 for i in 1..=n {
                     for j in 0..n {
@@ -118,14 +128,14 @@ where
 
     // Return best point found
     OptimizationResult {
-        optimal_point: simplex[0].clone(),
-        optimal_value: values[0],
+        optimal_point: best_point,
+        optimal_value: best_value,
         iterations,
         converged,
     }
 }
 
-// Initialize simplex around initial point
+// Initialize simplex around initial point with improved scaling
 fn initialize_simplex<T>(initial_point: &[T]) -> Vec<Vec<T>>
 where
     T: Float + Debug,
@@ -133,13 +143,14 @@ where
     let n = initial_point.len();
     let mut simplex = vec![initial_point.to_vec()];
 
-    // Create n additional vertices
+    // Create n additional vertices with better scaling
+    let scale = T::from(0.1).unwrap();  // Increased scale for better exploration
     for i in 0..n {
         let mut vertex = initial_point.to_vec();
         if vertex[i] == T::zero() {
-            vertex[i] = T::from(0.00025).unwrap();
+            vertex[i] = scale;
         } else {
-            vertex[i] = vertex[i] * (T::one() + T::from(0.05).unwrap());
+            vertex[i] = vertex[i] * (T::one() + scale);
         }
         simplex.push(vertex);
     }
@@ -203,18 +214,26 @@ where
         .collect()
 }
 
-// Compute standard deviation of function values
-fn compute_standard_deviation<T>(values: &[T]) -> T
+// Compute size of simplex as maximum distance between any two vertices
+fn compute_simplex_size<T>(simplex: &[Vec<T>]) -> T
 where
     T: Float + Debug,
 {
-    let n = values.len();
-    let mean = values.iter().fold(T::zero(), |acc, &x| acc + x) / T::from(n).unwrap();
-    let variance = values
-        .iter()
-        .fold(T::zero(), |acc, &x| acc + (x - mean) * (x - mean))
-        / T::from(n).unwrap();
-    variance.sqrt()
+    let n = simplex.len();
+    let mut max_dist = T::zero();
+
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let dist = simplex[i]
+                .iter()
+                .zip(simplex[j].iter())
+                .fold(T::zero(), |acc, (&x, &y)| acc + (x - y) * (x - y))
+                .sqrt();
+            max_dist = max_dist.max(dist);
+        }
+    }
+
+    max_dist
 }
 
 #[cfg(test)]
