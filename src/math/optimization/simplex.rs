@@ -1,7 +1,7 @@
 use num_traits::Float;
 use std::fmt::Debug;
 
-use crate::cs::optimization::{OptimizationConfig, OptimizationResult};
+use crate::math::optimization::{OptimizationConfig, OptimizationResult};
 
 /// A linear programming problem in standard form.
 #[derive(Debug, Clone)]

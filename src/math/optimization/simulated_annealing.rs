@@ -2,7 +2,7 @@ use num_traits::Float;
 use rand::Rng;
 use std::fmt::Debug;
 
-use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, OptimizationResult};
+use crate::math::optimization::{ObjectiveFunction, OptimizationConfig, OptimizationResult};
 
 /// Configuration specific to simulated annealing.
 #[derive(Debug, Clone)]

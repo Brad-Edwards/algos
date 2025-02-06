@@ -1,7 +1,7 @@
 use num_traits::Float;
 use std::fmt::Debug;
 
-use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, OptimizationResult};
+use crate::math::optimization::{ObjectiveFunction, OptimizationConfig, OptimizationResult};
 
 /// Minimizes an objective function using gradient descent.
 ///

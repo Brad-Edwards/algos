@@ -190,6 +190,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Genetic Algorithm  
 ✅ Simulated Annealing  
 
+#### Integer Linear Programming Methods
+
+✅ Branch and Bound  
+✅ Branch and Cut  
+✅ Branch and Price  
+✅ Gomory Cutting Planes  
+✅ Dantzig–Wolfe Decomposition  
+✅ Benders Decomposition  
+✅ Mixed Integer Rounding Cuts  
+✅ Lift-and-Project Cuts  
+✅ Branch & Reduce  
+✅ Column Generation  
+
 ### 🚧 Planned Implementation
 
 See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:

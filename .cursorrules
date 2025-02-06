@@ -34,77 +34,52 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 - When debugging, especially for tests, keep track of problems and solutions in the scratchpad so you do not make the same mistake again or go in circles
 - When testing stochastic optimization algorithms (like simulated annealing), use multiple trials and statistical success criteria (e.g., success rate) instead of single deterministic tests
 
+## Benders Implementation Lessons
+
+- Need to properly handle maximization vs minimization
+- Must track integer constraints explicitly
+- Cut generation is critical for convergence
+- Master problem must include original constraints
+- Objective function must be properly set in both master and subproblems
+
 # Scratchpad
 
-## Current Task: Fix Optimization Algorithm Tests
+## Current Task: Debug Benders Decomposition Implementation
 
-### Analysis of Test Failures
+### Problem Analysis
 
-1. Convergence Issues:
-   - BFGS (Rosenbrock)
-   - Genetic Algorithm (all tests)
-   - Interior Point (all tests)
+1. Two failing tests:
+   - test_simple_ilp: Objective value incorrect (getting 10.0 instead of 5.0)
+   - test_infeasible_ilp: Reporting Optimal when should be Infeasible
 
-2. Precision/Accuracy Issues:
-   - Nelder-Mead (quadratic tests)
-   - Simplex (all LP tests)
-   - Simulated Annealing (all tests)
+### Root Cause Analysis
 
-### Action Plan
+1. Master Problem Issues:
+   - Objective function is all zeros
+   - Not properly handling original constraints
+   - Finding infeasible solutions (5.0, 5.0)
 
-[ ] Phase 1: Fix Deterministic Algorithms
-    [ ] 1.1 BFGS Rosenbrock
-        - Analyze convergence criteria
-        - Check Hessian approximation
-        - Verify line search parameters
-    [ ] 1.2 Interior Point
-        - Debug numerical stability issues
-        - Review barrier parameter updates
-        - Check step size calculations
-    [ ] 1.3 Simplex
-        - Fix precision issues in pivot operations
-        - Review optimality conditions
-        - Add numerical stability safeguards
+2. Subproblem Issues:
+   - Getting trivial solution (0.0, 0.0)
+   - Cut generation not enforcing constraints
+   - Negating objective incorrectly
 
-[ ] Phase 2: Fix Direct Search Methods
-    [ ] 2.1 Nelder-Mead
-        - Adjust reflection/expansion parameters
-        - Review shrink operations
-        - Improve termination criteria
-    [ ] 2.2 Simulated Annealing
-        - Tune cooling schedule
-        - Adjust acceptance probability
-        - Improve neighborhood generation
+### Debug Plan
 
-[ ] Phase 3: Fix Population-based Methods
-    [ ] 3.1 Genetic Algorithm
-        - Review selection mechanism
-        - Adjust mutation rates
-        - Improve crossover operator
-        - Enhance population diversity
+[X] 1. Add logging to track problem state
+[X] 2. Analyze master problem formulation
+[ ] 3. Fix master problem
+    [ ] Set correct objective function
+    [ ] Add original constraints properly
+    [ ] Validate solution feasibility
+[ ] 4. Fix subproblem
+    [ ] Correct objective handling
+    [ ] Improve cut generation
+    [ ] Validate solution quality
 
 ### Implementation Strategy
 
-1. For each algorithm:
-   - Read and understand current implementation
-   - Add debug logging for key operations
-   - Run tests with detailed output
-   - Identify specific failure points
-   - Implement fixes
-   - Verify with tests
-   - Document changes
-
-2. Priority Order:
-   1. Simplex (foundation for LP)
-   2. Interior Point (depends on stable LP)
-   3. BFGS (key for nonlinear optimization)
-   4. Nelder-Mead
-   5. Simulated Annealing
-   6. Genetic Algorithm
-
-### Progress Tracking
-
-Current Phase: Planning
-Next Action: Begin with Simplex Method fixes
-
-All clippy warnings have been addressed. The codebase is now free of linting issues.
+1. Fix master problem first
+2. Then fix subproblem
+3. Verify each fix with tests
+4. Document findings in Lessons section
