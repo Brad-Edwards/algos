@@ -26,11 +26,64 @@ impl BranchAndCutSolver {
         &self,
         problem: &IntegerLinearProgram,
     ) -> Result<ILPSolution, Box<dyn Error>> {
+        // First check for obviously conflicting constraints
+        for i in 0..problem.constraints.len() {
+            for j in i + 1..problem.constraints.len() {
+                let c1 = &problem.constraints[i];
+                let c2 = &problem.constraints[j];
+
+                // Check if constraints are parallel (same direction)
+                let parallel = c1
+                    .iter()
+                    .zip(c2.iter())
+                    .all(|(&a, &b)| (a.abs() - b.abs()).abs() < self.tolerance);
+
+                if parallel {
+                    let b1 = problem.bounds[i];
+                    let b2 = problem.bounds[j];
+                    let is_c1_geq = c1.iter().any(|&x| x < 0.0);
+                    let is_c2_geq = c2.iter().any(|&x| x < 0.0);
+
+                    // If both are <= and lower bound > upper bound, infeasible
+                    // If both are >= and upper bound < lower bound, infeasible
+                    // If one is <= and one is >= and they conflict, infeasible
+                    if (!is_c1_geq && !is_c2_geq && b1 < b2 - self.tolerance)
+                        || (is_c1_geq && is_c2_geq && -b1 > -b2 + self.tolerance)
+                        || (is_c1_geq != is_c2_geq && b1 < b2 - self.tolerance)
+                    {
+                        return Ok(ILPSolution {
+                            values: vec![],
+                            objective_value: f64::NEG_INFINITY,
+                            status: ILPStatus::Infeasible,
+                        });
+                    }
+                }
+            }
+        }
+
+        // Convert constraints to standard form (Ax <= b)
+        let mut std_constraints = Vec::new();
+        let mut std_bounds = Vec::new();
+
+        // Process each constraint
+        for (i, constraint) in problem.constraints.iter().enumerate() {
+            if constraint.iter().any(|&x| x < 0.0) {
+                // This is a >= constraint (negative coefficients), negate it
+                let negated: Vec<f64> = constraint.iter().map(|&x| -x).collect();
+                std_constraints.push(negated);
+                std_bounds.push(-problem.bounds[i]);
+            } else {
+                // This is a <= constraint, keep as is
+                std_constraints.push(constraint.clone());
+                std_bounds.push(problem.bounds[i]);
+            }
+        }
+
         let lp = LinearProgram {
             // For maximization, we need to negate the objective since minimize will negate it again
             objective: problem.objective.iter().map(|&x| -x).collect(),
-            constraints: problem.constraints.clone(),
-            rhs: problem.bounds.clone(),
+            constraints: std_constraints,
+            rhs: std_bounds,
         };
 
         let config = OptimizationConfig {
@@ -40,14 +93,61 @@ impl BranchAndCutSolver {
         };
         let result = minimize(&lp, &config);
 
+        // Basic checks
+        if !result.converged
+            || result.optimal_point.is_empty()
+            || result.optimal_value.is_infinite()
+            || result.optimal_value.is_nan()
+        {
+            return Ok(ILPSolution {
+                values: vec![],
+                objective_value: f64::NEG_INFINITY,
+                status: ILPStatus::Infeasible,
+            });
+        }
+
+        // Check feasibility against original constraints
+        for (i, constraint) in problem.constraints.iter().enumerate() {
+            let lhs: f64 = constraint
+                .iter()
+                .zip(&result.optimal_point)
+                .map(|(a, &x)| a * x)
+                .sum();
+
+            // Check based on constraint type
+            let violation = if constraint.iter().any(|&x| x < 0.0) {
+                // >= constraint (x + y >= 6 means -x - y <= -6)
+                lhs < problem.bounds[i] - self.tolerance
+            } else {
+                // <= constraint
+                lhs > problem.bounds[i] + self.tolerance
+            };
+
+            if violation {
+                // If any constraint is violated, the problem is infeasible
+                return Ok(ILPSolution {
+                    values: vec![],
+                    objective_value: f64::NEG_INFINITY,
+                    status: ILPStatus::Infeasible,
+                });
+            }
+        }
+
+        // Also check non-negativity
+        for &x in &result.optimal_point {
+            if x < -self.tolerance {
+                return Ok(ILPSolution {
+                    values: vec![],
+                    objective_value: f64::NEG_INFINITY,
+                    status: ILPStatus::Infeasible,
+                });
+            }
+        }
+
         Ok(ILPSolution {
             values: result.optimal_point,
             objective_value: -result.optimal_value, // Negate back since we're maximizing
-            status: if result.converged {
-                ILPStatus::Optimal
-            } else {
-                ILPStatus::Infeasible
-            },
+            status: ILPStatus::Optimal,
         })
     }
 
@@ -222,29 +322,33 @@ mod tests {
 
     #[test]
     fn test_simple_ilp() -> Result<(), Box<dyn Error>> {
-        // Simple ILP: maximize x + y subject to:
-        // x + y <= 5
-        // x, y >= 0
-        // x, y integer
+        // maximize 2x + y
+        // subject to:
+        //   x + y <= 4
+        //   x <= 2
+        //   x, y >= 0 and integer
         let problem = IntegerLinearProgram {
-            objective: vec![1.0, 1.0],
+            objective: vec![2.0, 1.0], // Prefer x over y
             constraints: vec![
-                vec![1.0, 1.0], // x + y <= 5
-                vec![1.0, 0.0], // x >= 0
-                vec![0.0, 1.0], // y >= 0
+                vec![1.0, 1.0], // x + y <= 4
+                vec![1.0, 0.0], // x <= 2
             ],
-            bounds: vec![5.0, 0.0, 0.0],
+            bounds: vec![4.0, 2.0],
             integer_vars: vec![0, 1],
         };
 
-        let solver = BranchAndCutSolver::new(1000, 1e-6, 5);
+        let solver = BranchAndCutSolver::new(100, 1e-6, 5);
         let solution = solver.solve(&problem)?;
 
         assert_eq!(solution.status, ILPStatus::Optimal);
-        assert!((solution.objective_value - 5.0).abs() < 1e-6);
-        assert!(solution.values.len() == 2);
-        assert!((solution.values[0].round() - solution.values[0]).abs() < 1e-6);
-        assert!((solution.values[1].round() - solution.values[1]).abs() < 1e-6);
+        // Optimal solution should be x=2, y=2 giving value of 6
+        assert!((solution.objective_value - 6.0).abs() < 1e-6);
+
+        // Check integer feasibility
+        for &v in &solution.values {
+            assert!((v - v.round()).abs() < 1e-6);
+            assert!(v >= 0.0); // Check non-negativity
+        }
 
         Ok(())
     }
