@@ -83,3 +83,217 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 2. Then fix subproblem
 3. Verify each fix with tests
 4. Document findings in Lessons section
+
+## Branch and Bound Implementation Analysis
+
+### Core Components
+
+1. Data Structures
+   - BranchAndBoundSolver: {max_iterations, tolerance}
+   - IntegerLinearProgram: {objective, constraints, bounds, integer_vars}
+   - ILPSolution: {values, objective_value, status}
+   - LinearProgram: {objective, constraints, rhs}
+
+2. Key Functions
+   - solve_relaxation: Solves LP relaxation of ILP
+   - branch: Creates two new subproblems by branching on a variable
+   - solve: Main B&B algorithm
+   - is_integer: Helper to check if value is integer within tolerance
+
+### Detailed Analysis
+
+#### solve_relaxation
+
+1. Input handling:
+   - Takes ILP problem
+   - Negates objective for maximization -> minimization conversion ✓
+   - Creates new empty LP ✓
+
+2. Constraint conversion:
+   - Converts constraints to <= form
+   - ISSUE 1: Non-negativity constraints are added with wrong sign
+     - Current: x_i >= 0 becomes x_i <= 0 (WRONG)
+     - Should be: x_i >= 0 becomes -x_i <= 0
+
+3. LP solving:
+   - Uses minimize() from simplex module
+   - Basic feasibility checks ✓
+   - ISSUE 2: Constraint checking is wrong
+     - Current: Treats all constraints as <=
+     - Should: Handle <= and >= differently based on sign
+
+#### branch
+
+1. Creates two branches:
+   - Lower: x_i <= floor(value)
+   - Upper: x_i >= ceil(value)
+   - ISSUE 3: Upper branch constraint is correct but might be redundant with non-negativity
+
+#### solve (main algorithm)
+
+1. Algorithm flow:
+   - Initializes with root problem ✓
+   - Solves initial relaxation
+   - Main loop:
+     - Pop node
+     - Solve relaxation
+     - Check integer feasibility
+     - Branch if needed
+   - ISSUE 4: Node selection strategy might not be optimal
+     - Currently using DFS (stack)
+     - Might want best-bound search instead
+
+### Test Analysis
+
+1. test_simple_ilp:
+   - Problem: max x + y s.t. x + y <= 5, x,y >= 0
+   - Expected: Any integer solution summing to 5
+   - ISSUE 5: Test is correct, our constraint handling is wrong
+
+2. test_infeasible_ilp:
+   - Problem: max x + y s.t. x + y <= 5, x + y >= 6, x,y >= 0
+   - Expected: Infeasible
+   - Test is correct ✓
+
+### Root Cause Analysis
+
+The fundamental issue is in solve_relaxation:
+
+1. We're incorrectly handling non-negativity constraints
+2. We're not properly handling >= constraints
+3. The LP solver is getting constraints in wrong form
+
+### Fix Plan
+
+[ ] 1. Fix non-negativity constraints in solve_relaxation
+[ ] 2. Fix constraint conversion to standard form
+[ ] 3. Run tests
+[ ] 4. Consider improving node selection strategy (optional)
+
+### Progress
+
+[X] Complete code analysis
+[ ] Implement fixes
+[ ] Verify fixes with tests
+
+### Test Output Analysis
+
+For test_simple_ilp:
+
+```
+LP result: converged=true, obj=-5, point=[5.0, 5.0]
+Checking constraint 0: LHS=10, bound=5, coeffs=[1.0, 1.0]
+Constraint 0 violated: LHS=10 > bound=5
+```
+
+CRITICAL INSIGHT: The LP solver is giving us the WRONG solution!
+
+- For max x + y s.t. x + y <= 5, x,y >= 0
+- LP solver returns (5,5) which is clearly wrong
+- This means our problem formulation is wrong
+
+### Root Cause (Updated)
+
+1. The minimize() function expects problems in standard form:
+
+   ```
+   minimize c^T x
+   subject to Ax <= b
+   ```
+
+2. Our current formulation:
+   - We negate objective correctly: min -x - y
+   - We keep constraints as-is: x + y <= 5
+   - We add -x <= 0, -y <= 0
+
+3. The REAL issue:
+   - The minimize() function is treating ALL constraints as >=
+   - So x + y <= 5 becomes x + y >= 5 (WRONG!)
+   - This explains why we get (5,5) as solution
+
+### Fix Plan (Updated)
+
+[ ] 1. Fix constraint handling in solve_relaxation:
+      - Negate ALL constraints to flip >= to <=
+      - Keep <= constraints as-is
+      - Add non-negativity as -x_i <= 0
+
+[ ] 2. Fix constraint checking:
+      - Check against original constraints
+      - Don't modify bounds
+
+[ ] 3. Run tests
+
+### Progress
+
+[X] Complete code analysis
+[X] Identify root cause
+[ ] Implement fixes
+[ ] Verify fixes with tests
+
+### NEW INSIGHT: LP Solver Issue
+
+The problem is more fundamental than just stopping at the first solution:
+
+1. The LP solver is consistently returning (0,0) as optimal
+2. This means our constraint transformation is wrong
+3. Looking at the tableau output:
+
+   ```
+   Final tableau:
+   [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0]
+   [0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0]
+   ```
+
+   The coefficients are all wrong - we're negating constraints incorrectly
+
+### Updated Fix Plan
+
+[ ] 1. Fix constraint negation in solve_relaxation:
+      - Only negate >= constraints
+      - Keep <= constraints as is
+      - Fix non-negativity constraints
+      - Double check tableau output
+
+[ ] 2. Run tests and verify tableau
+
+[ ] 3. If still wrong, trace through simplex solver
+
+### Progress
+
+[X] Complete code analysis
+[X] Identify root cause (constraint negation)
+[ ] Fix constraint handling
+[ ] Verify with tests
+
+### NEW INSIGHT: Objective Function Issue
+
+Looking at the tableau output:
+
+1. The objective row (first row) has zeros in the x,y columns
+2. This means the solver sees no benefit in increasing x or y
+3. Therefore it's choosing the minimum feasible values (0,0)
+
+The issue is in how we're handling the objective:
+
+1. We correctly negate for minimization: min -x - y
+2. But the simplex solver is treating this differently
+3. We need to adjust how we pass the objective to minimize()
+
+### Updated Fix Plan
+
+[ ] 1. Fix objective handling in solve_relaxation:
+      - Pass objective coefficients correctly
+      - Verify tableau shows proper optimization direction
+      - Check final solution makes sense
+
+[ ] 2. Run tests and verify tableau
+
+[ ] 3. If still wrong, trace through simplex solver
+
+### Progress
+
+[X] Complete code analysis
+[X] Identify root cause (objective handling)
+[ ] Fix objective function
+[ ] Verify with tests

@@ -21,7 +21,10 @@ pub struct IntegerLinearProgram {
 }
 
 pub trait ILPSolver {
-    fn solve(&self, problem: &IntegerLinearProgram) -> Result<ILPSolution, Box<dyn std::error::Error>>;
+    fn solve(
+        &self,
+        problem: &IntegerLinearProgram,
+    ) -> Result<ILPSolution, Box<dyn std::error::Error>>;
 }
 
 // -----------------------------------------------------------------------
@@ -34,9 +37,9 @@ pub trait ILPSolver {
 // -----------------------------------------------------------------------
 #[derive(Debug)]
 pub struct LinearProgram {
-    pub objective: Vec<f64>,    // c
+    pub objective: Vec<f64>,        // c
     pub constraints: Vec<Vec<f64>>, // rows of A
-    pub rhs: Vec<f64>,          // b
+    pub rhs: Vec<f64>,              // b
 }
 
 /// Configuration for the optimizer
@@ -204,7 +207,7 @@ pub fn minimize(lp: &LinearProgram, cfg: &OptimizationConfig) -> MinimizeResult 
         }
     }
 
-    // The objective row last cell is the value of the *transformed* objective: 
+    // The objective row last cell is the value of the *transformed* objective:
     // We were maximizing -c^T x, so that final row's RHS is -optimal_value
     let final_obj = tableau[m][n + m];
 
@@ -300,9 +303,12 @@ impl BendersDecomposition {
                 objective[i] = -problem.objective[i];
             }
         }
-        
+
         // Add objective term for continuous variables (eta)
-        if !problem.integer_vars.contains(&(problem.objective.len() - 1)) {
+        if !problem
+            .integer_vars
+            .contains(&(problem.objective.len() - 1))
+        {
             objective.push(1.0);
         }
 
@@ -342,8 +348,13 @@ impl BendersDecomposition {
         // Check feasibility in original constraints
         let x = &res.optimal_point;
         let mut feasible = true;
-        for (i, (coeffs, &rhs)) in problem.constraints.iter().zip(problem.bounds.iter()).enumerate() {
-            let lhs: f64 = coeffs.iter().zip(x.iter()).map(|(&a, &xx)| a*xx).sum();
+        for (i, (coeffs, &rhs)) in problem
+            .constraints
+            .iter()
+            .zip(problem.bounds.iter())
+            .enumerate()
+        {
+            let lhs: f64 = coeffs.iter().zip(x.iter()).map(|(&a, &xx)| a * xx).sum();
             if lhs > rhs + self.tolerance {
                 eprintln!("Original constraint {} violated: {} > {}", i, lhs, rhs);
                 feasible = false;
@@ -372,7 +383,10 @@ impl BendersDecomposition {
         problem: &IntegerLinearProgram,
         subproblem_constraints: &[(Vec<f64>, f64)],
     ) -> Result<(f64, Vec<f64>, f64), Box<dyn Error>> {
-        eprintln!("\nSolving subproblem with fixed integer variables: {:?}", fixed_vars);
+        eprintln!(
+            "\nSolving subproblem with fixed integer variables: {:?}",
+            fixed_vars
+        );
 
         // Fix: Correct objective handling for subproblem
         let mut sub_objective = vec![0.0; problem.objective.len()];
@@ -427,7 +441,11 @@ impl BendersDecomposition {
 
         // Evaluate subproblem objective in the original objective sense
         let sub_x = &res.optimal_point;
-        let sub_obj: f64 = sub_x.iter().zip(problem.objective.iter()).map(|(&xx, &c)| xx*c).sum();
+        let sub_obj: f64 = sub_x
+            .iter()
+            .zip(problem.objective.iter())
+            .map(|(&xx, &c)| xx * c)
+            .sum();
 
         eprintln!("Calculated subproblem objective: {}", sub_obj);
 
@@ -451,7 +469,12 @@ impl ILPSolver for BendersDecomposition {
     fn solve(&self, problem: &IntegerLinearProgram) -> Result<ILPSolution, Box<dyn Error>> {
         eprintln!("\nSolving ILP with Benders Decomposition:");
         eprintln!("Objective: {:?}", problem.objective);
-        for (i, (con, &rhs)) in problem.constraints.iter().zip(problem.bounds.iter()).enumerate() {
+        for (i, (con, &rhs)) in problem
+            .constraints
+            .iter()
+            .zip(problem.bounds.iter())
+            .enumerate()
+        {
             eprintln!("  {}: {:?} <= {}", i, con, rhs);
         }
         eprintln!("Integer vars: {:?}", problem.integer_vars);
@@ -531,10 +554,11 @@ impl ILPSolver for BendersDecomposition {
                         break;
                     }
                     // Check cut violation
-                    let lhs: f64 = master_sol.values
+                    let lhs: f64 = master_sol
+                        .values
                         .iter()
                         .zip(&cut_coeffs)
-                        .map(|(&xv, &cc)| xv*cc)
+                        .map(|(&xv, &cc)| xv * cc)
                         .sum();
                     let violation = lhs - cut_rhs;
                     if violation > self.tolerance {
@@ -600,9 +624,9 @@ mod tests {
         let problem = IntegerLinearProgram {
             objective: vec![1.0, 1.0],
             constraints: vec![
-                vec![1.0, 1.0],    // x + y <= 5
-                vec![-1.0, 0.0],   // x >= 0
-                vec![0.0, -1.0],   // y >= 0
+                vec![1.0, 1.0],  // x + y <= 5
+                vec![-1.0, 0.0], // x >= 0
+                vec![0.0, -1.0], // y >= 0
             ],
             bounds: vec![5.0, 0.0, 0.0],
             integer_vars: vec![0, 1],
@@ -632,10 +656,10 @@ mod tests {
         let problem = IntegerLinearProgram {
             objective: vec![1.0, 1.0],
             constraints: vec![
-                vec![1.0, 1.0],    // x + y <= 5
-                vec![-1.0, -1.0],  // x + y >= 6
-                vec![-1.0, 0.0],   // x >= 0
-                vec![0.0, -1.0],   // y >= 0
+                vec![1.0, 1.0],   // x + y <= 5
+                vec![-1.0, -1.0], // x + y >= 6
+                vec![-1.0, 0.0],  // x >= 0
+                vec![0.0, -1.0],  // y >= 0
             ],
             bounds: vec![5.0, -6.0, 0.0, 0.0],
             integer_vars: vec![0, 1],
