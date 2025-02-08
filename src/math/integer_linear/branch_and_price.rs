@@ -139,6 +139,9 @@ impl BranchAndPriceSolver {
     }
 
     fn generate_columns(&self, problem: &mut IntegerLinearProgram, solution: &ILPSolution) -> bool {
+        if problem.objective.len() >= self.max_columns_per_node {
+            return false;
+        }
         let mut columns_added = 0;
         let mut dual_values = vec![0.0; problem.constraints.len()];
 
@@ -218,6 +221,13 @@ impl ILPSolver for BranchAndPriceSolver {
                 Ok(sol) if sol.status == ILPStatus::Optimal => sol,
                 _ => continue,
             };
+
+            // Generate additional columns if possible
+            let mut current_node = node.clone();
+            if self.generate_columns(&mut current_node, &relaxation) {
+                stack.push(current_node);
+                continue;
+            }
 
             // If the relaxation's best bound <= current best, prune
             if relaxation.objective_value <= best_objective {
