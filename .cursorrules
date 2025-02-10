@@ -33,6 +33,7 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 - Use 'gpt-4o' as the model name for OpenAI's GPT-4 with vision capabilities
 - When debugging, especially for tests, keep track of problems and solutions in the scratchpad so you do not make the same mistake again or go in circles
 - When testing stochastic optimization algorithms (like simulated annealing), use multiple trials and statistical success criteria (e.g., success rate) instead of single deterministic tests
+- When using optimization solvers that handle objective transformation (e.g., minimization to maximization), be careful not to transform the objective multiple times. Let the solver handle the transformation.
 
 ## Benders Implementation Lessons
 

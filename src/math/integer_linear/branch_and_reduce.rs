@@ -16,17 +16,14 @@ impl BranchAndReduceSolver {
         }
     }
 
-    fn is_integer(&self, value: f64) -> bool {
-        (value - value.round()).abs() < self.tolerance
-    }
-
     fn solve_relaxation(
         &self,
         problem: &IntegerLinearProgram,
     ) -> Result<ILPSolution, Box<dyn Error>> {
+        // We want to maximize, but minimize() will negate the objective and then negate the result,
+        // effectively giving us back what we want. So we pass the objective directly.
         let lp = LinearProgram {
-            // For maximization, we need to negate the objective since minimize will negate it again
-            objective: problem.objective.iter().map(|&x| -x).collect(),
+            objective: problem.objective.clone(),
             constraints: problem.constraints.clone(),
             rhs: problem.bounds.clone(),
         };
@@ -38,14 +35,40 @@ impl BranchAndReduceSolver {
         };
         let result = minimize(&lp, &config);
 
+        // Basic checks
+        if !result.converged
+            || result.optimal_point.is_empty()
+            || result.optimal_value.is_infinite()
+            || result.optimal_value.is_nan()
+        {
+            return Ok(ILPSolution {
+                values: vec![],
+                objective_value: f64::NEG_INFINITY,
+                status: ILPStatus::Infeasible,
+            });
+        }
+
+        // Check feasibility: A x <= b + tol
+        for (constraint, &b) in problem.constraints.iter().zip(problem.bounds.iter()) {
+            let lhs: f64 = constraint
+                .iter()
+                .zip(&result.optimal_point)
+                .map(|(a, &x)| a * x)
+                .sum();
+            if lhs > b + self.tolerance {
+                return Ok(ILPSolution {
+                    values: vec![],
+                    objective_value: f64::NEG_INFINITY,
+                    status: ILPStatus::Infeasible,
+                });
+            }
+        }
+
+        // Everything is feasible; result.optimal_value is already what we want
         Ok(ILPSolution {
-            values: result.optimal_point,
-            objective_value: -result.optimal_value, // Negate back since we're maximizing
-            status: if result.converged {
-                ILPStatus::Optimal
-            } else {
-                ILPStatus::Infeasible
-            },
+            values: result.optimal_point.clone(),
+            objective_value: result.optimal_value,
+            status: ILPStatus::Optimal,
         })
     }
 
@@ -55,44 +78,35 @@ impl BranchAndReduceSolver {
         let mut i = 0;
 
         while i < problem.constraints.len() {
-            // Check if constraint is redundant
-            let mut is_redundant = false;
             let current = &problem.constraints[i];
 
-            // Simple redundancy check: if all coefficients are zero
-            if current.iter().all(|&x| x.abs() < self.tolerance) {
-                is_redundant = true;
-            }
-
-            // Check if constraint is dominated by another constraint
-            for j in 0..problem.constraints.len() {
-                if i != j {
-                    let other = &problem.constraints[j];
-                    if self.dominates(other, current, problem.bounds[j], problem.bounds[i]) {
-                        is_redundant = true;
-                        break;
-                    }
+            // If all coefficients are ~0 but the bound is negative, the problem is infeasible;
+            // If the bound is >= 0, this constraint is always satisfied and can be dropped.
+            let all_zero = current.iter().all(|&x| x.abs() < self.tolerance);
+            if all_zero {
+                if problem.bounds[i] < -self.tolerance {
+                    // The constraint "0 <= negative" is unsatisfiable
+                    problem.constraints.clear();
+                    problem.bounds.clear();
+                    return true;
+                } else {
+                    // The constraint "0 <= some_nonnegative" is redundant
+                    problem.constraints.remove(i);
+                    problem.bounds.remove(i);
+                    reduced = true;
+                    continue; // do not increment i
                 }
             }
-
-            if is_redundant {
-                problem.constraints.remove(i);
-                problem.bounds.remove(i);
-                reduced = true;
-            } else {
-                i += 1;
-            }
+            i += 1;
         }
 
-        // Variable fixing: if we can determine a variable must be at its bound
+        // Variable fixing logic (kept as-is)
         for j in 0..n {
             if !problem.integer_vars.contains(&j) {
                 continue;
             }
-
             let mut min_val = f64::NEG_INFINITY;
             let mut max_val = f64::INFINITY;
-
             for (i, constraint) in problem.constraints.iter().enumerate() {
                 if constraint[j].abs() > self.tolerance {
                     let bound = problem.bounds[i] / constraint[j];
@@ -103,9 +117,8 @@ impl BranchAndReduceSolver {
                     }
                 }
             }
-
             if min_val.ceil() == max_val.floor() {
-                // Variable can be fixed
+                // We can fix the variable
                 let fixed_val = min_val.ceil();
                 let mut new_constraint = vec![0.0; n];
                 new_constraint[j] = 1.0;
@@ -116,14 +129,6 @@ impl BranchAndReduceSolver {
         }
 
         reduced
-    }
-
-    fn dominates(&self, a: &[f64], b: &[f64], a_bound: f64, b_bound: f64) -> bool {
-        // Check if constraint a dominates constraint b
-        let scale = b_bound / a_bound;
-        a.iter()
-            .zip(b.iter())
-            .all(|(&x, &y)| (x * scale - y).abs() < self.tolerance)
     }
 
     fn branch(
@@ -141,11 +146,11 @@ impl BranchAndReduceSolver {
         lower_branch.constraints.push(lower_constraint);
         lower_branch.bounds.push(value.floor());
 
-        // Add constraint x_i >= ceil(value) to upper branch
+        // Add constraint x_i >= ceil(value) to upper branch as -x_i <= -ceil(value)
         let mut upper_constraint = vec![0.0; problem.objective.len()];
-        upper_constraint[var_idx] = 1.0;
+        upper_constraint[var_idx] = -1.0;
         upper_branch.constraints.push(upper_constraint);
-        upper_branch.bounds.push(value.ceil());
+        upper_branch.bounds.push(-value.ceil());
 
         (lower_branch, upper_branch)
     }
@@ -154,7 +159,7 @@ impl BranchAndReduceSolver {
 impl ILPSolver for BranchAndReduceSolver {
     fn solve(&self, problem: &IntegerLinearProgram) -> Result<ILPSolution, Box<dyn Error>> {
         let mut best_solution = None;
-        let mut best_objective = f64::INFINITY;
+        let mut best_objective = f64::NEG_INFINITY;
         let mut nodes = vec![problem.clone()];
         let mut iterations = 0;
 
@@ -171,9 +176,9 @@ impl ILPSolver for BranchAndReduceSolver {
                 Err(_) => continue,
             };
 
-            // Check if solution is worse than best known
+            // Use tolerance when comparing objective values.
             if relaxation.status != ILPStatus::Optimal
-                || relaxation.objective_value >= best_objective
+                || relaxation.objective_value + self.tolerance <= best_objective
             {
                 continue;
             }
@@ -182,7 +187,9 @@ impl ILPSolver for BranchAndReduceSolver {
             let mut all_integer = true;
             let mut first_fractional = None;
             for (i, &value) in relaxation.values.iter().enumerate() {
-                if problem.integer_vars.contains(&i) && !self.is_integer(value) {
+                if problem.integer_vars.contains(&i)
+                    && (value - value.round()).abs() > self.tolerance
+                {
                     all_integer = false;
                     first_fractional = Some((i, value));
                     break;
@@ -227,16 +234,14 @@ mod tests {
     fn test_simple_ilp() -> Result<(), Box<dyn Error>> {
         // Simple ILP: maximize x + y subject to:
         // x + y <= 5
-        // x, y >= 0
+        // x, y >= 0 (handled implicitly by simplex solver)
         // x, y integer
         let problem = IntegerLinearProgram {
             objective: vec![1.0, 1.0],
             constraints: vec![
                 vec![1.0, 1.0], // x + y <= 5
-                vec![1.0, 0.0], // x >= 0
-                vec![0.0, 1.0], // y >= 0
             ],
-            bounds: vec![5.0, 0.0, 0.0],
+            bounds: vec![5.0],
             integer_vars: vec![0, 1],
         };
 
@@ -256,18 +261,16 @@ mod tests {
     fn test_infeasible_ilp() -> Result<(), Box<dyn Error>> {
         // Infeasible ILP: maximize x + y subject to:
         // x + y <= 5
-        // x + y >= 6
-        // x, y >= 0
+        // x + y >= 6  represented as -(x + y) <= -6
+        // x, y >= 0 (handled implicitly by simplex solver)
         // x, y integer
         let problem = IntegerLinearProgram {
             objective: vec![1.0, 1.0],
             constraints: vec![
-                vec![1.0, 1.0], // x + y <= 5
-                vec![1.0, 1.0], // x + y >= 6
-                vec![1.0, 0.0], // x >= 0
-                vec![0.0, 1.0], // y >= 0
+                vec![1.0, 1.0],   // x + y <= 5
+                vec![-1.0, -1.0], // -(x + y) <= -6  (x + y >= 6)
             ],
-            bounds: vec![5.0, 6.0, 0.0, 0.0],
+            bounds: vec![5.0, -6.0],
             integer_vars: vec![0, 1],
         };
 
