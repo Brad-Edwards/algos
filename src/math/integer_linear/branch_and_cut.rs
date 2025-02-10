@@ -80,8 +80,7 @@ impl BranchAndCutSolver {
         }
 
         let lp = LinearProgram {
-            // For maximization, we need to negate the objective since minimize will negate it again
-            objective: problem.objective.iter().map(|&x| -x).collect(),
+            objective: problem.objective.clone(),
             constraints: std_constraints,
             rhs: std_bounds,
         };
@@ -106,25 +105,14 @@ impl BranchAndCutSolver {
             });
         }
 
-        // Check feasibility against original constraints
-        for (i, constraint) in problem.constraints.iter().enumerate() {
+        // Check feasibility: A x <= b + tol
+        for (constraint, &b) in problem.constraints.iter().zip(problem.bounds.iter()) {
             let lhs: f64 = constraint
                 .iter()
                 .zip(&result.optimal_point)
                 .map(|(a, &x)| a * x)
                 .sum();
-
-            // Check based on constraint type
-            let violation = if constraint.iter().any(|&x| x < 0.0) {
-                // >= constraint (x + y >= 6 means -x - y <= -6)
-                lhs < problem.bounds[i] - self.tolerance
-            } else {
-                // <= constraint
-                lhs > problem.bounds[i] + self.tolerance
-            };
-
-            if violation {
-                // If any constraint is violated, the problem is infeasible
+            if lhs > b + self.tolerance {
                 return Ok(ILPSolution {
                     values: vec![],
                     objective_value: f64::NEG_INFINITY,
@@ -133,20 +121,10 @@ impl BranchAndCutSolver {
             }
         }
 
-        // Also check non-negativity
-        for &x in &result.optimal_point {
-            if x < -self.tolerance {
-                return Ok(ILPSolution {
-                    values: vec![],
-                    objective_value: f64::NEG_INFINITY,
-                    status: ILPStatus::Infeasible,
-                });
-            }
-        }
-
+        // Everything is feasible; result.optimal_value is already what we want
         Ok(ILPSolution {
-            values: result.optimal_point,
-            objective_value: -result.optimal_value, // Negate back since we're maximizing
+            values: result.optimal_point.clone(),
+            objective_value: result.optimal_value,
             status: ILPStatus::Optimal,
         })
     }

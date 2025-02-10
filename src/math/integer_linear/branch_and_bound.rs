@@ -24,12 +24,10 @@ impl BranchAndBoundSolver {
         &self,
         problem: &IntegerLinearProgram,
     ) -> Result<ILPSolution, Box<dyn Error>> {
-        // Convert "maximize f(x)" into "minimize -f(x)"
-        let neg_objective: Vec<f64> = problem.objective.iter().map(|&c| -c).collect();
-
-        // LP in standard form: A x <= b
+        // We want to maximize, but minimize() will negate the objective and then negate the result,
+        // effectively giving us back what we want. So we pass the objective directly.
         let lp = LinearProgram {
-            objective: neg_objective,
+            objective: problem.objective.clone(),
             constraints: problem.constraints.clone(),
             rhs: problem.bounds.clone(),
         };
@@ -70,10 +68,10 @@ impl BranchAndBoundSolver {
             }
         }
 
-        // Everything is feasible; negate minimized value to get original "maximize" objective
+        // Everything is feasible; result.optimal_value is already what we want
         Ok(ILPSolution {
             values: result.optimal_point.clone(),
-            objective_value: -result.optimal_value,
+            objective_value: result.optimal_value,
             status: ILPStatus::Optimal,
         })
     }
