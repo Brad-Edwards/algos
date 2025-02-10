@@ -1,12 +1,13 @@
 use num_traits::Float;
+use std::collections::VecDeque;
 use std::fmt::Debug;
 
-use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, OptimizationResult};
+use crate::math::optimization::{ObjectiveFunction, OptimizationConfig, OptimizationResult};
 
-/// Minimizes an objective function using the BFGS (Broyden–Fletcher–Goldfarb–Shanno) method.
+/// Minimizes an objective function using the L-BFGS (Limited-memory BFGS) method.
 ///
-/// BFGS is a quasi-Newton method that approximates the Hessian matrix using gradient information.
-/// It maintains a positive definite approximation to the Hessian matrix and updates it iteratively.
+/// L-BFGS is a memory-efficient variant of BFGS that maintains a limited history
+/// of position and gradient differences to approximate the inverse Hessian matrix.
 ///
 /// # Arguments
 ///
@@ -22,7 +23,7 @@ use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, Optimizatio
 ///
 /// ```
 /// use algos::cs::optimization::{ObjectiveFunction, OptimizationConfig};
-/// use algos::cs::optimization::bfgs::minimize;
+/// use algos::cs::optimization::lbfgs::minimize;
 ///
 /// // Define a simple quadratic function
 /// struct Quadratic;
@@ -44,26 +45,25 @@ use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, Optimizatio
 /// let result = minimize(&f, &initial_point, &config);
 /// assert!(result.converged);
 /// ```
-pub fn minimize<T>(
-    f: &impl ObjectiveFunction<T>,
+pub fn minimize<T, F>(
+    f: &F,
     initial_point: &[T],
     config: &OptimizationConfig<T>,
 ) -> OptimizationResult<T>
 where
     T: Float + Debug,
+    F: ObjectiveFunction<T>,
 {
+    const M: usize = 10; // Number of corrections to store
     let n = initial_point.len();
     let mut current_point = initial_point.to_vec();
     let mut iterations = 0;
     let mut converged = false;
 
-    // Initialize approximate inverse Hessian as identity matrix
-    let mut h_inv = vec![vec![T::zero(); n]; n];
-    for (i, row) in h_inv.iter_mut().enumerate().take(n) {
-        for (j, val) in row.iter_mut().enumerate() {
-            *val = if i == j { T::one() } else { T::zero() };
-        }
-    }
+    // Storage for the last M corrections
+    let mut s_list: VecDeque<Vec<T>> = VecDeque::with_capacity(M);
+    let mut y_list: VecDeque<Vec<T>> = VecDeque::with_capacity(M);
+    let mut rho_list: VecDeque<T> = VecDeque::with_capacity(M);
 
     // Get initial gradient
     let mut gradient = match f.gradient(&current_point) {
@@ -78,143 +78,117 @@ where
         }
     };
 
-    // Constants for Wolfe conditions
-    let c1 = T::from(1e-4).unwrap(); // Sufficient decrease parameter
-    let c2 = T::from(0.9).unwrap(); // Curvature condition parameter
-    let max_line_search = 20;
-
     while iterations < config.max_iterations {
-        // Check for convergence with a more relaxed criterion for difficult functions
+        // Check for convergence
         let gradient_norm = gradient
             .iter()
             .fold(T::zero(), |acc, &x| acc + x * x)
             .sqrt();
-        let scale = T::one().max(f.evaluate(&current_point).abs());
-        if gradient_norm < config.tolerance * scale {
+        if gradient_norm < config.tolerance {
             converged = true;
             break;
         }
 
-        // Compute search direction: p = -H⁻¹∇f
-        let mut direction = vec![T::zero(); n];
-        for i in 0..n {
-            direction[i] = gradient
-                .iter()
-                .enumerate()
-                .fold(T::zero(), |acc, (j, &g)| acc - h_inv[i][j] * g);
+        // Compute search direction using L-BFGS two-loop recursion
+        let mut q = gradient.clone();
+        let mut alpha_list = Vec::with_capacity(s_list.len());
+
+        // First loop
+        for i in (0..s_list.len()).rev() {
+            let alpha = rho_list[i]
+                * s_list[i]
+                    .iter()
+                    .zip(q.iter())
+                    .fold(T::zero(), |acc, (&s, &q)| acc + s * q);
+            alpha_list.push(alpha);
+            for (q_j, y_j) in q.iter_mut().zip(y_list[i].iter()) {
+                *q_j = *q_j - alpha * *y_j;
+            }
         }
 
-        // Line search with Wolfe conditions
-        let mut alpha = T::one(); // Start with full step
+        // Scale the initial Hessian approximation
+        let mut r = if !s_list.is_empty() {
+            let i = s_list.len() - 1;
+            let yy = y_list[i].iter().fold(T::zero(), |acc, &y| acc + y * y);
+            let ys = y_list[i]
+                .iter()
+                .zip(s_list[i].iter())
+                .fold(T::zero(), |acc, (&y, &s)| acc + y * s);
+            q.iter_mut().for_each(|r_j| *r_j = *r_j * (ys / yy));
+            q
+        } else {
+            q.iter_mut()
+                .for_each(|r_j| *r_j = *r_j * config.learning_rate);
+            q
+        };
+
+        // Second loop
+        for i in 0..s_list.len() {
+            let beta = rho_list[i]
+                * y_list[i]
+                    .iter()
+                    .zip(r.iter())
+                    .fold(T::zero(), |acc, (&y, &r)| acc + y * r);
+            let alpha = alpha_list[s_list.len() - 1 - i];
+            for (r_j, s_j) in r.iter_mut().zip(s_list[i].iter()) {
+                *r_j = *r_j + (alpha - beta) * *s_j;
+            }
+        }
+
+        // r now contains the search direction
+        let direction: Vec<T> = r.iter().map(|&x| -x).collect();
+
+        // Line search to find step size
+        let mut alpha = T::one();
         let mut new_point = vec![T::zero(); n];
         let current_value = f.evaluate(&current_point);
-        let directional_derivative = gradient
-            .iter()
-            .zip(direction.iter())
-            .fold(T::zero(), |acc, (&g, &d)| acc + g * d);
 
-        let mut found_step = false;
-        for _ in 0..max_line_search {
-            // Try current step size
+        // Simple backtracking line search
+        for _ in 0..20 {
             for i in 0..n {
                 new_point[i] = current_point[i] + alpha * direction[i];
             }
             let new_value = f.evaluate(&new_point);
-
-            // Check Armijo condition (sufficient decrease)
-            if new_value <= current_value + c1 * alpha * directional_derivative {
-                // Get new gradient for curvature condition
-                if let Some(new_grad) = f.gradient(&new_point) {
-                    let new_directional_derivative = new_grad
-                        .iter()
-                        .zip(direction.iter())
-                        .fold(T::zero(), |acc, (&g, &d)| acc + g * d);
-
-                    // Check curvature condition
-                    if new_directional_derivative.abs() <= c2 * directional_derivative.abs() {
-                        found_step = true;
-                        break;
-                    }
-                }
+            if new_value < current_value {
+                break;
             }
             alpha = alpha * T::from(0.5).unwrap();
         }
 
-        if !found_step {
-            // If line search failed, take a small step in the descent direction
-            alpha = T::from(1e-4).unwrap();
-            for i in 0..n {
-                new_point[i] = current_point[i] + alpha * direction[i];
-            }
-        }
-
-        // Compute s = x_{k+1} - x_k
-        let s: Vec<T> = new_point
-            .iter()
-            .zip(current_point.iter())
-            .map(|(&x_new, &x_old)| x_new - x_old)
-            .collect();
-
-        // Get new gradient and compute y = ∇f_{k+1} - ∇f_k
+        // Get new gradient
         let new_gradient = match f.gradient(&new_point) {
             Some(g) => g,
             None => break,
         };
 
-        let y: Vec<T> = new_gradient
+        // Update the correction vectors
+        let s = new_point
+            .iter()
+            .zip(current_point.iter())
+            .map(|(&x_new, &x_old)| x_new - x_old)
+            .collect::<Vec<T>>();
+        let y = new_gradient
             .iter()
             .zip(gradient.iter())
             .map(|(&g_new, &g_old)| g_new - g_old)
-            .collect();
+            .collect::<Vec<T>>();
 
-        // Compute ρ = 1/(y^T s) with safeguard
         let ys = y
             .iter()
             .zip(s.iter())
             .fold(T::zero(), |acc, (&y_i, &s_i)| acc + y_i * s_i);
-        let rho = if ys.abs() > T::from(1e-10).unwrap() {
-            T::one() / ys
-        } else {
-            T::one() / T::from(1e-10).unwrap()
-        };
+        let rho = T::one() / ys;
 
-        // BFGS update for inverse Hessian approximation
-        let mut temp_matrix = vec![vec![T::zero(); n]; n];
-        let mut new_h_inv = vec![vec![T::zero(); n]; n];
-
-        // First multiply: (I - ρsy^T)H_k⁻¹
-        for i in 0..n {
-            for j in 0..n {
-                let sy_term = s[i]
-                    * y.iter()
-                        .enumerate()
-                        .fold(T::zero(), |acc, (k, &y_k)| acc + y_k * h_inv[k][j]);
-                temp_matrix[i][j] = h_inv[i][j] - rho * sy_term;
-            }
+        if s_list.len() == M {
+            s_list.pop_front();
+            y_list.pop_front();
+            rho_list.pop_front();
         }
-
-        // Then multiply by (I - ρys^T)
-        for i in 0..n {
-            let row_sum = y
-                .iter()
-                .enumerate()
-                .fold(T::zero(), |acc, (k, &y_k)| acc + y_k * temp_matrix[i][k]);
-            new_h_inv[i] = s
-                .iter()
-                .enumerate()
-                .map(|(j, &s_j)| temp_matrix[i][j] - rho * row_sum * s_j)
-                .collect();
-        }
-
-        // Add ρss^T
-        for i in 0..n {
-            for j in 0..n {
-                new_h_inv[i][j] = new_h_inv[i][j] + rho * s[i] * s[j];
-            }
-        }
+        s_list.push_back(s);
+        y_list.push_back(y);
+        rho_list.push_back(rho);
 
         // Update for next iteration
-        h_inv = new_h_inv;
         current_point = new_point;
         gradient = new_gradient;
         iterations += 1;
@@ -246,7 +220,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bfgs_quadratic() {
+    fn test_lbfgs_quadratic() {
         let f = Quadratic;
         let initial_point = vec![1.0, 1.0];
         let config = OptimizationConfig {
@@ -280,7 +254,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bfgs_quadratic_with_minimum() {
+    fn test_lbfgs_quadratic_with_minimum() {
         let f = QuadraticWithMinimum;
         let initial_point = vec![0.0];
         let config = OptimizationConfig {
@@ -317,13 +291,13 @@ mod tests {
     }
 
     #[test]
-    fn test_bfgs_rosenbrock() {
+    fn test_lbfgs_rosenbrock() {
         let f = Rosenbrock;
         let initial_point = vec![0.0, 0.0];
         let config = OptimizationConfig {
-            max_iterations: 2000, // Increased max iterations
-            tolerance: 1e-5,      // Slightly relaxed tolerance
-            learning_rate: 1.0,   // Start with full step size
+            max_iterations: 1000,
+            tolerance: 1e-6,
+            learning_rate: 0.01,
         };
 
         let result = minimize(&f, &initial_point, &config);
@@ -331,5 +305,47 @@ mod tests {
         assert!(result.converged);
         assert!((result.optimal_point[0] - 1.0).abs() < 1e-3);
         assert!((result.optimal_point[1] - 1.0).abs() < 1e-3);
+    }
+
+    // Test high-dimensional optimization
+    struct HighDimensionalQuadratic;
+
+    impl ObjectiveFunction<f64> for HighDimensionalQuadratic {
+        fn evaluate(&self, point: &[f64]) -> f64 {
+            point
+                .iter()
+                .enumerate()
+                .map(|(i, &x)| (i + 1) as f64 * x * x)
+                .sum()
+        }
+
+        fn gradient(&self, point: &[f64]) -> Option<Vec<f64>> {
+            Some(
+                point
+                    .iter()
+                    .enumerate()
+                    .map(|(i, &x)| 2.0 * (i + 1) as f64 * x)
+                    .collect(),
+            )
+        }
+    }
+
+    #[test]
+    fn test_lbfgs_high_dimensional() {
+        let f = HighDimensionalQuadratic;
+        let initial_point = vec![1.0; 100];
+        let config = OptimizationConfig {
+            max_iterations: 1000,
+            tolerance: 1e-6,
+            learning_rate: 1.0,
+        };
+
+        let result = minimize(&f, &initial_point, &config);
+
+        assert!(result.converged);
+        assert!(result.optimal_value < 1e-6);
+        for x in result.optimal_point {
+            assert!(x.abs() < 1e-3);
+        }
     }
 }

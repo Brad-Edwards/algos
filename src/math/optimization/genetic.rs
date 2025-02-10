@@ -3,7 +3,7 @@ use rand::distributions::{Distribution, Uniform};
 use rand::Rng;
 use std::fmt::Debug;
 
-use crate::cs::optimization::{ObjectiveFunction, OptimizationConfig, OptimizationResult};
+use crate::math::optimization::{ObjectiveFunction, OptimizationConfig, OptimizationResult};
 
 /// Configuration specific to genetic algorithm.
 #[derive(Debug, Clone)]

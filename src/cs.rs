@@ -3,7 +3,6 @@ pub mod dynamic;
 pub mod error;
 pub mod graph;
 pub mod hashing;
-pub mod optimization;
 pub mod search;
 pub mod security;
 pub mod sort;
@@ -42,14 +41,6 @@ pub use hashing::{
     murmurhash::{murmur3_x64_128, murmur3_x86_32, MurmurHasher},
     perfect::PerfectHash,
     universal::UniversalHash64,
-};
-
-pub use optimization::{
-    bfgs_minimize, conjugate_gradient_minimize, genetic::GeneticConfig, genetic_minimize,
-    gradient_descent_minimize, interior_point_minimize, lbfgs_minimize, nelder_mead_minimize,
-    newton_minimize, simplex::LinearProgram, simplex_minimize,
-    simulated_annealing::AnnealingConfig, simulated_annealing_minimize, ObjectiveFunction,
-    OptimizationConfig, OptimizationResult,
 };
 
 pub use search::{bfs::Graph as BfsGraph, dfs::Graph as DfsGraph, fibonacci_search};

@@ -1,7 +1,7 @@
 use num_traits::Float;
 use std::fmt::Debug;
 
-use crate::cs::optimization::{OptimizationConfig, OptimizationResult};
+use crate::math::optimization::{OptimizationConfig, OptimizationResult};
 
 /// A linear programming problem in standard form.
 #[derive(Debug, Clone)]
@@ -113,6 +113,9 @@ where
     let mut converged = false;
     let eps = T::from(EPSILON).unwrap();
 
+    // Debug: Print initial tableau
+    println!("Initial tableau: {:?}", tableau);
+
     // Phase I: Find initial basic feasible solution if needed
     if !is_feasible(&tableau, m, n) {
         let mut artificial_tableau = add_artificial_variables(&tableau, m, n);
@@ -177,15 +180,11 @@ where
     }
 
     // Debug: Print final tableau
-    #[cfg(test)]
-    {
-        eprintln!("Final tableau:");
-        print_tableau(&tableau);
-    }
+    println!("Final tableau: {:?}", tableau);
 
     // Extract solution
     let optimal_point = extract_solution(&tableau, m, n);
-    let optimal_value = tableau[0][n + m];
+    let optimal_value = -tableau[0][n + m]; // Negate since we're maximizing
 
     OptimizationResult {
         optimal_point,
@@ -218,7 +217,11 @@ where
 
     // Set objective row (for maximization)
     for j in 0..n {
-        tableau[0][j] = -lp.objective[j]; // Negative for reduced costs
+        tableau[0][j] = lp.objective[j]; // Already negated in minimize()
+    }
+    // Set slack variable coefficients to zero in objective row
+    for j in n..n + m {
+        tableau[0][j] = T::zero();
     }
 
     // Set constraint rows with slack variables

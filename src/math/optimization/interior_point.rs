@@ -1,8 +1,8 @@
 use num_traits::Float;
 use std::fmt::Debug;
 
-use crate::cs::optimization::simplex::LinearProgram;
-use crate::cs::optimization::{OptimizationConfig, OptimizationResult};
+use crate::math::optimization::simplex::LinearProgram;
+use crate::math::optimization::{OptimizationConfig, OptimizationResult};
 
 /// Minimizes a linear program using the Interior Point Method.
 ///
