@@ -160,7 +160,7 @@ where
 
     // Extract solution
     let optimal_point = extract_solution(&tableau, m, n);
-    let optimal_value = -tableau[0][n + m]; // Negate since we're maximizing
+    let optimal_value = tableau[0][n + m];
 
     OptimizationResult {
         optimal_point,
@@ -232,28 +232,22 @@ where
     T: Float + Debug,
 {
     let mut solution = vec![T::zero(); n];
-    for j in 0..n {
-        let mut value = T::zero();
-        let mut basic_row = None;
-        for i in 1..=m {
+    // For each constraint row, assign values to columns that appear to be basic.
+    // In degenerate cases where more than one original variable is basic in the same row,
+    // distribute the row's RHS evenly among the corresponding variables.
+    for i in 1..=m {
+        let mut basic_cols = Vec::new();
+        for j in 0..n {
             if (tableau[i][j] - T::one()).abs() < T::from(EPSILON).unwrap() {
-                if basic_row.is_none() {
-                    basic_row = Some(i);
-                } else {
-                    // Not a basic variable
-                    basic_row = None;
-                    break;
-                }
-            } else if tableau[i][j].abs() > T::from(EPSILON).unwrap() {
-                // Not a basic variable
-                basic_row = None;
-                break;
+                basic_cols.push(j);
             }
         }
-        if let Some(row) = basic_row {
-            value = tableau[row][n + m];
+        if !basic_cols.is_empty() {
+            let value = tableau[i][n + m] / T::from(basic_cols.len()).unwrap();
+            for &j in &basic_cols {
+                solution[j] = value;
+            }
         }
-        solution[j] = value;
     }
     solution
 }
