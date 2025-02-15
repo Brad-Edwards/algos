@@ -19,7 +19,7 @@ impl BranchAndCutSolver {
     }
 
     fn is_integer(&self, value: f64) -> bool {
-        (value - value.round()).abs() < self.tolerance
+        (value - value.round()).abs() < f64::max(self.tolerance, 1e-4)
     }
 
     fn solve_relaxation(
@@ -80,7 +80,7 @@ impl BranchAndCutSolver {
         }
 
         let lp = LinearProgram {
-            objective: problem.objective.clone(),
+            objective: problem.objective.iter().map(|x| -x).collect(),
             constraints: std_constraints,
             rhs: std_bounds,
         };
@@ -124,7 +124,7 @@ impl BranchAndCutSolver {
         // Everything is feasible; result.optimal_value is already what we want
         Ok(ILPSolution {
             values: result.optimal_point.clone(),
-            objective_value: result.optimal_value,
+            objective_value: -result.optimal_value,
             status: ILPStatus::Optimal,
         })
     }
@@ -206,11 +206,11 @@ impl BranchAndCutSolver {
         lower_branch.constraints.push(lower_constraint);
         lower_branch.bounds.push(value.floor());
 
-        // Add constraint x_i >= ceil(value) to upper branch
+        // Add constraint x_i >= ceil(value) to upper branch with conversion: -x_i <= -ceil(value)
         let mut upper_constraint = vec![0.0; problem.objective.len()];
-        upper_constraint[var_idx] = 1.0;
+        upper_constraint[var_idx] = -1.0;
         upper_branch.constraints.push(upper_constraint);
-        upper_branch.bounds.push(value.ceil());
+        upper_branch.bounds.push(-value.ceil());
 
         (lower_branch, upper_branch)
     }
@@ -219,7 +219,7 @@ impl BranchAndCutSolver {
 impl ILPSolver for BranchAndCutSolver {
     fn solve(&self, problem: &IntegerLinearProgram) -> Result<ILPSolution, Box<dyn Error>> {
         let mut best_solution = None;
-        let mut best_objective = f64::INFINITY;
+        let mut best_objective = f64::NEG_INFINITY;
         let mut nodes = vec![problem.clone()];
         let mut iterations = 0;
 
@@ -235,7 +235,7 @@ impl ILPSolver for BranchAndCutSolver {
 
             // Check if solution is worse than best known
             if relaxation.status != ILPStatus::Optimal
-                || relaxation.objective_value >= best_objective
+                || relaxation.objective_value <= best_objective
             {
                 continue;
             }
