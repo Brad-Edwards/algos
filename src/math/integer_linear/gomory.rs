@@ -1,8 +1,7 @@
 use crate::math::integer_linear::{ILPSolution, ILPSolver, ILPStatus, IntegerLinearProgram};
-use crate::math::optimization::simplex::{minimize, LinearProgram};
-use crate::math::optimization::OptimizationConfig;
 use std::error::Error;
 
+#[allow(dead_code)]
 pub struct GomoryCuttingPlanes {
     max_iterations: usize,
     tolerance: f64,
@@ -18,17 +17,15 @@ impl GomoryCuttingPlanes {
         }
     }
 
-    fn is_integer(&self, value: f64) -> bool {
-        (value - value.round()).abs() < self.tolerance
-    }
-
     fn solve_relaxation(
         &self,
         problem: &IntegerLinearProgram,
     ) -> Result<ILPSolution, Box<dyn Error>> {
+        use crate::math::optimization::simplex::{minimize, LinearProgram};
+        use crate::math::optimization::OptimizationConfig;
+
         let lp = LinearProgram {
-            // For maximization, we need to negate the objective since minimize will negate it again
-            objective: problem.objective.iter().map(|&x| -x).collect(),
+            objective: problem.objective.iter().map(|x| -x).collect(),
             constraints: problem.constraints.clone(),
             rhs: problem.bounds.clone(),
         };
@@ -38,111 +35,25 @@ impl GomoryCuttingPlanes {
             tolerance: self.tolerance,
             learning_rate: 1.0,
         };
-        // Compute the relaxation using the simplex solver.
         let result = minimize(&lp, &config);
-        // Verify the feasibility of the obtained solution by checking each constraint.
-        for (i, row) in lp.constraints.iter().enumerate() {
-            let sum: f64 = row
-                .iter()
-                .zip(result.optimal_point.iter())
-                .map(|(a, b)| a * b)
-                .sum();
-            if sum > lp.rhs[i] + self.tolerance {
-                return Ok(ILPSolution {
-                    values: vec![],
-                    objective_value: 0.0,
-                    status: ILPStatus::Infeasible,
-                });
-            }
+
+        if !result.converged
+            || result.optimal_point.is_empty()
+            || result.optimal_value.is_infinite()
+            || result.optimal_value.is_nan()
+        {
+            return Ok(ILPSolution {
+                values: vec![],
+                objective_value: f64::NEG_INFINITY,
+                status: ILPStatus::Infeasible,
+            });
         }
-        // Additional nonnegativity check: ensure all variables are nonnegative.
-        for &v in result.optimal_point.iter() {
-            if v < -self.tolerance {
-                return Ok(ILPSolution {
-                    values: vec![],
-                    objective_value: 0.0,
-                    status: ILPStatus::Infeasible,
-                });
-            }
-        }
+
         Ok(ILPSolution {
             values: result.optimal_point,
-            objective_value: result.optimal_value,
-            status: if result.converged {
-                ILPStatus::Optimal
-            } else {
-                ILPStatus::Infeasible
-            },
+            objective_value: -result.optimal_value,
+            status: ILPStatus::Optimal,
         })
-    }
-
-    fn generate_gomory_cut(
-        &self,
-        solution: &[f64],
-        row: &[f64],
-        rhs: f64,
-    ) -> Option<(Vec<f64>, f64)> {
-        // Find a basic variable with a fractional value.
-        let mut fractional_idx = None;
-        for (i, &value) in solution.iter().enumerate() {
-            if !self.is_integer(value) {
-                fractional_idx = Some(i);
-                break;
-            }
-        }
-
-        if fractional_idx.is_some() {
-            // Derive cut coefficients from the provided row.
-            let mut cut = vec![0.0; row.len()];
-            let mut cut_rhs = 0.0;
-
-            for (i, &coeff) in row.iter().enumerate() {
-                let frac_part = coeff - coeff.floor();
-                if frac_part > self.tolerance {
-                    cut[i] = frac_part;
-                }
-            }
-
-            let rhs_frac = rhs - rhs.floor();
-            if rhs_frac > self.tolerance {
-                cut_rhs = rhs_frac;
-            }
-
-            if cut.iter().any(|&x| x.abs() > self.tolerance) {
-                Some((cut, cut_rhs))
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-
-    fn add_cuts(&self, problem: &mut IntegerLinearProgram, solution: &ILPSolution) -> bool {
-        let mut cuts_added = 0;
-        let n = problem.constraints.len();
-        let mut new_cuts = Vec::new();
-        let mut new_bounds = Vec::new();
-
-        // Attempt to generate cuts from each constraint.
-        for i in 0..n {
-            if let Some((cut, rhs)) = self.generate_gomory_cut(
-                &solution.values,
-                &problem.constraints[i],
-                problem.bounds[i],
-            ) {
-                new_cuts.push(cut);
-                new_bounds.push(rhs);
-                cuts_added += 1;
-                if cuts_added >= self.max_cuts_per_iteration {
-                    break;
-                }
-            }
-        }
-
-        problem.constraints.extend(new_cuts);
-        problem.bounds.extend(new_bounds);
-        cuts_added > 0
     }
 }
 
@@ -259,15 +170,13 @@ fn enumerate_integer_solution(
 impl ILPSolver for GomoryCuttingPlanes {
     fn solve(&self, problem: &IntegerLinearProgram) -> Result<ILPSolution, Box<dyn Error>> {
         let current_problem = normalize(problem.clone());
-        if let Some(candidate) =
-            enumerate_integer_solution(&current_problem, &problem.integer_vars, &problem.objective)
-        {
+        if let Some(candidate) = enumerate_integer_solution(&current_problem, &problem.integer_vars, &problem.objective) {
             return Ok(candidate);
         }
         Ok(ILPSolution {
             values: vec![],
             objective_value: 0.0,
-            status: ILPStatus::Infeasible,
+            status: ILPStatus::MaxIterationsReached,
         })
     }
 }

@@ -36,18 +36,30 @@ impl MixedIntegerRoundingCuts {
     /// use algos::integer_linear::MixedIntegerRoundingCuts;
     /// let coeffs = vec![1.2, 3.7, 4.3];
     /// let rhs = 7.5; // fractional part r = 0.5
-    /// let result = MixedIntegerRoundingCuts::compute(&coeffs, rhs);
-    /// assert_eq!(result, Some((vec![0.2, 0.5, 0.3], 0.5)));
+    /// let result = MixedIntegerRoundingCuts::compute(&coeffs, rhs).unwrap();
+    /// let (cut, r) = result;
+    /// let eps = 1e-12;
+    /// assert!((cut[0] - 0.2).abs() < eps);
+    /// assert!((cut[1] - 0.5).abs() < eps);
+    /// assert!((cut[2] - 0.3).abs() < eps);
+    /// assert!((r - 0.5).abs() < eps);
     /// ```
     pub fn compute(coeffs: &[f64], rhs: f64) -> Option<(Vec<f64>, f64)> {
         let r = rhs.fract();
         if r == 0.0 {
             return None;
         }
-        let cut_coeffs: Vec<f64> = coeffs.iter().map(|&a| {
-            let frac_a = a.fract();
-            if frac_a < r { frac_a } else { r }
-        }).collect();
+        let cut_coeffs: Vec<f64> = coeffs
+            .iter()
+            .map(|&a| {
+                let frac_a = a.fract();
+                if frac_a < r {
+                    frac_a
+                } else {
+                    r
+                }
+            })
+            .collect();
         Some((cut_coeffs, r))
     }
 }
@@ -58,11 +70,20 @@ mod tests {
 
     fn assert_approx_eq(expected: f64, actual: f64) {
         let tol = 1e-12;
-        assert!((expected - actual).abs() < tol, "expected: {}, got: {}", expected, actual);
+        assert!(
+            (expected - actual).abs() < tol,
+            "expected: {}, got: {}",
+            expected,
+            actual
+        );
     }
 
     fn assert_approx_eq_vec(expected: &[f64], actual: &[f64]) {
-        assert_eq!(expected.len(), actual.len(), "Vectors have different lengths");
+        assert_eq!(
+            expected.len(),
+            actual.len(),
+            "Vectors have different lengths"
+        );
         for (&e, &a) in expected.iter().zip(actual.iter()) {
             assert_approx_eq(e, a);
         }

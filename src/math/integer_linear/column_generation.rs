@@ -90,49 +90,6 @@ impl ColumnGenerationSolver {
         })
     }
 
-    fn solve_pricing_problem(
-        &self,
-        dual_values: &[f64],
-        problem: &IntegerLinearProgram,
-    ) -> Option<Vec<f64>> {
-        // Try to generate a new column by examining unit vectors and their combinations
-        let mut best_column = None;
-        let mut best_reduced_cost = 0.0;
-
-        // Try unit vectors first
-        for i in 0..problem.objective.len() {
-            let mut column = vec![0.0; problem.constraints.len()];
-            for (j, constraint) in problem.constraints.iter().enumerate() {
-                column[j] = constraint[i];
-            }
-
-            let reduced_cost =
-                self.calculate_reduced_cost(&column, dual_values, problem.objective[i]);
-            if reduced_cost < -self.tolerance && reduced_cost < best_reduced_cost {
-                best_reduced_cost = reduced_cost;
-                best_column = Some(column.clone());
-            }
-
-            // Try combinations with other unit vectors
-            for k in (i + 1)..problem.objective.len() {
-                let mut combined_column = vec![0.0; problem.constraints.len()];
-                for (j, constraint) in problem.constraints.iter().enumerate() {
-                    combined_column[j] = (constraint[i] + constraint[k]) * 0.5;
-                }
-
-                let obj_val = (problem.objective[i] + problem.objective[k]) * 0.5;
-                let reduced_cost =
-                    self.calculate_reduced_cost(&combined_column, dual_values, obj_val);
-                if reduced_cost < -self.tolerance && reduced_cost < best_reduced_cost {
-                    best_reduced_cost = reduced_cost;
-                    best_column = Some(combined_column);
-                }
-            }
-        }
-
-        best_column
-    }
-
     fn calculate_reduced_cost(&self, column: &[f64], dual_values: &[f64], obj_coeff: f64) -> f64 {
         let dual_contribution: f64 = dual_values
             .iter()
