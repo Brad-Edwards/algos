@@ -57,8 +57,8 @@ where
 /// # Examples
 ///
 /// ```
-/// use algos::cs::optimization::{ObjectiveFunction, OptimizationConfig};
-/// use algos::cs::optimization::simulated_annealing::{AnnealingConfig, minimize};
+/// use algos::math::optimization::{ObjectiveFunction, OptimizationConfig};
+/// use algos::math::optimization::simulated_annealing::{AnnealingConfig, minimize};
 ///
 /// // Define a simple quadratic function
 /// struct Quadratic;

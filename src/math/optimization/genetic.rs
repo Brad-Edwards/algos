@@ -60,8 +60,8 @@ where
 /// # Examples
 ///
 /// ```
-/// use algos::cs::optimization::{ObjectiveFunction, OptimizationConfig};
-/// use algos::cs::optimization::genetic::{GeneticConfig, minimize};
+/// use algos::math::optimization::{ObjectiveFunction, OptimizationConfig};
+/// use algos::math::optimization::genetic::{GeneticConfig, minimize};
 ///
 /// // Define a simple quadratic function
 /// struct Quadratic;

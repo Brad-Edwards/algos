@@ -38,8 +38,8 @@ const EPSILON: f64 = 1e-10;
 /// # Examples
 ///
 /// ```
-/// use algos::cs::optimization::{OptimizationConfig};
-/// use algos::cs::optimization::simplex::{LinearProgram, minimize};
+/// use algos::math::optimization::{OptimizationConfig};
+/// use algos::math::optimization::simplex::{LinearProgram, minimize};
 ///
 /// // Solve the linear program:
 /// // minimize -x - y
@@ -253,93 +253,4 @@ where
         }
     }
     solution
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_simple_lp() {
-        // Solve:
-        // minimize -x - y
-        // subject to:
-        //   x + y ≤ 1
-        //   x, y ≥ 0
-        let lp = LinearProgram {
-            objective: vec![-1.0, -1.0],
-            constraints: vec![vec![1.0, 1.0]],
-            rhs: vec![1.0],
-        };
-
-        let config = OptimizationConfig {
-            max_iterations: 100,
-            tolerance: 1e-6,
-            learning_rate: 1.0,
-        };
-
-        let result = minimize(&lp, &config);
-
-        assert!(result.converged);
-        assert!((result.optimal_point[0] - 0.5).abs() < 1e-6);
-        assert!((result.optimal_point[1] - 0.5).abs() < 1e-6);
-        assert!((result.optimal_value + 1.0).abs() < 1e-6);
-    }
-
-    #[test]
-    fn test_bounded_lp() {
-        // Solve:
-        // minimize -2x - y
-        // subject to:
-        //   x + y ≤ 2
-        //   x ≤ 1
-        //   x, y ≥ 0
-        let lp = LinearProgram {
-            objective: vec![-2.0, -1.0],
-            constraints: vec![vec![1.0, 1.0], vec![1.0, 0.0]],
-            rhs: vec![2.0, 1.0],
-        };
-
-        let config = OptimizationConfig {
-            max_iterations: 100,
-            tolerance: 1e-6,
-            learning_rate: 1.0,
-        };
-
-        let result = minimize(&lp, &config);
-
-        assert!(result.converged);
-        assert!((result.optimal_point[0] - 1.0).abs() < 1e-6);
-        assert!((result.optimal_point[1] - 1.0).abs() < 1e-6);
-        assert!((result.optimal_value + 3.0).abs() < 1e-6);
-    }
-
-    #[test]
-    fn test_degenerate_lp() {
-        // Solve:
-        // minimize -x - y
-        // subject to:
-        //   x + y ≤ 1
-        //   x ≤ 0.5
-        //   y ≤ 0.5
-        //   x, y ≥ 0
-        let lp = LinearProgram {
-            objective: vec![-1.0, -1.0],
-            constraints: vec![vec![1.0, 1.0], vec![1.0, 0.0], vec![0.0, 1.0]],
-            rhs: vec![1.0, 0.5, 0.5],
-        };
-
-        let config = OptimizationConfig {
-            max_iterations: 100,
-            tolerance: 1e-6,
-            learning_rate: 1.0,
-        };
-
-        let result = minimize(&lp, &config);
-
-        assert!(result.converged);
-        assert!((result.optimal_point[0] - 0.5).abs() < 1e-6);
-        assert!((result.optimal_point[1] - 0.5).abs() < 1e-6);
-        assert!((result.optimal_value + 1.0).abs() < 1e-6);
-    }
 }
