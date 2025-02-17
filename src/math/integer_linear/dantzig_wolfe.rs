@@ -1,12 +1,16 @@
 use crate::math::integer_linear::{ILPSolution, ILPSolver, ILPStatus, IntegerLinearProgram};
 use crate::math::optimization::simplex::{minimize, LinearProgram};
 use crate::math::optimization::OptimizationConfig;
-use std::error::Error;
 use log;
+use std::error::Error;
 
 // Helper function to perform brute force rounding of an LP solution to a feasible
 // integer solution by enumerating floor and ceiling choices for integer variables.
-fn brute_force_round(solution: &[f64], problem: &IntegerLinearProgram, tolerance: f64) -> Option<Vec<f64>> {
+fn brute_force_round(
+    solution: &[f64],
+    problem: &IntegerLinearProgram,
+    tolerance: f64,
+) -> Option<Vec<f64>> {
     let n = solution.len();
     let mut best_solution = None;
     let mut best_obj = -f64::INFINITY;
@@ -34,7 +38,11 @@ fn brute_force_round(solution: &[f64], problem: &IntegerLinearProgram, tolerance
         // Check feasibility of candidate: each constraint dot(candidate) <= bound (+ tolerance)
         let mut feasible = true;
         for (i, constraint) in problem.constraints.iter().enumerate() {
-            let dot: f64 = constraint.iter().zip(candidate.iter()).map(|(&a, &x)| a * x).sum();
+            let dot: f64 = constraint
+                .iter()
+                .zip(candidate.iter())
+                .map(|(&a, &x)| a * x)
+                .sum();
             if dot > problem.bounds[i] + tolerance {
                 feasible = false;
                 break;
@@ -51,7 +59,12 @@ fn brute_force_round(solution: &[f64], problem: &IntegerLinearProgram, tolerance
             continue;
         }
         // Compute objective value.
-        let obj: f64 = problem.objective.iter().zip(candidate.iter()).map(|(&c, &x)| c * x).sum();
+        let obj: f64 = problem
+            .objective
+            .iter()
+            .zip(candidate.iter())
+            .map(|(&c, &x)| c * x)
+            .sum();
         if obj > best_obj {
             best_obj = obj;
             best_solution = Some(candidate);
@@ -215,12 +228,25 @@ impl DantzigWolfeDecomposition {
 
         // Compute linking column.
         let linking_indices = Self::compute_linking_indices(block, self.tolerance);
-        let linking = Self::compute_linking_column_for_indices(block, &result.optimal_point, &linking_indices);
+        let linking = Self::compute_linking_column_for_indices(
+            block,
+            &result.optimal_point,
+            &linking_indices,
+        );
         log::debug!("Computed linking column: {:?}", linking);
 
         // Calculate reduced cost.
-        let obj_value: f64 = block.objective.iter().zip(&result.optimal_point).map(|(&c, &x)| c * x).sum();
-        let dual_contribution: f64 = linking.iter().zip(dual_values.iter()).map(|(&l, &d)| l * d).sum();
+        let obj_value: f64 = block
+            .objective
+            .iter()
+            .zip(&result.optimal_point)
+            .map(|(&c, &x)| c * x)
+            .sum();
+        let dual_contribution: f64 = linking
+            .iter()
+            .zip(dual_values.iter())
+            .map(|(&l, &d)| l * d)
+            .sum();
         let reduced_cost = obj_value - dual_contribution;
         log::debug!("Reduced cost: {}", reduced_cost);
 
@@ -242,7 +268,10 @@ impl DantzigWolfeDecomposition {
         }]
     }
 
-    fn solve_relaxation(&self, block: &IntegerLinearProgram) -> Result<ILPSolution, Box<dyn Error>> {
+    fn solve_relaxation(
+        &self,
+        block: &IntegerLinearProgram,
+    ) -> Result<ILPSolution, Box<dyn Error>> {
         let lp = LinearProgram {
             objective: block.objective.iter().map(|&c| -c).collect(),
             constraints: block.constraints.clone(),
@@ -284,7 +313,9 @@ impl DantzigWolfeDecomposition {
                 let all_nonnegative = cons.iter().all(|&a| a >= 0.0);
                 let any_positive = cons.iter().any(|&a| a > 0.0);
                 if all_nonnegative && any_positive {
-                    for a in cons.iter_mut() { *a = -(*a); }
+                    for a in cons.iter_mut() {
+                        *a = -(*a);
+                    }
                     new_problem.bounds[i] = -new_problem.bounds[i];
                 }
             }
@@ -295,10 +326,15 @@ impl DantzigWolfeDecomposition {
         for i in 0..new_problem.constraints.len() {
             let cons = &new_problem.constraints[i];
             if let Some(&(_, prev_bound)) = seen.iter().find(|&&(ref v, _)| {
-                v.len() == cons.len() && v.iter().zip(cons.iter()).all(|(&a, &b)| (a - b).abs() < tol)
+                v.len() == cons.len()
+                    && v.iter()
+                        .zip(cons.iter())
+                        .all(|(&a, &b)| (a - b).abs() < tol)
             }) {
                 if new_problem.bounds[i] > prev_bound + tol {
-                    for a in new_problem.constraints[i].iter_mut() { *a = -(*a); }
+                    for a in new_problem.constraints[i].iter_mut() {
+                        *a = -(*a);
+                    }
                     new_problem.bounds[i] = -new_problem.bounds[i];
                 }
             } else {
@@ -315,7 +351,9 @@ impl DantzigWolfeDecomposition {
     }
 
     fn compute_linking_column(block: &IntegerLinearProgram, x: &[f64]) -> Vec<f64> {
-        block.constraints.iter()
+        block
+            .constraints
+            .iter()
             .map(|row| row.iter().zip(x.iter()).map(|(&a, &x)| a * x).sum())
             .collect()
     }
@@ -334,11 +372,18 @@ impl DantzigWolfeDecomposition {
         x: &[f64],
         indices: &[usize],
     ) -> Vec<f64> {
-        indices.iter()
+        indices
+            .iter()
             .map(|&i| {
                 if i < block.constraints.len() {
-                    block.constraints[i].iter().zip(x.iter()).map(|(&a, &xi)| a * xi).sum()
-                } else { 0.0 }
+                    block.constraints[i]
+                        .iter()
+                        .zip(x.iter())
+                        .map(|(&a, &xi)| a * xi)
+                        .sum()
+                } else {
+                    0.0
+                }
             })
             .collect()
     }
@@ -371,7 +416,7 @@ impl ILPSolver for DantzigWolfeDecomposition {
         };
 
         let result = minimize(&lp, &config);
-        
+
         println!("\nLP solution results:");
         println!("  Converged: {}", result.converged);
         println!("  Iterations: {}", result.iterations);
@@ -408,7 +453,12 @@ impl ILPSolver for DantzigWolfeDecomposition {
         println!("\nRounding solution to integer values using brute force:");
         if let Some(rounded_solution) = brute_force_round(&solution, problem, self.tolerance) {
             println!("Rounded solution: {:?}", rounded_solution);
-            let obj_value: f64 = problem.objective.iter().zip(rounded_solution.iter()).map(|(&c, &x)| c * x).sum();
+            let obj_value: f64 = problem
+                .objective
+                .iter()
+                .zip(rounded_solution.iter())
+                .map(|(&c, &x)| c * x)
+                .sum();
             println!("\nFinal objective value: {}", obj_value);
             return Ok(ILPSolution {
                 values: rounded_solution,

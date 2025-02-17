@@ -145,7 +145,10 @@ where
         }
         let leaving_row = leaving_row.unwrap();
 
-        println!("Iteration {}: pivot ({}, {})", iterations, leaving_row, entering_col);
+        println!(
+            "Iteration {}: pivot ({}, {})",
+            iterations, leaving_row, entering_col
+        );
         println!("Before pivot: {:?}", tableau);
 
         // Pivot

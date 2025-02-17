@@ -42,7 +42,11 @@ impl GomoryCuttingPlanes {
         let result = minimize(&lp, &config);
         // Verify the feasibility of the obtained solution by checking each constraint.
         for (i, row) in lp.constraints.iter().enumerate() {
-            let sum: f64 = row.iter().zip(result.optimal_point.iter()).map(|(a, b)| a * b).sum();
+            let sum: f64 = row
+                .iter()
+                .zip(result.optimal_point.iter())
+                .map(|(a, b)| a * b)
+                .sum();
             if sum > lp.rhs[i] + self.tolerance {
                 return Ok(ILPSolution {
                     values: vec![],
@@ -160,8 +164,11 @@ fn normalize(mut problem: IntegerLinearProgram) -> IntegerLinearProgram {
 }
 
 // Fallback exhaustive enumeration for integer solutions (using recursion).
-fn enumerate_integer_solution(problem: &IntegerLinearProgram, integer_vars: &Vec<usize>, objective: &Vec<f64>)
-    -> Option<ILPSolution> {
+fn enumerate_integer_solution(
+    problem: &IntegerLinearProgram,
+    integer_vars: &Vec<usize>,
+    objective: &Vec<f64>,
+) -> Option<ILPSolution> {
     let n = objective.len();
     let mut ranges = vec![(0usize, 10usize); integer_vars.len()];
     // Determine the range for each integer variable.
@@ -184,7 +191,7 @@ fn enumerate_integer_solution(problem: &IntegerLinearProgram, integer_vars: &Vec
         let ub_val = ub.unwrap_or(10);
         ranges[k] = (0, ub_val);
     }
-    
+
     fn recursive_enumerate(
         current: &mut Vec<f64>,
         idx: usize,
@@ -193,11 +200,15 @@ fn enumerate_integer_solution(problem: &IntegerLinearProgram, integer_vars: &Vec
         n: usize,
         problem: &IntegerLinearProgram,
         objective: &Vec<f64>,
-        best: &mut Option<(Vec<f64>, f64)>
+        best: &mut Option<(Vec<f64>, f64)>,
     ) {
         if idx == integer_vars.len() {
             let feasible = problem.constraints.iter().enumerate().all(|(i, row)| {
-                let dot: f64 = row.iter().enumerate().map(|(j, &val)| current[j] * val).sum();
+                let dot: f64 = row
+                    .iter()
+                    .enumerate()
+                    .map(|(j, &val)| current[j] * val)
+                    .sum();
                 dot <= problem.bounds[i] + 1e-6
             });
             if feasible {
@@ -211,22 +222,46 @@ fn enumerate_integer_solution(problem: &IntegerLinearProgram, integer_vars: &Vec
             let (low, high) = ranges[idx];
             for val in low..=high {
                 current[var_index] = val as f64;
-                recursive_enumerate(current, idx + 1, integer_vars, ranges, n, problem, objective, best);
+                recursive_enumerate(
+                    current,
+                    idx + 1,
+                    integer_vars,
+                    ranges,
+                    n,
+                    problem,
+                    objective,
+                    best,
+                );
             }
         }
     }
-    
+
     let mut current = vec![0.0; n];
     let mut best_solution: Option<(Vec<f64>, f64)> = None;
-    recursive_enumerate(&mut current, 0, integer_vars, &ranges, n, problem, objective, &mut best_solution);
-    best_solution.map(|(sol, obj)| ILPSolution { values: sol, objective_value: obj, status: ILPStatus::Optimal })
+    recursive_enumerate(
+        &mut current,
+        0,
+        integer_vars,
+        &ranges,
+        n,
+        problem,
+        objective,
+        &mut best_solution,
+    );
+    best_solution.map(|(sol, obj)| ILPSolution {
+        values: sol,
+        objective_value: obj,
+        status: ILPStatus::Optimal,
+    })
 }
 
 // Workaround implementation for GomoryCuttingPlanes using exhaustive enumeration.
 impl ILPSolver for GomoryCuttingPlanes {
     fn solve(&self, problem: &IntegerLinearProgram) -> Result<ILPSolution, Box<dyn Error>> {
         let current_problem = normalize(problem.clone());
-        if let Some(candidate) = enumerate_integer_solution(&current_problem, &problem.integer_vars, &problem.objective) {
+        if let Some(candidate) =
+            enumerate_integer_solution(&current_problem, &problem.integer_vars, &problem.objective)
+        {
             return Ok(candidate);
         }
         Ok(ILPSolution {

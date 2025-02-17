@@ -199,19 +199,19 @@ impl ILPSolver for BranchAndPriceSolver {
         let mut iterations = 0;
         let mut best_objective = f64::NEG_INFINITY;
         let mut best_solution = None;
-        
+
         while let Some(node) = stack.pop() {
             iterations += 1;
             if iterations > self.max_iterations {
                 break;
             }
-            
+
             // Solve LP relaxation on this node.
             let relaxation = match self.solve_relaxation(&node) {
                 Ok(sol) if sol.status == ILPStatus::Optimal => sol,
                 _ => continue,
             };
-            
+
             // If the LP relaxation yields an integer solution for the original variables, return it.
             let mut solution_is_integer = true;
             for &i in &node.integer_vars {
@@ -223,19 +223,19 @@ impl ILPSolver for BranchAndPriceSolver {
             if solution_is_integer {
                 return Ok(relaxation);
             }
-            
+
             // Generate additional columns if possible.
             let mut current_node = node.clone();
             if self.generate_columns(&mut current_node, &relaxation) {
                 stack.push(current_node);
                 continue;
             }
-            
+
             // Prune if the relaxation's objective is not better than the best known.
             if relaxation.objective_value <= best_objective {
                 continue;
             }
-            
+
             // Branch on the most fractional variable.
             let mut all_integer = true;
             let mut most_fractional = None;
@@ -258,14 +258,14 @@ impl ILPSolver for BranchAndPriceSolver {
                     stack.push(upper);
                 }
             }
-            
+
             // Update best solution if applicable.
             if all_integer && relaxation.objective_value > best_objective {
                 best_objective = relaxation.objective_value;
                 best_solution = Some(relaxation);
             }
         }
-        
+
         Ok(best_solution.unwrap_or(ILPSolution {
             values: vec![],
             objective_value: f64::NEG_INFINITY,
@@ -277,7 +277,7 @@ impl ILPSolver for BranchAndPriceSolver {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_simple_ilp() -> Result<(), Box<dyn Error>> {
         // maximize 2x + y
@@ -306,7 +306,7 @@ mod tests {
         }
         Ok(())
     }
-    
+
     #[test]
     fn test_infeasible_ilp() -> Result<(), Box<dyn Error>> {
         // maximize x + y
