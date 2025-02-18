@@ -3,6 +3,7 @@ pub mod dynamic;
 pub mod error;
 pub mod graph;
 pub mod hashing;
+pub mod randomized;
 pub mod search;
 pub mod security;
 pub mod sort;
@@ -42,6 +43,8 @@ pub use hashing::{
     perfect::PerfectHash,
     universal::UniversalHash64,
 };
+
+pub use randomized::{randomized_bfs_2sat, reservoir_sampling, SkipList};
 
 pub use search::{bfs::Graph as BfsGraph, dfs::Graph as DfsGraph, fibonacci_search};
 

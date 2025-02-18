@@ -32,6 +32,8 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ ShellSort  
 ✅ CountingSort  
 ✅ RadixSort  
+✅ Randomized QuickSelect
+✅ Randomized QuickSort
 ✅ BucketSort  
 
 #### Searching Algorithms
@@ -76,15 +78,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 #### Graph Algorithms (Part 2)
 
 ✅ Edmond–Karp (max flow)  
-✅ Dinic’s Algorithm (max flow)  
+✅ Dinic's Algorithm (max flow)  
 ✅ Ford–Fulkerson (max flow)  
 ✅ Hungarian Algorithm (assignment)  
 ✅ Hopcroft–Karp (bipartite matching)  
 ✅ Bron–Kerbosch (maximal clique)  
-✅ Johnson’s Cycle Detection  
-✅ Floyd’s Cycle Detection (Tortoise and Hare)  
+✅ Johnson's Cycle Detection  
+✅ Floyd's Cycle Detection (Tortoise and Hare)  
 ✅ Euler Tour / Euler Circuit Algorithm  
-✅ Hierholzer’s Algorithm (Euler paths/circuits)
+✅ Hierholzer's Algorithm (Euler paths/circuits)  
+✅ Karger's Min Cut  
+✅ Randomized Delaunay Triangulation  
+✅ Randomized Kruskal's MST  
+✅ Randomized Prim's MST  
 
 #### Dynamic Programming
 
@@ -169,8 +175,8 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Greedy Set Cover  
 ✅ 2-Approximation for Vertex Cover  
 ✅ PTAS for Knapsack  
-✅ Christofides’ Algorithm (TSP)  
-✅ Johnson’s Algorithm for MAX-SAT  
+✅ Christofides' Algorithm (TSP)  
+✅ Johnson's Algorithm for MAX-SAT  
 ✅ FPTAS for Subset Sum  
 ✅ Local-Ratio Theorem  
 ✅ Primal–Dual Approximation (for covering problems)  
@@ -180,7 +186,7 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 #### Linear & Nonlinear Optimization
 
 ✅ Gradient Descent  
-✅ Newton’s Method  
+✅ Newton's Method  
 ✅ Conjugate Gradient  
 ✅ BFGS  
 ✅ L-BFGS  
@@ -203,14 +209,15 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Branch & Reduce  
 ✅ Column Generation  
 
-### 🚧 Planned Implementation
+#### Randomized Algorithms
 
-See our [Algorithm Categories](notes/specifications/ALGORITHM-CATEGORIES.md) document for the full list of planned implementations across all categories, including:
+✅ Randomized BFS 2-SAT  
+✅ Reservoir Sampling  
+✅ Skip List  
 
-- Reinforcement Learning
-- Approximation Algorithms
-- Linear & Nonlinear Optimization
-- And many more...
+#### Monte Carlo Methods
+
+✅ Monte Carlo Integration  
 
 ## Contributing
 
