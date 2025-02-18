@@ -34,7 +34,7 @@ dependencies = [
 
 [[package]]
 name = "algos"
-version = "0.6.5"
+version = "0.6.6"
 dependencies = [
  "approx",
  "cargo-tarpaulin",
