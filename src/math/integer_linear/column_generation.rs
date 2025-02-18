@@ -51,8 +51,9 @@ impl ColumnGenerationSolver {
             }
         }
 
+        let orig_objective = problem.objective.clone();
         let lp = LinearProgram {
-            objective: problem.objective.clone(), // Don't negate, minimize will handle it
+            objective: orig_objective.iter().map(|&x| -x).collect(),
             constraints: std_constraints,
             rhs: std_bounds,
         };
@@ -75,13 +76,9 @@ impl ColumnGenerationSolver {
             });
         }
 
-        // Calculate objective value using original coefficients
-        let obj_value = problem
-            .objective
-            .iter()
-            .zip(result.optimal_point.iter())
-            .map(|(&c, &x)| c * x)
-            .sum();
+        // Calculate original objective value from the minimization result
+        // The minimization problem solved is for -f(x), so the original objective value is -result.optimal_value.
+        let obj_value = -result.optimal_value;
 
         Ok(ILPSolution {
             values: result.optimal_point,
