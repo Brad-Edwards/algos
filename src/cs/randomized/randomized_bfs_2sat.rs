@@ -1,12 +1,12 @@
-use std::collections::{HashSet, VecDeque};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand::Rng;
+use std::collections::{HashSet, VecDeque};
 
 /// Checks if the given assignment satisfies the 2-SAT formula.
 /// Clauses are represented as (i32, i32) where a positive integer represents a literal (variable is true)
 /// and a negative integer represents its negation (variable is false).
-fn satisfies(assignment: &Vec<bool>, clauses: &[(i32, i32)]) -> bool {
+fn satisfies(assignment: &[bool], clauses: &[(i32, i32)]) -> bool {
     for &(a, b) in clauses {
         let lit_a = if a > 0 {
             assignment[(a - 1) as usize]
@@ -26,7 +26,7 @@ fn satisfies(assignment: &Vec<bool>, clauses: &[(i32, i32)]) -> bool {
 }
 
 /// Converts a boolean assignment to a unique key (assuming num_vars ≤ 64).
-fn assignment_to_key(assignment: &Vec<bool>) -> u64 {
+fn assignment_to_key(assignment: &[bool]) -> u64 {
     let mut key = 0u64;
     for &b in assignment {
         key = (key << 1) | (if b { 1 } else { 0 });
@@ -35,12 +35,12 @@ fn assignment_to_key(assignment: &Vec<bool>) -> u64 {
 }
 
 /// Solves a 2-SAT instance using a randomized BFS over the space of assignments.
-/// 
+///
 /// # Arguments
-/// - `clauses`: A slice of clauses, each represented as a tuple (i32, i32). 
+/// - `clauses`: A slice of clauses, each represented as a tuple (i32, i32).
 ///   A positive literal i represents variable i being true; a negative literal -i represents variable i being false.
 /// - `num_vars`: The total number of variables.
-/// 
+///
 /// # Returns
 /// Returns Some(assignment) where assignment is a Vec<bool> (index 0 corresponds to variable 1), if a satisfying assignment is found.
 /// Returns None if the formula is unsatisfiable.
@@ -52,7 +52,7 @@ pub fn randomized_bfs_2sat(clauses: &[(i32, i32)], num_vars: usize) -> Option<Ve
     queue.push_back(initial.clone());
     let mut visited = HashSet::new();
     visited.insert(assignment_to_key(&initial));
-    
+
     while !queue.is_empty() {
         // Randomly select an assignment from the queue.
         let idx = rng.gen_range(0..queue.len());
@@ -82,7 +82,7 @@ pub fn randomized_bfs_2sat(clauses: &[(i32, i32)], num_vars: usize) -> Option<Ve
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_randomized_bfs_2sat_satisfiable() {
         // Example 2-SAT formula:
@@ -95,7 +95,7 @@ mod tests {
         let asgn = assignment.unwrap();
         assert!(satisfies(&asgn, &clauses));
     }
-    
+
     #[test]
     fn test_randomized_bfs_2sat_unsatisfiable() {
         // Unsatisfiable formula: (x1) ∧ (¬x1)

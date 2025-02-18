@@ -15,27 +15,27 @@ impl UnionFind {
             rank: vec![0; n],
         }
     }
-    
+
     fn find(&mut self, x: usize) -> usize {
         if self.parent[x] != x {
             self.parent[x] = self.find(self.parent[x]);
         }
         self.parent[x]
     }
-    
+
     fn union(&mut self, x: usize, y: usize) -> bool {
         let x_root = self.find(x);
         let y_root = self.find(y);
         if x_root == y_root {
             return false;
         }
-        if self.rank[x_root] < self.rank[y_root] {
-            self.parent[x_root] = y_root;
-        } else if self.rank[x_root] > self.rank[y_root] {
-            self.parent[y_root] = x_root;
-        } else {
-            self.parent[y_root] = x_root;
-            self.rank[x_root] += 1;
+        match self.rank[x_root].cmp(&self.rank[y_root]) {
+            std::cmp::Ordering::Less => self.parent[x_root] = y_root,
+            std::cmp::Ordering::Greater => self.parent[y_root] = x_root,
+            std::cmp::Ordering::Equal => {
+                self.parent[y_root] = x_root;
+                self.rank[x_root] += 1;
+            }
         }
         true
     }
@@ -43,22 +43,22 @@ impl UnionFind {
 
 /// Implements a randomized variant of Kruskal's algorithm for finding a minimum spanning tree.
 /// It shuffles the edges before sorting to randomize tie-breaking among edges with equal weight.
-/// 
+///
 /// # Arguments
 /// - `num_vertices`: Total number of vertices.
 /// - `edges`: Vector of edges as (u, v, weight) tuples.
-/// 
+///
 /// # Returns
 /// A tuple containing the list of edges in the MST and the total weight.
 pub fn randomized_kruskal(num_vertices: usize, mut edges: Vec<Edge>) -> (Vec<Edge>, f64) {
     let mut rng = thread_rng();
     edges.shuffle(&mut rng);
     edges.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap());
-    
+
     let mut uf = UnionFind::new(num_vertices);
     let mut mst_edges = Vec::new();
     let mut total_weight = 0.0;
-    
+
     for edge in edges {
         if uf.union(edge.0, edge.1) {
             mst_edges.push(edge);
@@ -74,7 +74,7 @@ pub fn randomized_kruskal(num_vertices: usize, mut edges: Vec<Edge>) -> (Vec<Edg
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_randomized_kruskal() {
         // Graph: 4 vertices with 6 edges.

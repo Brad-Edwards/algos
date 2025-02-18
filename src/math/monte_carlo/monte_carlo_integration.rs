@@ -1,7 +1,7 @@
 use rand::Rng;
 
 /// Performs Monte Carlo integration of the function `f` over the interval [a, b] using the specified number of samples.
-pub fn monte_carlo_integration<F>(f: F, a: f64, b: f64, samples: usize) -> f64 
+pub fn monte_carlo_integration<F>(f: F, a: f64, b: f64, samples: usize) -> f64
 where
     F: Fn(f64) -> f64,
 {
@@ -18,7 +18,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_monte_carlo_integration() {
         // Integrate f(x) = x over [0,1]. The exact value is 0.5.

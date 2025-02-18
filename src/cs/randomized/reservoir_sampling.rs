@@ -24,7 +24,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_reservoir_sampling() {
         let data = 1..101;

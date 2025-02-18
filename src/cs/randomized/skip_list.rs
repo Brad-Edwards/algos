@@ -32,7 +32,7 @@ impl<T: Ord> SkipList<T> {
             current_level: 1,
         }
     }
-    
+
     /// Randomly determines a level for a new node based on probability p.
     fn random_level(&self) -> usize {
         let mut lvl = 1;
@@ -42,7 +42,7 @@ impl<T: Ord> SkipList<T> {
         }
         lvl
     }
-    
+
     /// Inserts a value into the skip list.
     pub fn insert(&mut self, value: T) {
         let mut update: Vec<Rc<RefCell<SkipNode<T>>>> = vec![self.head.clone(); self.max_level];
@@ -67,9 +67,11 @@ impl<T: Ord> SkipList<T> {
         // Determine node level.
         let lvl = self.random_level();
         if lvl > self.current_level {
-            for i in self.current_level..lvl {
-                update[i] = self.head.clone();
-            }
+            update
+                .iter_mut()
+                .skip(self.current_level)
+                .take(lvl - self.current_level)
+                .for_each(|x| *x = self.head.clone());
             self.current_level = lvl;
         }
         let new_node = Rc::new(RefCell::new(SkipNode {
@@ -77,13 +79,13 @@ impl<T: Ord> SkipList<T> {
             forward: vec![None; lvl],
         }));
         // Splice the new node into the list.
-        for i in 0..lvl {
-            let next = update[i].borrow().forward[i].clone();
+        for (i, update_node) in update.iter().take(lvl).enumerate() {
+            let next = update_node.borrow().forward[i].clone();
             new_node.borrow_mut().forward[i] = next;
-            update[i].borrow_mut().forward[i] = Some(new_node.clone());
+            update_node.borrow_mut().forward[i] = Some(new_node.clone());
         }
     }
-    
+
     /// Searches for a value in the skip list. Returns true if the value is present.
     pub fn search(&self, value: &T) -> bool {
         let mut current = self.head.clone();
@@ -114,7 +116,7 @@ impl<T: Ord> SkipList<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_skip_list_insert_search() {
         let mut skip_list = SkipList::new(16, 0.5);
@@ -122,7 +124,7 @@ mod tests {
         skip_list.insert(20);
         skip_list.insert(15);
         skip_list.insert(5);
-        
+
         assert!(skip_list.search(&10));
         assert!(skip_list.search(&15));
         assert!(skip_list.search(&20));

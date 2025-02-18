@@ -5,7 +5,7 @@ pub type Edge = (usize, usize, f64);
 
 /// Implements a randomized Prim's algorithm for computing a minimum spanning tree.
 /// The graph is represented as an adjacency list: Vec<Vec<(usize, f64)>>, where each entry is (neighbor, weight).
-pub fn randomized_prim(num_vertices: usize, graph: &Vec<Vec<(usize, f64)>>) -> (Vec<Edge>, f64) {
+pub fn randomized_prim(num_vertices: usize, graph: &[Vec<(usize, f64)>]) -> (Vec<Edge>, f64) {
     if num_vertices == 0 {
         return (Vec::new(), 0.0);
     }
@@ -16,13 +16,18 @@ pub fn randomized_prim(num_vertices: usize, graph: &Vec<Vec<(usize, f64)>>) -> (
     let mut tree_edges = Vec::new();
     let mut total_weight = 0.0;
     let mut candidate_edges: Vec<Edge> = graph[start].iter().map(|&(v, w)| (start, v, w)).collect();
-    
+
     while tree_edges.len() < num_vertices - 1 {
         if candidate_edges.is_empty() {
             break;
         }
-        let idx = rng.gen_range(0..candidate_edges.len());
-        let edge = candidate_edges.remove(idx);
+        let min_index = candidate_edges
+            .iter()
+            .enumerate()
+            .min_by(|(_, a), (_, b)| a.2.partial_cmp(&b.2).unwrap())
+            .map(|(i, _)| i)
+            .unwrap();
+        let edge = candidate_edges.remove(min_index);
         let (_, v, w) = edge;
         if in_tree[v] {
             continue;
@@ -42,7 +47,7 @@ pub fn randomized_prim(num_vertices: usize, graph: &Vec<Vec<(usize, f64)>>) -> (
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_randomized_prim() {
         let num_vertices = 4;
