@@ -23,7 +23,7 @@ impl BranchAndReduceSolver {
         // We want to maximize, but minimize() will negate the objective and then negate the result,
         // effectively giving us back what we want. So we pass the objective directly.
         let lp = LinearProgram {
-            objective: problem.objective.clone(),
+            objective: problem.objective.iter().map(|x| -x).collect(),
             constraints: problem.constraints.clone(),
             rhs: problem.bounds.clone(),
         };
@@ -67,7 +67,7 @@ impl BranchAndReduceSolver {
         // Everything is feasible; result.optimal_value is already what we want
         Ok(ILPSolution {
             values: result.optimal_point.clone(),
-            objective_value: result.optimal_value,
+            objective_value: -result.optimal_value,
             status: ILPStatus::Optimal,
         })
     }

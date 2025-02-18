@@ -1,3 +1,4 @@
+#![allow(clippy::needless_range_loop, clippy::type_complexity)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum ILPStatus {
     Optimal,

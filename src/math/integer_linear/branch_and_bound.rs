@@ -17,7 +17,7 @@ impl BranchAndBoundSolver {
     }
 
     fn is_integer(&self, value: f64) -> bool {
-        (value - value.round()).abs() < self.tolerance
+        (value - value.round()).abs() < f64::max(self.tolerance, 1e-4)
     }
 
     fn solve_relaxation(
@@ -27,7 +27,7 @@ impl BranchAndBoundSolver {
         // We want to maximize, but minimize() will negate the objective and then negate the result,
         // effectively giving us back what we want. So we pass the objective directly.
         let lp = LinearProgram {
-            objective: problem.objective.clone(),
+            objective: problem.objective.iter().map(|x| -x).collect(),
             constraints: problem.constraints.clone(),
             rhs: problem.bounds.clone(),
         };
@@ -71,7 +71,7 @@ impl BranchAndBoundSolver {
         // Everything is feasible; result.optimal_value is already what we want
         Ok(ILPSolution {
             values: result.optimal_point.clone(),
-            objective_value: result.optimal_value,
+            objective_value: -result.optimal_value,
             status: ILPStatus::Optimal,
         })
     }
@@ -133,10 +133,10 @@ impl ILPSolver for BranchAndBoundSolver {
             for (i, &v) in relaxation.values.iter().enumerate() {
                 if node.integer_vars.contains(&i) && !self.is_integer(v) {
                     all_integer = false;
-                    let frac = (v - v.floor()).abs();
-                    let diff = (frac - 0.5).abs();
-                    if diff > max_frac_diff {
-                        max_frac_diff = diff;
+                    let frac = v - v.floor();
+                    let gap = if frac <= 0.5 { frac } else { 1.0 - frac };
+                    if gap > max_frac_diff {
+                        max_frac_diff = gap;
                         most_fractional = Some((i, v));
                     }
                 }

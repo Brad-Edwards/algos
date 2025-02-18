@@ -30,8 +30,8 @@ impl BranchAndPriceSolver {
         let n = problem.objective.len();
         let m = problem.constraints.len();
 
-        // Use original coefficients (do not negate) since the simplex solver is in maximization mode.
-        let mut lp_objective: Vec<f64> = original_objective.clone();
+        // Convert the maximization problem into a minimization one by negating the objective.
+        let mut lp_objective: Vec<f64> = original_objective.iter().map(|x| -x).collect();
         lp_objective.extend(vec![0.0; m]);
 
         let lp_constraints: Vec<Vec<f64>> = problem
@@ -71,8 +71,8 @@ impl BranchAndPriceSolver {
             });
         }
 
-        // Do not re-negate the optimal_value.
-        let x = result.optimal_point[..problem.objective.len()].to_vec();
+        // Retrieve the values corresponding to the original variables.
+        let x = result.optimal_point[..n].to_vec();
         // Check feasibility against original constraints.
         for (i, constraint) in problem.constraints.iter().enumerate() {
             let lhs: f64 = constraint.iter().zip(&x).map(|(&a, &xi)| a * xi).sum();
@@ -85,9 +85,10 @@ impl BranchAndPriceSolver {
             }
         }
 
+        // Re-negate the optimal value to convert back into a maximization result.
         Ok(ILPSolution {
             values: x,
-            objective_value: result.optimal_value,
+            objective_value: -result.optimal_value,
             status: ILPStatus::Optimal,
         })
     }
@@ -101,20 +102,17 @@ impl BranchAndPriceSolver {
         // to find columns with negative reduced cost. Here we use a simple heuristic.
         let mut best_column = None;
         let mut best_reduced_cost = -self.tolerance;
-
-        // Try unit vectors as potential columns
+        // Try unit vectors as potential columns.
         for i in 0..problem.constraints.len() {
             let mut new_column = vec![0.0; problem.constraints.len()];
             new_column[i] = 1.0;
-
-            // Calculate reduced cost for this column
-            let mut reduced_cost = -1.0; // Assume unit contribution to objective
+            // Calculate reduced cost for this column.
+            let mut reduced_cost = -1.0; // Assume unit contribution to objective.
             for (j, &dual) in dual_values.iter().enumerate() {
                 reduced_cost += dual * new_column[j];
             }
-
             if reduced_cost < best_reduced_cost {
-                // Verify the column satisfies all constraints
+                // Verify the column satisfies all constraints.
                 let mut feasible = true;
                 for (constraint, &bound) in problem.constraints.iter().zip(problem.bounds.iter()) {
                     let lhs: f64 = constraint
@@ -127,14 +125,12 @@ impl BranchAndPriceSolver {
                         break;
                     }
                 }
-
                 if feasible {
                     best_reduced_cost = reduced_cost;
                     best_column = Some(new_column);
                 }
             }
         }
-
         best_column
     }
 
@@ -144,10 +140,9 @@ impl BranchAndPriceSolver {
         }
         let mut columns_added = 0;
         let mut dual_values = vec![0.0; problem.constraints.len()];
-
-        // Calculate dual values from solution
-        for i in 0..problem.constraints.len() {
-            let lhs: f64 = problem.constraints[i]
+        // Calculate dual values from solution.
+        for (i, constraint) in problem.constraints.iter().enumerate() {
+            let lhs: f64 = constraint
                 .iter()
                 .zip(&solution.values)
                 .map(|(&a, &x)| a * x)
@@ -157,14 +152,13 @@ impl BranchAndPriceSolver {
                 dual_values[i] = if problem.bounds[i] > 0.0 { 1.0 } else { -1.0 };
             }
         }
-
-        // Try to generate a single improving column
+        // Try to generate a single improving column.
         if let Some(new_column) = self.solve_pricing_problem(&dual_values, problem) {
-            // Add new column to problem
+            // Add new column to problem.
             for (i, constraint) in problem.constraints.iter_mut().enumerate() {
                 constraint.push(new_column[i]);
             }
-            // Calculate objective coefficient
+            // Calculate objective coefficient.
             let obj_coeff = new_column
                 .iter()
                 .zip(problem.objective.iter())
@@ -174,7 +168,6 @@ impl BranchAndPriceSolver {
             problem.integer_vars.push(problem.objective.len() - 1);
             columns_added += 1;
         }
-
         columns_added > 0
     }
 
@@ -186,29 +179,26 @@ impl BranchAndPriceSolver {
     ) -> (IntegerLinearProgram, IntegerLinearProgram) {
         let mut lower_branch = problem.clone();
         let mut upper_branch = problem.clone();
-
-        // Add constraint x_i <= floor(value) to lower branch
+        // Add constraint x_i <= floor(value) to lower branch.
         let mut lower_constraint = vec![0.0; problem.objective.len()];
         lower_constraint[var_idx] = 1.0;
         lower_branch.constraints.push(lower_constraint);
         lower_branch.bounds.push(value.floor());
-
-        // Add constraint x_i >= ceil(value) to upper branch
+        // Add constraint x_i >= ceil(value) to upper branch.
         let mut upper_constraint = vec![0.0; problem.objective.len()];
-        upper_constraint[var_idx] = -1.0; // Use -1.0 to convert >= to <=
+        upper_constraint[var_idx] = -1.0; // Use -1.0 to convert >= to <=.
         upper_branch.constraints.push(upper_constraint);
-        upper_branch.bounds.push(-value.ceil()); // Negate bound for <=
-
+        upper_branch.bounds.push(-value.ceil()); // Negate bound for <=.
         (lower_branch, upper_branch)
     }
 }
 
 impl ILPSolver for BranchAndPriceSolver {
     fn solve(&self, problem: &IntegerLinearProgram) -> Result<ILPSolution, Box<dyn Error>> {
-        let mut best_solution = None;
-        let mut best_objective = f64::NEG_INFINITY;
         let mut stack = vec![problem.clone()];
         let mut iterations = 0;
+        let mut best_objective = f64::NEG_INFINITY;
+        let mut best_solution = None;
 
         while let Some(node) = stack.pop() {
             iterations += 1;
@@ -216,29 +206,40 @@ impl ILPSolver for BranchAndPriceSolver {
                 break;
             }
 
-            // Solve LP relaxation on this node
+            // Solve LP relaxation on this node.
             let relaxation = match self.solve_relaxation(&node) {
                 Ok(sol) if sol.status == ILPStatus::Optimal => sol,
                 _ => continue,
             };
 
-            // Generate additional columns if possible
+            // If the LP relaxation yields an integer solution for the original variables, return it.
+            let mut solution_is_integer = true;
+            for &i in &node.integer_vars {
+                if (relaxation.values[i] - relaxation.values[i].round()).abs() > self.tolerance {
+                    solution_is_integer = false;
+                    break;
+                }
+            }
+            if solution_is_integer {
+                return Ok(relaxation);
+            }
+
+            // Generate additional columns if possible.
             let mut current_node = node.clone();
             if self.generate_columns(&mut current_node, &relaxation) {
                 stack.push(current_node);
                 continue;
             }
 
-            // If the relaxation's best bound <= current best, prune
+            // Prune if the relaxation's objective is not better than the best known.
             if relaxation.objective_value <= best_objective {
                 continue;
             }
 
-            // Check integer feasibility
+            // Branch on the most fractional variable.
             let mut all_integer = true;
             let mut most_fractional = None;
             let mut max_frac_diff = 0.0;
-
             for (i, &v) in relaxation.values.iter().enumerate() {
                 if node.integer_vars.contains(&i) && !self.is_integer(v) {
                     all_integer = false;
@@ -250,18 +251,18 @@ impl ILPSolver for BranchAndPriceSolver {
                     }
                 }
             }
-
-            if all_integer {
-                // Update best solution if it improves
-                if relaxation.objective_value > best_objective {
-                    best_objective = relaxation.objective_value;
-                    best_solution = Some(relaxation);
+            if !all_integer {
+                if let Some((idx, val)) = most_fractional {
+                    let (lower, upper) = self.branch(&node, idx, val);
+                    stack.push(lower);
+                    stack.push(upper);
                 }
-            } else if let Some((idx, val)) = most_fractional {
-                // Branch on the most fractional variable
-                let (lower, upper) = self.branch(&node, idx, val);
-                stack.push(lower);
-                stack.push(upper);
+            }
+
+            // Update best solution if applicable.
+            if all_integer && relaxation.objective_value > best_objective {
+                best_objective = relaxation.objective_value;
+                best_solution = Some(relaxation);
             }
         }
 
@@ -281,35 +282,28 @@ mod tests {
     fn test_simple_ilp() -> Result<(), Box<dyn Error>> {
         // maximize 2x + y
         // subject to:
-        //   x + y <= 4
-        //   x <= 2
-        //   x, y >= 0 and integer
+        //   x + y ≤ 4
+        //   x ≤ 2
+        //   x, y ≥ 0 and integer
         let problem = IntegerLinearProgram {
-            objective: vec![2.0, 1.0], // Prefer x over y
+            objective: vec![2.0, 1.0],
             constraints: vec![
-                vec![1.0, 1.0],  // x + y <= 4
-                vec![1.0, 0.0],  // x <= 2
-                vec![-1.0, 0.0], // -x <= 0  (x >= 0)
-                vec![0.0, -1.0], // -y <= 0  (y >= 0)
+                vec![1.0, 1.0],
+                vec![1.0, 0.0],
+                vec![-1.0, 0.0],
+                vec![0.0, -1.0],
             ],
             bounds: vec![4.0, 2.0, 0.0, 0.0],
             integer_vars: vec![0, 1],
         };
-
         let solver = BranchAndPriceSolver::new(100, 1e-6, 5);
         let solution = solver.solve(&problem)?;
-
         assert_eq!(solution.status, ILPStatus::Optimal);
-        // Optimal solution should be x=2, y=2 giving value of 6
-        // Relax tolerance further to 1e-4 for numerical precision
+        // Optimal solution should be x=2, y=2, value of 6.
         assert!((solution.objective_value - 6.0).abs() < 1e-1);
-
-        // Check integer feasibility
         for &v in &solution.values {
-            assert!((v - v.round()).abs() < 1e-6);
-            assert!(v >= 0.0);
+            assert!((v - v.round()).abs() < 1e-6 && v >= 0.0);
         }
-
         Ok(())
     }
 
@@ -317,34 +311,23 @@ mod tests {
     fn test_infeasible_ilp() -> Result<(), Box<dyn Error>> {
         // maximize x + y
         // subject to:
-        //   x + y <= 5
-        //   x + y >= 6
-        //   x, y >= 0 and integer
+        //   x + y ≤ 5
+        //   x + y ≥ 6  (represented as -(x + y) ≤ -6)
+        //   x, y ≥ 0 and integer
         let problem = IntegerLinearProgram {
             objective: vec![1.0, 1.0],
             constraints: vec![
-                vec![1.0, 1.0],   // x + y <= 5
-                vec![-1.0, -1.0], // -(x + y) <= -6  (x + y >= 6)
-                vec![-1.0, 0.0],  // -x <= 0  (x >= 0)
-                vec![0.0, -1.0],  // -y <= 0  (y >= 0)
+                vec![1.0, 1.0],
+                vec![-1.0, -1.0],
+                vec![-1.0, 0.0],
+                vec![0.0, -1.0],
             ],
             bounds: vec![5.0, -6.0, 0.0, 0.0],
             integer_vars: vec![0, 1],
         };
-
         let solver = BranchAndPriceSolver::new(100, 1e-6, 5);
         let solution = solver.solve(&problem)?;
-
         assert_eq!(solution.status, ILPStatus::Infeasible);
         Ok(())
     }
 }
-
-// Hint: Debug the simplex (minimize) implementation. Ensure that:
-//
-// • The objective is set as [-2, -1, 0, …] (for maximize 2x+y).
-// • Slack variables are correctly added so that constraints become equalities.
-// • The RHS values are correctly incorporated in the initial tableau.
-// • The final optimal value from minimize is correct (it should be -6 so that re-negation yields 6).
-//
-// Consider instrumenting your simplex solver to verify these aspects.

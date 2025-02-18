@@ -27,6 +27,7 @@ ndarray = "0.16.1"
 rand = "0.8.5"
 rand_core = "0.6.4"
 rand_distr = "0.4.3"
+log = "0.4.25"
 
 [dev-dependencies]
 criterion = "0.5.1"

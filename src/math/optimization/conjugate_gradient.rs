@@ -21,8 +21,8 @@ use crate::math::optimization::{ObjectiveFunction, OptimizationConfig, Optimizat
 /// # Examples
 ///
 /// ```
-/// use algos::cs::optimization::{ObjectiveFunction, OptimizationConfig};
-/// use algos::cs::optimization::conjugate_gradient::minimize;
+/// use algos::math::optimization::{ObjectiveFunction, OptimizationConfig};
+/// use algos::math::optimization::conjugate_gradient::minimize;
 ///
 /// // Define a simple quadratic function
 /// struct Quadratic;
