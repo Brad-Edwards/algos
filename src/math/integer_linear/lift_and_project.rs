@@ -86,7 +86,6 @@ impl LiftAndProjectCuts {
             status: ILPStatus::Optimal,
         })
     }
-
 }
 
 impl LiftAndProjectCuts {

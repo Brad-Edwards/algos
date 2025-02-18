@@ -64,7 +64,8 @@ fn enumerate_integer_solution(
         ranges[k] = (0, ub_val);
     }
 
-    fn recursive_enumerate(
+    #[allow(clippy::too_many_arguments)]
+fn recursive_enumerate(
         current: &mut Vec<f64>,
         idx: usize,
         integer_vars: &Vec<usize>,
@@ -131,7 +132,9 @@ fn enumerate_integer_solution(
 impl ILPSolver for GomoryCuttingPlanes {
     fn solve(&self, problem: &IntegerLinearProgram) -> Result<ILPSolution, Box<dyn Error>> {
         let current_problem = normalize(problem.clone());
-        if let Some(candidate) = enumerate_integer_solution(&current_problem, &problem.integer_vars, &problem.objective) {
+        if let Some(candidate) =
+            enumerate_integer_solution(&current_problem, &problem.integer_vars, &problem.objective)
+        {
             return Ok(candidate);
         }
         Ok(ILPSolution {

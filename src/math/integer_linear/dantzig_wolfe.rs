@@ -1,6 +1,6 @@
 use crate::math::integer_linear::{ILPSolution, ILPSolver, ILPStatus, IntegerLinearProgram};
 use crate::math::optimization::simplex::{minimize, LinearProgram};
-use crate::math::optimization::OptimizationConfig;
+use crate::math::optimization::OptimizationConfig; 
 use std::error::Error;
 
 // Helper function to perform brute force rounding of an LP solution to a feasible
@@ -25,13 +25,11 @@ fn brute_force_round(
                 candidate[i] = floor_val;
             } else if (ceil_val - solution[i]).abs() < tolerance {
                 candidate[i] = ceil_val;
-            } else {
-                if ((mask >> j) & 1) == 0 {
+            } else if ((mask >> j) & 1) == 0 {
                     candidate[i] = floor_val;
                 } else {
                     candidate[i] = ceil_val;
                 }
-            }
         }
         // Check feasibility of candidate: each constraint dot(candidate) <= bound (+ tolerance)
         let mut feasible = true;
@@ -156,18 +154,18 @@ impl ILPSolver for DantzigWolfeDecomposition {
                 .map(|(&c, &x)| c * x)
                 .sum();
             println!("\nFinal objective value: {}", obj_value);
-            return Ok(ILPSolution {
+            Ok(ILPSolution {
                 values: rounded_solution,
                 objective_value: obj_value,
                 status: ILPStatus::Optimal,
-            });
+            })
         } else {
             println!("\nNo feasible integer rounding found.");
-            return Ok(ILPSolution {
+            Ok(ILPSolution {
                 values: vec![],
                 objective_value: 0.0,
                 status: ILPStatus::Infeasible,
-            });
+            })
         }
     }
 }
