@@ -32,7 +32,7 @@ log = "0.4.25"
 [dev-dependencies]
 criterion = "0.5.1"
 rand = "0.8.5"
-cargo-tarpaulin = "0.31.5"
+cargo-tarpaulin = "0.32.0"
 
 [[bench]]
 name = "suffix_array"
