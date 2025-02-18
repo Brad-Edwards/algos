@@ -1,4 +1,5 @@
 pub mod integer_linear;
+pub mod monte_carlo;
 pub mod optimization;
 
 pub use optimization::{
@@ -15,3 +16,5 @@ pub use integer_linear::{
     ILPSolution, ILPSolver, ILPStatus, IntegerLinearProgram, LiftAndProjectCuts,
     MixedIntegerRoundingCuts,
 };
+
+pub use monte_carlo::monte_carlo_integration::monte_carlo_integration;
