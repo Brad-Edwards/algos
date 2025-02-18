@@ -141,8 +141,8 @@ impl BranchAndPriceSolver {
         let mut columns_added = 0;
         let mut dual_values = vec![0.0; problem.constraints.len()];
         // Calculate dual values from solution.
-        for i in 0..problem.constraints.len() {
-            let lhs: f64 = problem.constraints[i]
+        for (i, constraint) in problem.constraints.iter().enumerate() {
+            let lhs: f64 = constraint
                 .iter()
                 .zip(&solution.values)
                 .map(|(&a, &x)| a * x)

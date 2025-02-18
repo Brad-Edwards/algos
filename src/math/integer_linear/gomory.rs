@@ -65,7 +65,7 @@ fn enumerate_integer_solution(
     }
 
     #[allow(clippy::too_many_arguments)]
-fn recursive_enumerate(
+    fn recursive_enumerate(
         current: &mut Vec<f64>,
         idx: usize,
         integer_vars: &Vec<usize>,

@@ -128,10 +128,10 @@ where
         // Find leaving variable (minimum ratio test)
         let mut leaving_row = None;
         let mut min_ratio = T::infinity();
-        for i in 1..=m {
-            let coef = tableau[i][entering_col];
+        for (i, row) in tableau.iter().enumerate().skip(1).take(m) {
+            let coef = row[entering_col];
             if coef > eps {
-                let ratio = tableau[i][n + m] / coef;
+                let ratio = row[n + m] / coef;
                 if ratio < min_ratio {
                     min_ratio = ratio;
                     leaving_row = Some(i);
@@ -235,20 +235,18 @@ where
     T: Float + Debug,
 {
     let mut solution = vec![T::zero(); n];
-    // For each constraint row, assign values to columns that appear to be basic.
-    // In degenerate cases where more than one original variable is basic in the same row,
-    // distribute the row's RHS evenly among the corresponding variables.
-    for i in 1..=m {
-        let mut basic_cols = Vec::new();
-        for j in 0..n {
-            if (tableau[i][j] - T::one()).abs() < T::from(EPSILON).unwrap() {
-                basic_cols.push(j);
+    for row in tableau.iter().skip(1).take(m) {
+        let mut count = 0;
+        let mut last_nonzero = None;
+        for (j, &val) in row.iter().take(n).enumerate() {
+            if val.abs() > T::epsilon() {
+                count += 1;
+                last_nonzero = Some(j);
             }
         }
-        if !basic_cols.is_empty() {
-            let value = tableau[i][n + m] / T::from(basic_cols.len()).unwrap();
-            for &j in &basic_cols {
-                solution[j] = value;
+        if count == 1 {
+            if let Some(j) = last_nonzero {
+                solution[j] = row[n + m] / row[j];
             }
         }
     }
