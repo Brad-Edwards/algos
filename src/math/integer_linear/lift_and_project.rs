@@ -87,40 +87,6 @@ impl LiftAndProjectCuts {
         })
     }
 
-    /// For each fractional binary variable in the current LP solution, add a disjunctive cut:
-    /// - If xᵢ < 0.5, add the inequality xᵢ ≤ 0.
-    /// - If xᵢ > 0.5, add the inequality -xᵢ ≤ -1 (i.e. xᵢ ≥ 1).
-    /// These cuts are valid for all 0–1 integer points.
-    fn add_integrality_cuts(
-        &self,
-        problem: &mut IntegerLinearProgram,
-        solution: &ILPSolution,
-    ) -> usize {
-        let mut cuts_added = 0;
-        for &i in &problem.integer_vars {
-            let val = solution.values[i];
-            if !self.is_integer(val) {
-                let k = val.floor();
-                let frac = val - k;
-                if frac < 0.5 {
-                    let n = problem.objective.len();
-                    let mut cut = vec![0.0; n];
-                    cut[i] = 1.0;
-                    problem.constraints.push(cut);
-                    problem.bounds.push(k);
-                    cuts_added += 1;
-                } else {
-                    let n = problem.objective.len();
-                    let mut cut = vec![0.0; n];
-                    cut[i] = -1.0;
-                    problem.constraints.push(cut);
-                    problem.bounds.push(-(k + 1.0));
-                    cuts_added += 1;
-                }
-            }
-        }
-        cuts_added
-    }
 }
 
 impl LiftAndProjectCuts {

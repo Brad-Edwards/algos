@@ -16,45 +16,6 @@ impl GomoryCuttingPlanes {
             max_cuts_per_iteration,
         }
     }
-
-    fn solve_relaxation(
-        &self,
-        problem: &IntegerLinearProgram,
-    ) -> Result<ILPSolution, Box<dyn Error>> {
-        use crate::math::optimization::simplex::{minimize, LinearProgram};
-        use crate::math::optimization::OptimizationConfig;
-
-        let lp = LinearProgram {
-            objective: problem.objective.iter().map(|x| -x).collect(),
-            constraints: problem.constraints.clone(),
-            rhs: problem.bounds.clone(),
-        };
-
-        let config = OptimizationConfig {
-            max_iterations: self.max_iterations,
-            tolerance: self.tolerance,
-            learning_rate: 1.0,
-        };
-        let result = minimize(&lp, &config);
-
-        if !result.converged
-            || result.optimal_point.is_empty()
-            || result.optimal_value.is_infinite()
-            || result.optimal_value.is_nan()
-        {
-            return Ok(ILPSolution {
-                values: vec![],
-                objective_value: f64::NEG_INFINITY,
-                status: ILPStatus::Infeasible,
-            });
-        }
-
-        Ok(ILPSolution {
-            values: result.optimal_point,
-            objective_value: -result.optimal_value,
-            status: ILPStatus::Optimal,
-        })
-    }
 }
 
 /// Normalize the ILP constraints to help our algorithm.
@@ -176,7 +137,7 @@ impl ILPSolver for GomoryCuttingPlanes {
         Ok(ILPSolution {
             values: vec![],
             objective_value: 0.0,
-            status: ILPStatus::MaxIterationsReached,
+            status: ILPStatus::Infeasible,
         })
     }
 }
