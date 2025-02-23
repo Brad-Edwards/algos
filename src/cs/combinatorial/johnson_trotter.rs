@@ -112,4 +112,4 @@ mod tests {
         let perms = johnson_trotter(&data);
         assert_eq!(perms, vec![vec![42]]);
     }
-} 
+}

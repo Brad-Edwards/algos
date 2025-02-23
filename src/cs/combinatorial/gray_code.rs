@@ -45,4 +45,4 @@ mod tests {
         let codes = gray_code(0);
         assert_eq!(codes, vec![0]);
     }
-} 
+}

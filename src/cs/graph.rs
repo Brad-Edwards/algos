@@ -37,7 +37,7 @@ pub use bron_kerbosch::BronKerbosch;
 pub use dijkstra::shortest_paths as dijkstra_shortest_paths;
 pub use dinic::Dinic;
 pub use edmond_karp::edmond_karp as edmond_karp_max_flow;
-pub use edmonds_blossom::{Graph as BlossomGraph, edmonds_blossom_max_matching};
+pub use edmonds_blossom::{edmonds_blossom_max_matching, Graph as BlossomGraph};
 pub use floyd_cycle::has_cycle as floyd_cycle_detection;
 pub use floyd_warshall::all_pairs_shortest_paths as floyd_warshall_all_pairs_shortest_paths;
 pub use ford_fulkerson::ford_fulkerson as ford_fulkerson_max_flow;

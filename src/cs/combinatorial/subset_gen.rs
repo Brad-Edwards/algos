@@ -127,7 +127,11 @@ mod tests {
             vec![1, 2, 3],
         ];
         for expected in expected_subsets {
-            assert!(subsets.contains(&expected), "Missing subset: {:?}", expected);
+            assert!(
+                subsets.contains(&expected),
+                "Missing subset: {:?}",
+                expected
+            );
         }
     }
 
@@ -138,4 +142,4 @@ mod tests {
         let lazy: Vec<_> = power_set_iter(&items).collect();
         assert_eq!(eager, lazy);
     }
-} 
+}

@@ -125,7 +125,10 @@ impl PermutationGroup {
     /// (together with the identity).
     /// This is a naive closure under composition and inverses, suitable only for small groups.
     pub fn from_generators(generators: &[Permutation]) -> Self {
-        assert!(!generators.is_empty(), "Must provide at least one generator.");
+        assert!(
+            !generators.is_empty(),
+            "Must provide at least one generator."
+        );
         let n = generators[0].len();
         for g in generators {
             assert_eq!(g.len(), n, "Generators must have uniform permutation size.");
@@ -182,10 +185,7 @@ impl PermutationGroup {
 
     /// Returns the identity element of this group (we assume there's always exactly one).
     pub fn identity(&self) -> Option<Permutation> {
-        self.elements
-            .iter()
-            .find(|perm| is_identity(perm))
-            .cloned()
+        self.elements.iter().find(|perm| is_identity(perm)).cloned()
     }
 
     /// Enumerate all subgroups of `self` in the simplest (exponential) manner.
@@ -346,7 +346,10 @@ fn covers_whole_group(g: &PermutationGroup, n: &PermutationGroup, h: &Permutatio
 
 /// Main Schur–Zassenhaus procedure: factor G into (N, H) where N is a normal Sylow p-subgroup,
 /// and H is a complement. Returns `None` if no such factorization is found.
-pub fn schur_zassenhaus(group: &PermutationGroup, p: usize) -> Option<(PermutationGroup, PermutationGroup)> {
+pub fn schur_zassenhaus(
+    group: &PermutationGroup,
+    p: usize,
+) -> Option<(PermutationGroup, PermutationGroup)> {
     // For the trivial group, there's no non-trivial factorization
     if group.order() == 1 {
         return None;
@@ -421,4 +424,4 @@ mod tests {
         assert!(schur_zassenhaus(&g, 2).is_none());
         assert!(schur_zassenhaus(&g, 3).is_none());
     }
-} 
+}

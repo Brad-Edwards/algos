@@ -195,4 +195,4 @@ mod tests {
         let cycles = g.all_hamiltonian_cycles();
         assert_eq!(cycles, vec![vec![0, 1, 2]]);
     }
-} 
+}

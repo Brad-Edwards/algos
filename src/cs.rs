@@ -1,4 +1,5 @@
 pub mod approx;
+pub mod combinatorial;
 pub mod dynamic;
 pub mod error;
 pub mod graph;
@@ -8,7 +9,6 @@ pub mod search;
 pub mod security;
 pub mod sort;
 pub mod string;
-pub mod combinatorial;
 
 pub use approx::{
     christofides_solve, fptas_subset_sum, goemans_williamson_solve, greedy_set_cover,

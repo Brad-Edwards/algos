@@ -71,7 +71,14 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
     /// Finds the least common ancestor (LCA) of vertices v and w in the alternating tree.
     /// This is used to identify the base of a blossom when one is found during the search.
     /// The alternating tree is implicitly defined by the parent array p and the current matching.
-    fn lca(v: usize, w: usize, p: &Vec<usize>, base: &Vec<usize>, matchv: &Vec<usize>, inf: usize) -> usize {
+    fn lca(
+        v: usize,
+        w: usize,
+        p: &Vec<usize>,
+        base: &Vec<usize>,
+        matchv: &Vec<usize>,
+        inf: usize,
+    ) -> usize {
         let n = p.len();
         let mut used_flag = vec![false; n];
         let mut v = v;
@@ -120,7 +127,14 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
     /// An augmenting path alternates between unmatched and matched edges, starting and ending
     /// at unmatched vertices. When found, such a path can be used to increase the size of the matching.
     /// The function handles blossom contraction when odd cycles are encountered during the search.
-    fn find_path(start: usize, g: &Graph, matchv: &Vec<usize>, p: &mut Vec<usize>, base: &mut Vec<usize>, inf: usize) -> Option<usize> {
+    fn find_path(
+        start: usize,
+        g: &Graph,
+        matchv: &Vec<usize>,
+        p: &mut Vec<usize>,
+        base: &mut Vec<usize>,
+        inf: usize,
+    ) -> Option<usize> {
         let n = g.len();
         let mut used = vec![false; n];
         let mut q = std::collections::VecDeque::new();
@@ -137,8 +151,28 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
                 if to == start || (matchv[to] != inf && p[matchv[to]] != inf) {
                     let cur = lca(v, to, p, base, matchv, inf);
                     let mut blossom_flag = vec![false; n];
-                    mark_path(v, cur, to, p, base, &mut used, matchv, &mut blossom_flag, inf);
-                    mark_path(to, cur, v, p, base, &mut used, matchv, &mut blossom_flag, inf);
+                    mark_path(
+                        v,
+                        cur,
+                        to,
+                        p,
+                        base,
+                        &mut used,
+                        matchv,
+                        &mut blossom_flag,
+                        inf,
+                    );
+                    mark_path(
+                        to,
+                        cur,
+                        v,
+                        p,
+                        base,
+                        &mut used,
+                        matchv,
+                        &mut blossom_flag,
+                        inf,
+                    );
                     for i in 0..n {
                         if blossom_flag[base[i]] {
                             base[i] = cur;
@@ -165,7 +199,13 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
     /// Augments the matching along the found path.
     /// Given an augmenting path from start to finish, this function flips the matched/unmatched
     /// status of edges along the path to increase the size of the matching by one.
-    fn augment_path(start: usize, finish: usize, matchv: &mut Vec<usize>, p: &Vec<usize>, inf: usize) {
+    fn augment_path(
+        start: usize,
+        finish: usize,
+        matchv: &mut Vec<usize>,
+        p: &Vec<usize>,
+        inf: usize,
+    ) {
         let mut cur = finish;
         while cur != start {
             let prev = p[cur];
@@ -189,7 +229,10 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
     }
 
     // Convert sentinel inf back to None.
-    matchv.into_iter().map(|x| if x == inf { None } else { Some(x) }).collect()
+    matchv
+        .into_iter()
+        .map(|x| if x == inf { None } else { Some(x) })
+        .collect()
 }
 
 #[cfg(test)]
@@ -204,12 +247,26 @@ mod tests {
         g.add_edge(1, 2);
         g.add_edge(2, 0);
         let matching = edmonds_blossom_max_matching(&g);
-        let matched_edges: Vec<_> = matching.iter().enumerate().filter_map(|(v, &m)| {
-            if let Some(u) = m {
-                if v < u { Some((v, u)) } else { None }
-            } else { None }
-        }).collect();
-        assert_eq!(matched_edges.len(), 1, "Triangle should yield 1 matched edge");
+        let matched_edges: Vec<_> = matching
+            .iter()
+            .enumerate()
+            .filter_map(|(v, &m)| {
+                if let Some(u) = m {
+                    if v < u {
+                        Some((v, u))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect();
+        assert_eq!(
+            matched_edges.len(),
+            1,
+            "Triangle should yield 1 matched edge"
+        );
     }
 
     /// In a square with diagonals, the maximum matching has two edges.
@@ -223,12 +280,26 @@ mod tests {
         g.add_edge(0, 2);
         g.add_edge(1, 3);
         let matching = edmonds_blossom_max_matching(&g);
-        let matched_edges: Vec<_> = matching.iter().enumerate().filter_map(|(v, &m)| {
-            if let Some(u) = m {
-                if v < u { Some((v, u)) } else { None }
-            } else { None }
-        }).collect();
-        assert_eq!(matched_edges.len(), 2, "Square with diagonals should yield 2 matched edges");
+        let matched_edges: Vec<_> = matching
+            .iter()
+            .enumerate()
+            .filter_map(|(v, &m)| {
+                if let Some(u) = m {
+                    if v < u {
+                        Some((v, u))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect();
+        assert_eq!(
+            matched_edges.len(),
+            2,
+            "Square with diagonals should yield 2 matched edges"
+        );
     }
 
     /// A classic blossom case: a 5-cycle with an extra chord.
@@ -242,12 +313,26 @@ mod tests {
         g.add_edge(4, 0);
         g.add_edge(1, 3);
         let matching = edmonds_blossom_max_matching(&g);
-        let matched_edges: Vec<_> = matching.iter().enumerate().filter_map(|(v, &m)| {
-            if let Some(u) = m {
-                if v < u { Some((v, u)) } else { None }
-            } else { None }
-        }).collect();
+        let matched_edges: Vec<_> = matching
+            .iter()
+            .enumerate()
+            .filter_map(|(v, &m)| {
+                if let Some(u) = m {
+                    if v < u {
+                        Some((v, u))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect();
         // For this blossom case, a maximum matching has two edges.
-        assert_eq!(matched_edges.len(), 2, "Blossom case should yield 2 matched edges");
+        assert_eq!(
+            matched_edges.len(),
+            2,
+            "Blossom case should yield 2 matched edges"
+        );
     }
 }

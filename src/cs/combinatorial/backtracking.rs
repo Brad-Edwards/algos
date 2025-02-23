@@ -163,14 +163,17 @@ mod tests {
     fn test_combinations_k_two() {
         let items = vec![1, 2, 3, 4];
         let combos = combinations(&items, 2);
-        assert_eq!(combos, vec![
-            vec![1, 2],
-            vec![1, 3],
-            vec![1, 4],
-            vec![2, 3],
-            vec![2, 4],
-            vec![3, 4],
-        ]);
+        assert_eq!(
+            combos,
+            vec![
+                vec![1, 2],
+                vec![1, 3],
+                vec![1, 4],
+                vec![2, 3],
+                vec![2, 4],
+                vec![3, 4],
+            ]
+        );
     }
 
     #[test]
@@ -186,4 +189,4 @@ mod tests {
         let combos = combinations(&items, 4);
         assert!(combos.is_empty());
     }
-} 
+}

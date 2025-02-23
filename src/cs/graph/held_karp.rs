@@ -51,10 +51,11 @@ pub fn held_karp(dist: &[Vec<u64>]) -> (u64, Vec<usize>) {
     for size in 2..n {
         // For each subset of size 'size'
         for mask in 0..(1 << n) {
-            if mask & 1 != 0 { // Skip if subset includes node 0
+            if mask & 1 != 0 {
+                // Skip if subset includes node 0
                 continue;
             }
-            
+
             // Count set bits
             let mut bits = 0;
             let mut m = mask;
@@ -186,11 +187,7 @@ mod tests {
 
     #[test]
     fn test_three_nodes() {
-        let dist = vec![
-            vec![0, 10, 15],
-            vec![10, 0, 20],
-            vec![15, 20, 0],
-        ];
+        let dist = vec![vec![0, 10, 15], vec![10, 0, 20], vec![15, 20, 0]];
         let (cost, path) = held_karp(&dist);
         assert_eq!(cost, 45);
         assert_eq!(path.len(), 4);
@@ -200,18 +197,14 @@ mod tests {
 
     #[test]
     fn test_asymmetric_costs() {
-        let dist = vec![
-            vec![0, 10, 15],
-            vec![20, 0, 25],
-            vec![30, 35, 0],
-        ];
+        let dist = vec![vec![0, 10, 15], vec![20, 0, 25], vec![30, 35, 0]];
         let (cost, path) = held_karp(&dist);
         assert_eq!(cost, 65); // 0->1->2->0 = 10 + 25 + 30
         let expected_path = vec![0, 1, 2, 0];
         assert_eq!(path.len(), expected_path.len());
         assert_eq!(path[0], 0);
         assert_eq!(path[path.len() - 1], 0);
-        
+
         // Calculate the actual cost of the path
         let mut actual_cost = 0;
         for i in 0..path.len() - 1 {
@@ -219,4 +212,4 @@ mod tests {
         }
         assert_eq!(actual_cost, 65);
     }
-} 
+}

@@ -125,7 +125,7 @@ impl DancingLinks {
             dlx.cols.push(Column { size: 0 });
         }
         dlx.nodes[0].left = cols; // root's left = last col
-        dlx.nodes[0].right = 1;   // root's right = first col
+        dlx.nodes[0].right = 1; // root's right = first col
 
         // Add rows
         let mut current_node_idx = 1 + cols; // next free node index
@@ -137,10 +137,10 @@ impl DancingLinks {
                 }
                 // Insert a new node
                 let col_header_idx = c + 1; // column header node index
-                
+
                 // Get the necessary values before mutating
                 let up_idx = dlx.nodes[col_header_idx].up;
-                
+
                 // Create the new node
                 let node_idx = current_node_idx;
                 current_node_idx += 1;
@@ -321,12 +321,12 @@ mod tests {
         // R4 -> [1, 0, 1, 0]
         // R5 -> [0, 1, 0, 1]
         let matrix = vec![
-            vec![true,  false, true,  false],
-            vec![true,  false, false, true ],
-            vec![false, true,  true,  false],
-            vec![false, true,  false, true ],
-            vec![true,  false, true,  false],
-            vec![false, true,  false, true ],
+            vec![true, false, true, false],
+            vec![true, false, false, true],
+            vec![false, true, true, false],
+            vec![false, true, false, true],
+            vec![true, false, true, false],
+            vec![false, true, false, true],
         ];
         let mut dlx = DancingLinks::new(&matrix);
         let solutions = dlx.solve_all();
@@ -363,13 +363,10 @@ mod tests {
     fn test_single_col() {
         // 1 column, 2 rows
         // Row0 covers the column, Row1 does not
-        let matrix = vec![
-            vec![true],
-            vec![false],
-        ];
+        let matrix = vec![vec![true], vec![false]];
         let mut dlx = DancingLinks::new(&matrix);
         let solutions = dlx.solve_all();
         // The only solution is picking row0
         assert_eq!(solutions, vec![vec![0]]);
     }
-} 
+}
