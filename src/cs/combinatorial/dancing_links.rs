@@ -13,8 +13,8 @@
 /// //   R1: [1, 0, 0, 1]
 /// //   R2: [0, 1, 1, 0]
 /// //   R3: [0, 1, 0, 1]
-/// //   R4: [1, 0, 1, 0]  <-- same as R0, just to illustrate multiple coverage
-/// //   R5: [0, 1, 0, 1]  <-- same as R3
+/// //   R4: [1, 0, 1, 0]  (same as R0, just to illustrate multiple coverage)
+/// //   R5: [0, 1, 0, 1]  (same as R3)
 /// //
 /// // The columns are "exactly covered" by choosing e.g. R1 + R2 or R0 + R3, etc.
 /// use algos::cs::combinatorial::dancing_links::DancingLinks;
@@ -51,7 +51,6 @@ struct Node {
 #[derive(Clone, Debug)]
 struct Column {
     size: usize,
-    head: usize, // Index of the node that acts as this column's "head"
 }
 
 /// A Dancing Links solver for exact cover.
@@ -95,7 +94,7 @@ impl DancingLinks {
                 down: 0,
                 column: 0,
             });
-            dlx.cols.push(Column { size: 0, head: 0 });
+            dlx.cols.push(Column { size: 0 });
             return dlx;
         }
 
@@ -112,7 +111,7 @@ impl DancingLinks {
             down: 0,
             column: 0,
         });
-        dlx.cols.push(Column { size: 0, head: 0 });
+        dlx.cols.push(Column { size: 0 });
 
         // Link column headers in a left-right ring
         for c in 1..=cols {
@@ -123,10 +122,7 @@ impl DancingLinks {
                 down: c,
                 column: c,
             });
-            dlx.cols.push(Column {
-                size: 0,
-                head: c,
-            });
+            dlx.cols.push(Column { size: 0 });
         }
         dlx.nodes[0].left = cols; // root's left = last col
         dlx.nodes[0].right = 1;   // root's right = first col

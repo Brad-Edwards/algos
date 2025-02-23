@@ -12,7 +12,7 @@
 /// let combos = combinations(&data, 2);
 /// assert_eq!(combos.len(), 3);
 /// ```
-
+///
 /// Returns all permutations of the input slice using backtracking.
 ///
 /// # Example
