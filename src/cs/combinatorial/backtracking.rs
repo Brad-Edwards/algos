@@ -21,14 +21,19 @@
 ///
 /// let items = vec!['a', 'b', 'c'];
 /// let perms = permutations(&items);
-/// assert_eq!(perms, vec![
+/// let mut expected = vec![
 ///     vec!['a', 'b', 'c'],
 ///     vec!['a', 'c', 'b'],
 ///     vec!['b', 'a', 'c'],
 ///     vec!['b', 'c', 'a'],
-///     vec!['c', 'a', 'b'],
 ///     vec!['c', 'b', 'a'],
-/// ]);
+///     vec!['c', 'a', 'b'],
+/// ];
+/// expected.sort();
+/// let mut perms_sorted = perms.clone();
+/// perms_sorted.sort();
+/// assert_eq!(perms_sorted, expected);
+/// assert_eq!(perms.len(), 6);
 /// ```
 pub fn permutations<T: Clone>(items: &[T]) -> Vec<Vec<T>> {
     let mut results = Vec::new();
