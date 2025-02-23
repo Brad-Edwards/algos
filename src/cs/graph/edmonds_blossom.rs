@@ -27,6 +27,35 @@ impl Graph {
     }
 }
 
+/// Implementation of Edmonds' Blossom algorithm for finding maximum matchings in undirected graphs.
+/// A matching in a graph is a set of edges where no two edges share a vertex. A maximum matching
+/// is a matching that contains the largest possible number of edges.
+///
+/// # Algorithm Overview
+/// The algorithm works by repeatedly finding augmenting paths in the graph. An augmenting path
+/// is a path that starts and ends at unmatched vertices and alternates between unmatched and
+/// matched edges. The key insight of Edmonds' algorithm is handling "blossoms" - odd-length
+/// cycles that need to be contracted during the search.
+///
+/// # Complexity
+/// - Time complexity: O(V³), where V is the number of vertices
+/// - Space complexity: O(V), for storing the matching and auxiliary data structures
+///
+/// # Example
+/// ```
+/// use algos::cs::graph::edmonds_blossom::{Graph, edmonds_blossom_max_matching};
+///
+/// // Create a simple path of 3 vertices
+/// let mut g = Graph::new(3);
+/// g.add_edge(0, 1);
+/// g.add_edge(1, 2);
+///
+/// // Find maximum matching
+/// let matching = edmonds_blossom_max_matching(&g);
+/// // The matching will contain one edge, matching[i] gives the vertex matched to i
+/// assert_eq!(matching.len(), 3);
+/// assert!(matching.iter().filter(|x| x.is_some()).count() == 2); // 2 vertices matched
+/// ```
 /// Computes a maximum matching in the given undirected graph using Edmonds' Blossom algorithm.
 /// Vertices that are unmatched are stored as `None` in the output vector.
 /// Internally, we use `INF = n` as a sentinel value.
@@ -39,7 +68,9 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
     let _used = vec![false; n];
     let _blossom = vec![false; n];
 
-    // Finds the least common ancestor of v and w in the alternating tree.
+    /// Finds the least common ancestor (LCA) of vertices v and w in the alternating tree.
+    /// This is used to identify the base of a blossom when one is found during the search.
+    /// The alternating tree is implicitly defined by the parent array p and the current matching.
     fn lca(v: usize, w: usize, p: &Vec<usize>, base: &Vec<usize>, matchv: &Vec<usize>, inf: usize) -> usize {
         let n = p.len();
         let mut used_flag = vec![false; n];
@@ -59,7 +90,10 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
         base[w]
     }
 
-    // Marks the blossom along the path.
+    /// Marks the vertices in a blossom for contraction.
+    /// When a blossom is found (an odd cycle), we need to contract it into a single vertex
+    /// for the purpose of finding an augmenting path. This function marks all vertices that
+    /// are part of the blossom by following the alternating path from v up to the base vertex b.
     fn mark_path(
         v: usize,
         b: usize,
@@ -82,7 +116,10 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
         }
     }
 
-    // Finds an augmenting path starting from 'start' using BFS.
+    /// Finds an augmenting path starting from an unmatched vertex using BFS.
+    /// An augmenting path alternates between unmatched and matched edges, starting and ending
+    /// at unmatched vertices. When found, such a path can be used to increase the size of the matching.
+    /// The function handles blossom contraction when odd cycles are encountered during the search.
     fn find_path(start: usize, g: &Graph, matchv: &Vec<usize>, p: &mut Vec<usize>, base: &mut Vec<usize>, inf: usize) -> Option<usize> {
         let n = g.len();
         let mut used = vec![false; n];
@@ -125,7 +162,9 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
         None
     }
 
-    // Augments the matching along the found path.
+    /// Augments the matching along the found path.
+    /// Given an augmenting path from start to finish, this function flips the matched/unmatched
+    /// status of edges along the path to increase the size of the matching by one.
     fn augment_path(start: usize, finish: usize, matchv: &mut Vec<usize>, p: &Vec<usize>, inf: usize) {
         let mut cur = finish;
         while cur != start {
