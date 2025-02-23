@@ -120,16 +120,16 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 #### Classic Machine Learning
 
-✅ k-Means Clustering
-✅ k-Nearest Neighbors (k-NN)
-✅ Linear Regression (OLS)
-✅ Logistic Regression
-✅ Decision Tree Learning (ID3, C4.5)
-✅ Random Forest
-✅ Support Vector Machine (SVM)
-✅ Naive Bayes
-✅ Gradient Boosting (GBM family)
-✅ XGBoost
+✅ k-Means Clustering  
+✅ k-Nearest Neighbors (k-NN)  
+✅ Linear Regression (OLS)  
+✅ Logistic Regression  
+✅ Decision Tree Learning (ID3, C4.5)  
+✅ Random Forest  
+✅ Support Vector Machine (SVM)  
+✅ Naive Bayes  
+✅ Gradient Boosting (GBM family)  
+✅ XGBoost  
 
 #### ***DO NOT USE*** Cryptography and Security ***DO NOT USE***
 
@@ -218,6 +218,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 #### Monte Carlo Methods
 
 ✅ Monte Carlo Integration  
+
+#### Combinatorial & Backtracking
+
+✅ Backtracking for Permutations/Combinations  
+✅ Held–Karp Algorithm (TSP using DP)  
+✅ Johnson–Trotter (permutation generation)  
+✅ Gray Code Generation  
+✅ Knuth’s Dancing Links (Algorithm X)  
+✅ Zassenhaus Algorithm (group factorization)  
+✅ Cycle Enumeration (graph cycles)  
+✅ Hamiltonian Cycle Backtracking  
+✅ Edmonds’ Blossom Algorithm (max matching)  
+✅ Subset Generation (binary representation)  
 
 ## Contributing
 
