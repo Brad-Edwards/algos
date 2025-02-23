@@ -32,22 +32,22 @@ impl Graph {
 /// Internally, we use `INF = n` as a sentinel value.
 pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
     let n = g.len();
-    let INF = n; // sentinel value: no match
-    let mut matchv = vec![INF; n];
-    let mut p = vec![INF; n];
+    let inf = n; // sentinel value: no match
+    let mut matchv = vec![inf; n];
+    let mut p = vec![inf; n];
     let mut base: Vec<usize> = (0..n).collect();
-    let mut used = vec![false; n];
-    let mut blossom = vec![false; n];
+    let _used = vec![false; n];
+    let _blossom = vec![false; n];
 
     // Finds the least common ancestor of v and w in the alternating tree.
-    fn lca(v: usize, w: usize, p: &Vec<usize>, base: &Vec<usize>, matchv: &Vec<usize>, INF: usize) -> usize {
+    fn lca(v: usize, w: usize, p: &Vec<usize>, base: &Vec<usize>, matchv: &Vec<usize>, inf: usize) -> usize {
         let n = p.len();
         let mut used_flag = vec![false; n];
         let mut v = v;
         loop {
             v = base[v];
             used_flag[v] = true;
-            if matchv[v] == INF {
+            if matchv[v] == inf {
                 break;
             }
             v = p[matchv[v]];
@@ -66,10 +66,10 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
         mut x: usize,
         p: &mut Vec<usize>,
         base: &mut Vec<usize>,
-        used: &mut Vec<bool>,
+        _used: &mut Vec<bool>,
         matchv: &Vec<usize>,
         blossom: &mut Vec<bool>,
-        INF: usize,
+        _inf: usize,
     ) {
         let mut v = v;
         while base[v] != b {
@@ -83,25 +83,25 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
     }
 
     // Finds an augmenting path starting from 'start' using BFS.
-    fn find_path(start: usize, g: &Graph, matchv: &Vec<usize>, p: &mut Vec<usize>, base: &mut Vec<usize>, INF: usize) -> Option<usize> {
+    fn find_path(start: usize, g: &Graph, matchv: &Vec<usize>, p: &mut Vec<usize>, base: &mut Vec<usize>, inf: usize) -> Option<usize> {
         let n = g.len();
         let mut used = vec![false; n];
         let mut q = std::collections::VecDeque::new();
         q.push_back(start);
         used[start] = true;
         for i in 0..n {
-            p[i] = INF;
+            p[i] = inf;
         }
         while let Some(v) = q.pop_front() {
             for &to in &g.adj[v] {
                 if base[v] == base[to] || matchv[v] == to {
                     continue;
                 }
-                if to == start || (matchv[to] != INF && p[matchv[to]] != INF) {
-                    let cur = lca(v, to, p, base, matchv, INF);
+                if to == start || (matchv[to] != inf && p[matchv[to]] != inf) {
+                    let cur = lca(v, to, p, base, matchv, inf);
                     let mut blossom_flag = vec![false; n];
-                    mark_path(v, cur, to, p, base, &mut used, matchv, &mut blossom_flag, INF);
-                    mark_path(to, cur, v, p, base, &mut used, matchv, &mut blossom_flag, INF);
+                    mark_path(v, cur, to, p, base, &mut used, matchv, &mut blossom_flag, inf);
+                    mark_path(to, cur, v, p, base, &mut used, matchv, &mut blossom_flag, inf);
                     for i in 0..n {
                         if blossom_flag[base[i]] {
                             base[i] = cur;
@@ -111,9 +111,9 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
                             }
                         }
                     }
-                } else if p[to] == INF {
+                } else if p[to] == inf {
                     p[to] = v;
-                    if matchv[to] == INF {
+                    if matchv[to] == inf {
                         return Some(to);
                     } else {
                         used[matchv[to]] = true;
@@ -126,7 +126,7 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
     }
 
     // Augments the matching along the found path.
-    fn augment_path(start: usize, finish: usize, matchv: &mut Vec<usize>, p: &Vec<usize>, INF: usize) {
+    fn augment_path(start: usize, finish: usize, matchv: &mut Vec<usize>, p: &Vec<usize>, inf: usize) {
         let mut cur = finish;
         while cur != start {
             let prev = p[cur];
@@ -134,7 +134,7 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
             matchv[cur] = prev;
             matchv[prev] = cur;
             cur = nxt;
-            if cur == INF {
+            if cur == inf {
                 break;
             }
         }
@@ -142,15 +142,15 @@ pub fn edmonds_blossom_max_matching(g: &Graph) -> Vec<Option<usize>> {
 
     // Main loop: for each free vertex, try to find an augmenting path.
     for v in 0..n {
-        if matchv[v] == INF {
-            if let Some(finish) = find_path(v, g, &matchv, &mut p, &mut base, INF) {
-                augment_path(v, finish, &mut matchv, &p, INF);
+        if matchv[v] == inf {
+            if let Some(finish) = find_path(v, g, &matchv, &mut p, &mut base, inf) {
+                augment_path(v, finish, &mut matchv, &p, inf);
             }
         }
     }
 
-    // Convert sentinel INF back to None.
-    matchv.into_iter().map(|x| if x == INF { None } else { Some(x) }).collect()
+    // Convert sentinel inf back to None.
+    matchv.into_iter().map(|x| if x == inf { None } else { Some(x) }).collect()
 }
 
 #[cfg(test)]
