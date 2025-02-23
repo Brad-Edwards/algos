@@ -82,6 +82,7 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Ford–Fulkerson (max flow)  
 ✅ Hungarian Algorithm (assignment)  
 ✅ Hopcroft–Karp (bipartite matching)  
+✅ Edmonds' Blossom Algorithm (max matching)  
 ✅ Bron–Kerbosch (maximal clique)  
 ✅ Johnson's Cycle Detection  
 ✅ Floyd's Cycle Detection (Tortoise and Hare)  
@@ -222,14 +223,11 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 #### Combinatorial & Backtracking
 
 ✅ Backtracking for Permutations/Combinations  
-✅ Held–Karp Algorithm (TSP using DP)  
 ✅ Johnson–Trotter (permutation generation)  
 ✅ Gray Code Generation  
-✅ Knuth’s Dancing Links (Algorithm X)  
+✅ Knuth's Dancing Links (Algorithm X)  
 ✅ Zassenhaus Algorithm (group factorization)  
-✅ Cycle Enumeration (graph cycles)  
 ✅ Hamiltonian Cycle Backtracking  
-✅ Edmonds’ Blossom Algorithm (max matching)  
 ✅ Subset Generation (binary representation)  
 
 ## Contributing

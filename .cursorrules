@@ -45,29 +45,62 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 
 # Scratchpad
 
-## Current Task: Gray Code Implementation
+## Current Task: Algorithm Categorization
+
+### Combinatorial Algorithms (cs/combinatorial)
+
+[X] Backtracking (Permutations/Combinations)
+[X] Johnson-Trotter (permutation generation)
+[X] Gray Code Generation
+[X] Dancing Links (Algorithm X)
+[X] Zassenhaus Algorithm
+
+### Graph Algorithms (cs/graph)
+
+[X] Held-Karp (TSP)
+[X] Hamiltonian Cycle Backtracking
+[X] Edmonds' Blossom Algorithm (max matching)
+[X] Bellman-Ford
+[X] Bron-Kerbosch
+[X] Dijkstra
+[X] Dinic
+[X] Edmond-Karp
+[X] Floyd Cycle Detection
+[X] Floyd-Warshall
+[X] Ford-Fulkerson
+[X] Hierholzer
+[X] Hopcroft-Karp
+[X] Hungarian
+[X] Johnson
+[X] Johnson Cycle Detection
+[X] Karger
+[X] Kosaraju
+[X] Kruskal
+[X] Prim
+[X] Randomized Delaunay
+[X] Randomized Kruskal
+[X] Randomized Prim
+[X] Tarjan
+[X] Topological Sort
+[X] Warshall
 
 ### Progress
 
-[X] Created gray_code.rs with implementation
-[X] Added documentation and tests
-[X] Fixed type mismatch (usize to u64)
-[X] Registered module in combinatorial.rs
-[X] All tests passing (730 tests total)
+[X] Reviewed current implementations
+[X] Identified algorithms to be moved
+[X] Moved Held-Karp to graph module
+[X] Implement Hamiltonian Cycle
+[X] Implement Edmonds' Blossom in graph module
+[ ] Implement Subset Generation
 
-### Implementation Details
+### Notes
 
-1. Function: `gray_code(n: usize) -> Vec<u64>`
-2. Algorithm: Uses `i ^ (i >> 1)` formula
-3. Returns: Vector of length 2^n containing Gray code sequence
-4. Type handling: Properly converts usize to u64 for return type
-
-### Verification
-
-- Unit tests pass for n=0, n=2, and n=3
-- Documentation tests pass
-- No regressions in existing codebase
-- All 730 tests passing
+- Held-Karp successfully moved to graph module
+- Hamiltonian Cycle implementation complete and tested
+- Edmonds' Blossom implementation complete and tested
+- Subset Generation still needs implementation
+- All other algorithms are in their correct modules
+- All tests passing after reorganization
 
 ## Current Task: Debug Branch and Price Test Failures
 

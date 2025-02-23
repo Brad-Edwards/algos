@@ -4,7 +4,7 @@
 ///
 /// # Example
 /// ```
-/// use algos::cs::combinatorial::held_karp::held_karp;
+/// use algos::cs::graph::held_karp::held_karp;
 ///
 /// // A small 4-node complete graph (0->1=10, 0->2=15, 0->3=20, etc.).
 /// // dist[i][j] is the cost of traveling from i to j.
