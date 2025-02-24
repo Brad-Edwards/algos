@@ -52,7 +52,11 @@ pub use lz78::{compress as lz78_compress, decompress as lz78_decompress, Token a
 pub mod lzw;
 pub use lzw::{compress as lzw_compress, decompress as lzw_decompress};
 
+pub mod arithmetic;
+pub use arithmetic::{
+    arithmetic_decode, arithmetic_encode, FrequencyModel, ALPHABET_SIZE as ARITHMETIC_ALPHABET_SIZE,
+};
+
 // Re-export specific implementations as they are added
 // pub mod rle;
-// pub mod arithmetic;
 // pub mod bwt;
