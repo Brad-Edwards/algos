@@ -49,8 +49,10 @@ pub use lz77::{compress as lz77_compress, decompress as lz77_decompress, Token a
 pub mod lz78;
 pub use lz78::{compress as lz78_compress, decompress as lz78_decompress, Token as Lz78Token};
 
+pub mod lzw;
+pub use lzw::{compress as lzw_compress, decompress as lzw_decompress};
+
 // Re-export specific implementations as they are added
-// pub mod lzw;
 // pub mod rle;
 // pub mod arithmetic;
 // pub mod bwt;
