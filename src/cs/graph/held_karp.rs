@@ -1,30 +1,31 @@
-/// Held-Karp implementation for the Traveling Salesman Problem (TSP) using Dynamic Programming.
-/// Assumes a complete graph with `dist[i][j]` giving the cost from node i to node j.
-/// Returns the minimal cost and one optimal route (starting and ending at node 0).
-///
-/// # Example
-/// ```
-/// use algos::cs::graph::held_karp::held_karp;
-///
-/// // A small 4-node complete graph (0->1=10, 0->2=15, 0->3=20, etc.).
-/// // dist[i][j] is the cost of traveling from i to j.
-/// let dist = vec![
-///     vec![0, 10, 15, 20],
-///     vec![10, 0, 35, 25],
-///     vec![15, 35, 0, 30],
-///     vec![20, 25, 30, 0],
-/// ];
-///
-/// let (cost, path) = held_karp(&dist);
-/// // This returns (80, [0, 1, 3, 2, 0]) or another path with the same cost.
-/// assert_eq!(cost, 80);
-/// assert_eq!(path.len(), 5);
-/// assert_eq!(path[0], 0);
-/// assert_eq!(path[4], 0);
-/// ```
+//! Held-Karp implementation for the Traveling Salesman Problem (TSP) using Dynamic Programming.
+//! Assumes a complete graph with `dist[i][j]` giving the cost from node i to node j.
+//! Returns the minimal cost and one optimal route (starting and ending at node 0).
+//!
+//! # Example
+//! ```
+//! use algos::cs::graph::held_karp::held_karp;
+//!
+//! // A small 4-node complete graph (0->1=10, 0->2=15, 0->3=20, etc.).
+//! // dist[i][j] is the cost of traveling from i to j.
+//! let dist = vec![
+//!     vec![0, 10, 15, 20],
+//!     vec![10, 0, 35, 25],
+//!     vec![15, 35, 0, 30],
+//!     vec![20, 25, 30, 0],
+//! ];
+//!
+//! let (cost, path) = held_karp(&dist);
+//! // This returns (80, [0, 1, 3, 2, 0]) or another path with the same cost.
+//! assert_eq!(cost, 80);
+//! assert_eq!(path.len(), 5);
+//! assert_eq!(path[0], 0);
+//! assert_eq!(path[4], 0);
+//! ```
 
 /// Held-Karp TSP solver.
 /// Returns (minimum_cost, path_including_start_end).
+#[allow(clippy::needless_range_loop)]
 pub fn held_karp(dist: &[Vec<u64>]) -> (u64, Vec<usize>) {
     let n = dist.len();
     if n == 0 {
@@ -57,12 +58,7 @@ pub fn held_karp(dist: &[Vec<u64>]) -> (u64, Vec<usize>) {
             }
 
             // Count set bits
-            let mut bits = 0;
-            let mut m = mask;
-            while m > 0 {
-                bits += m & 1;
-                m >>= 1;
-            }
+            let bits = (mask as u32).count_ones() as usize;
             if bits != size {
                 continue;
             }
@@ -92,21 +88,6 @@ pub fn held_karp(dist: &[Vec<u64>]) -> (u64, Vec<usize>) {
 
     // Handle the final subset that includes all nodes except 0
     let all_but_zero = ((1 << n) - 1) & !(1);
-    for j in 1..n {
-        let prev_mask = all_but_zero & !(1 << j);
-        for i in 1..n {
-            if i == j {
-                continue;
-            }
-            let new_cost = dp[prev_mask][i].saturating_add(dist[i][j]);
-            if new_cost < dp[all_but_zero][j] {
-                dp[all_but_zero][j] = new_cost;
-                parent[all_but_zero][j] = i;
-            }
-        }
-    }
-
-    // Find the optimal cost and last node
     let mut best_cost = inf;
     let mut best_end = 0;
     for j in 1..n {

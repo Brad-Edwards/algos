@@ -1,24 +1,24 @@
-/// A backtracking approach to find all Hamiltonian cycles in an undirected graph.
-/// Each cycle is a sequence of vertices v0..v_{n-1} with an edge between consecutive
-/// vertices, plus an edge from v_{n-1} back to v0, visiting all vertices exactly once.
-///
-/// # Example
-/// ```
-/// use algos::cs::graph::hamiltonian::Graph;
-///
-/// // A 4-node cycle: edges (0-1, 1-2, 2-3, 3-0).
-/// let mut g = Graph::new(4);
-/// g.add_edge(0, 1);
-/// g.add_edge(1, 2);
-/// g.add_edge(2, 3);
-/// g.add_edge(3, 0);
-///
-/// // This graph has a single Hamiltonian cycle [0,1,2,3] (and its rotations).
-/// // `all_hamiltonian_cycles` returns each cycle in a canonical form
-/// // (smallest vertex first), so effectively just one unique cycle here.
-/// let cycles = g.all_hamiltonian_cycles();
-/// assert_eq!(cycles, vec![vec![0, 1, 2, 3]]);
-/// ```
+//! A backtracking approach to find all Hamiltonian cycles in an undirected graph.
+//! Each cycle is a sequence of vertices v0..v_{n-1} with an edge between consecutive
+//! vertices, plus an edge from v_{n-1} back to v0, visiting all vertices exactly once.
+//!
+//! # Example
+//! ```
+//! use algos::cs::graph::hamiltonian::Graph;
+//!
+//! // A 4-node cycle: edges (0-1, 1-2, 2-3, 3-0).
+//! let mut g = Graph::new(4);
+//! g.add_edge(0, 1);
+//! g.add_edge(1, 2);
+//! g.add_edge(2, 3);
+//! g.add_edge(3, 0);
+//!
+//! // This graph has a single Hamiltonian cycle [0,1,2,3] (and its rotations).
+//! // `all_hamiltonian_cycles` returns each cycle in a canonical form
+//! // (smallest vertex first), so effectively just one unique cycle here.
+//! let cycles = g.all_hamiltonian_cycles();
+//! assert_eq!(cycles, vec![vec![0, 1, 2, 3]]);
+//! ```
 
 /// Simple undirected graph with adjacency lists.
 #[derive(Clone, Debug)]
@@ -133,7 +133,7 @@ fn unique_cycles(cycles: &mut Vec<Vec<usize>>) {
 
 /// Rotate the cycle so that the smallest vertex is first.
 /// E.g. [2,3,0,1] -> [0,1,2,3].
-fn rotate_cycle_to_smallest(cycle: &mut Vec<usize>) {
+fn rotate_cycle_to_smallest(cycle: &mut [usize]) {
     if cycle.is_empty() {
         return;
     }

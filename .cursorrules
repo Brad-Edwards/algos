@@ -34,6 +34,7 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 - When debugging, especially for tests, keep track of problems and solutions in the scratchpad so you do not make the same mistake again or go in circles
 - When testing stochastic optimization algorithms (like simulated annealing), use multiple trials and statistical success criteria (e.g., success rate) instead of single deterministic tests
 - When using optimization solvers that handle objective transformation (e.g., minimization to maximization), be careful not to transform the objective multiple times. Let the solver handle the transformation.
+- In algorithms like Held-Karp where indices are used for both array access and bit manipulation, range-based loops can be clearer and more correct than iterator-based approaches. It's acceptable to keep range loops in such cases and suppress the clippy warning.
 
 ## Benders Implementation Lessons
 

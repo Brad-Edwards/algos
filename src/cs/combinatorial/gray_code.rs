@@ -1,14 +1,14 @@
-/// Generate an n-bit Gray code sequence using the standard i ^ (i >> 1) method.
-/// Returns a Vec of length 2^n, where each element is the Gray code for i in [0 .. 2^n).
-///
-/// # Example
-/// ```
-/// use algos::cs::combinatorial::gray_code;
-///
-/// let codes = gray_code(2);
-/// // For n=2, the sequence is [0, 1, 3, 2].
-/// assert_eq!(codes, vec![0, 1, 3, 2]);
-/// ```
+//! Generate an n-bit Gray code sequence using the standard i ^ (i >> 1) method.
+//! Returns a Vec of length 2^n, where each element is the Gray code for i in [0 .. 2^n).
+//!
+//! # Example
+//! ```
+//! use algos::cs::combinatorial::gray_code;
+//!
+//! let codes = gray_code(2);
+//! // For n=2, the sequence is [0, 1, 3, 2].
+//! assert_eq!(codes, vec![0, 1, 3, 2]);
+//! ```
 
 /// Returns a vector of 2^n Gray codes, each stored as a `u64`.
 pub fn gray_code(n: usize) -> Vec<u64> {

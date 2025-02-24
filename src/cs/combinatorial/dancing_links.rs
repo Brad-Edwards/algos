@@ -36,7 +36,6 @@
 /// // e.g. one possible solution is [1, 2] which covers all columns.
 /// println!("{:?}", solutions);
 /// ```
-
 /// Each dancing-links node links up/down/left/right in a circular list.
 #[derive(Clone, Debug)]
 struct Node {
@@ -69,51 +68,50 @@ pub struct DancingLinks {
 
 impl DancingLinks {
     /// Constructs the dancing-links structure from a boolean matrix:
-    /// * `matrix[r][c] = true` means row r covers column c.
-    /// The rows are 0..matrix.len(), columns 0..matrix[0].len().
+    ///   The rows are 0..matrix.len(), columns 0..matrix[0].len().
     pub fn new(matrix: &[Vec<bool>]) -> Self {
         let rows = matrix.len();
-        let cols = if rows == 0 { 0 } else { matrix[0].len() };
-
-        // One extra for the root header.
+        if rows == 0 {
+            return DancingLinks {
+                root: 0,
+                nodes: vec![Node {
+                    left: 0,
+                    right: 0,
+                    up: 0,
+                    down: 0,
+                    column: 0,
+                }],
+                cols: vec![Column { size: 0 }],
+                num_cols: 0,
+                row_id: Vec::new(),
+                solution_stack: Vec::new(),
+            };
+        }
+        let cols = matrix[0].len();
         let mut dlx = DancingLinks {
             root: 0,
-            nodes: vec![],
-            cols: vec![],
+            nodes: Vec::new(),
+            cols: Vec::new(),
             num_cols: cols,
-            row_id: vec![],
-            solution_stack: vec![],
+            row_id: Vec::new(),
+            solution_stack: Vec::new(),
         };
 
-        // For empty matrix, just return with root node pointing to itself
-        if cols == 0 {
-            dlx.nodes.push(Node {
-                left: 0,
-                right: 0,
-                up: 0,
-                down: 0,
-                column: 0,
-            });
-            dlx.cols.push(Column { size: 0 });
-            return dlx;
-        }
-
         // Initialize column headers + root
-        // We'll store columns from 1..=cols, plus node[0] is the "root".
         dlx.nodes.reserve(1 + cols); // root + each col header
         dlx.cols.reserve(cols + 1);
 
         // Create the "root" node
         dlx.nodes.push(Node {
-            left: 0,
-            right: 0,
+            left: cols,
+            right: 1,
             up: 0,
             down: 0,
             column: 0,
         });
         dlx.cols.push(Column { size: 0 });
 
-        // Link column headers in a left-right ring
+        // Create column headers
         for c in 1..=cols {
             dlx.nodes.push(Node {
                 left: if c == 1 { 0 } else { c - 1 },
@@ -124,15 +122,13 @@ impl DancingLinks {
             });
             dlx.cols.push(Column { size: 0 });
         }
-        dlx.nodes[0].left = cols; // root's left = last col
-        dlx.nodes[0].right = 1; // root's right = first col
 
         // Add rows
         let mut current_node_idx = 1 + cols; // next free node index
-        for r in 0..rows {
+        for (r, row) in matrix.iter().enumerate() {
             let mut first_in_row: Option<usize> = None;
-            for c in 0..cols {
-                if !matrix[r][c] {
+            for (c, &value) in row.iter().enumerate() {
+                if !value {
                     continue;
                 }
                 // Insert a new node

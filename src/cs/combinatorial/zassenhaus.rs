@@ -11,11 +11,11 @@
 //! for small groups. It is purely demonstrative and will not handle large groups efficiently.
 //!
 //! ## Overview
-//! - `Permutation`: A permutation over {0..n-1}.
-//! - `PermutationGroup`: A set of permutations closed under composition and inverses, plus helpful
-//!   group-theoretic methods (order, membership, subgroups, normality checks).
-//! - `schur_zassenhaus`: Attempts to factor a finite group `G` into a normal Sylow p-subgroup `N` and
-//!   a complement `H` of matching order (if it exists).
+//!   - `Permutation`: A permutation over {0..n-1}.
+//!   - `PermutationGroup`: A set of permutations closed under composition and inverses, plus helpful
+//!     group-theoretic methods (order, membership, subgroups, normality checks).
+//!   - `schur_zassenhaus`: Attempts to factor a finite group `G` into a normal Sylow p-subgroup `N` and
+//!     a complement `H` of matching order (if it exists).
 //!
 //! ## Example
 //! ```
@@ -61,6 +61,11 @@ impl Permutation {
         self.mapping.len()
     }
 
+    /// Returns true if this permutation acts on an empty set.
+    pub fn is_empty(&self) -> bool {
+        self.mapping.is_empty()
+    }
+
     /// Permute an element `x`.
     pub fn apply(&self, x: usize) -> usize {
         self.mapping[x]
@@ -76,8 +81,8 @@ impl Permutation {
         );
         let n = self.len();
         let mut new_map = vec![0; n];
-        for i in 0..n {
-            new_map[i] = self.mapping[other.mapping[i]];
+        for (i, item) in new_map.iter_mut().enumerate().take(n) {
+            *item = self.mapping[other.mapping[i]];
         }
         Permutation::new(new_map)
     }
@@ -202,16 +207,16 @@ impl PermutationGroup {
         'outer: for mask in 0..total {
             // Collect a subset
             let mut subset = Vec::new();
-            for i in 0..self.order() {
+            for (i, elem) in all_elems.iter().enumerate().take(self.order()) {
                 if (mask & (1 << i)) != 0 {
-                    subset.push(all_elems[i].clone());
+                    subset.push(elem.clone());
                 }
             }
             if subset.is_empty() {
                 continue; // skip
             }
             // Must contain identity
-            if !subset.iter().any(|p| is_identity(p)) {
+            if !subset.iter().any(is_identity) {
                 continue;
             }
             // Must be closed under composition and inverses
@@ -277,49 +282,43 @@ fn is_identity(p: &Permutation) -> bool {
     true
 }
 
-/// Naively find a Sylow p-subgroup of `group` by enumerating all subgroups and choosing one whose
-/// order is the largest power of p dividing |G|.
-fn find_sylow_p_subgroup(group: &PermutationGroup, p: usize) -> Option<PermutationGroup> {
-    let g_order = group.order();
-    // Largest power of p dividing g_order:
+/// Find a Sylow p-subgroup of G (if one exists).
+/// A Sylow p-subgroup is a subgroup of order p^k where p^k divides |G| but p^(k+1) does not.
+pub fn find_sylow_p_subgroup(group: &PermutationGroup, p: usize) -> Option<PermutationGroup> {
+    let order = group.order();
     let mut p_power = 1;
-    while p_power * p <= g_order {
+    while order % (p_power * p) == 0 {
         p_power *= p;
     }
-    // Among all subgroups, pick one of order p_power (if any).
-    // We choose the first one we find. Real logic might do more sophisticated searching.
-    for sub in group.all_subgroups() {
-        if sub.order() == p_power {
-            return Some(sub);
-        }
-    }
-    None
+    group
+        .all_subgroups()
+        .into_iter()
+        .find(|sub| sub.order() == p_power)
 }
 
-/// Attempt to find a subgroup H such that:
-///   1. |H| * |N| = |G|
-///   2. H intersects N trivially (just the identity).
-///   3. G = N ⋊ H  (i.e. every element of G can be written as n*h with n in N, h in H)
+/// Find a complement H to N in G (if one exists).
+/// A complement H is a subgroup of G such that:
+///   1. G = NH (every element of G is a product of elements from N and H)
+///   2. N ∩ H = {e} (N and H intersect only at the identity)
+///   3. |N| * |H| = |G| (orders multiply)
+///
 /// This naive approach enumerates subgroups of G of the correct order and checks these conditions.
-fn find_complement_subgroup(
-    group: &PermutationGroup,
-    n_sub: &PermutationGroup,
-) -> Option<PermutationGroup> {
-    let target_order = group.order() / n_sub.order();
+pub fn find_complement(g: &PermutationGroup, n: &PermutationGroup) -> Option<PermutationGroup> {
+    let target_order = g.order() / n.order();
 
-    'subgroup_search: for h_sub in group.all_subgroups() {
+    'subgroup_search: for h_sub in g.all_subgroups() {
         if h_sub.order() == target_order {
             // Check trivial intersection: N ∩ H = {identity}.
             // We skip any that share non-identity elements.
             for x in &h_sub.elements {
-                if !is_identity(x) && n_sub.contains(x) {
+                if !is_identity(x) && n.contains(x) {
                     continue 'subgroup_search;
                 }
             }
 
             // Check if every element g in G can be written as n*h for some n in N, h in H.
             // This is extremely naive: try all pairs.
-            if covers_whole_group(group, n_sub, &h_sub) {
+            if covers_whole_group(g, n, &h_sub) {
                 return Some(h_sub);
             }
         }
@@ -367,7 +366,7 @@ pub fn schur_zassenhaus(
     if group.order() % n_sub.order() != 0 {
         return None;
     }
-    let h_sub = find_complement_subgroup(group, &n_sub)?;
+    let h_sub = find_complement(group, &n_sub)?;
 
     // If found, we consider that the factorization is G = N ⋊ H.
     Some((n_sub, h_sub))

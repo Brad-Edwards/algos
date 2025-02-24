@@ -1,24 +1,23 @@
-/// Johnson-Trotter permutation generator in Rust.
-/// Produces all permutations of distinct items in "adjacent swap" (Johnson-Trotter) order.
-///
-/// # Example
-/// ```
-/// use algos::cs::combinatorial::johnson_trotter;
-///
-/// let data = vec![1, 2, 3];
-/// let perms = johnson_trotter(&data);
-/// assert_eq!(perms, vec![
-///     vec![1, 2, 3],
-///     vec![1, 3, 2],
-///     vec![3, 1, 2],
-///     vec![3, 2, 1],
-///     vec![2, 3, 1],
-///     vec![2, 1, 3],
-/// ]);
-/// ```
+//! Johnson-Trotter permutation generator in Rust.
+//! Produces all permutations of distinct items in "adjacent swap" (Johnson-Trotter) order.
+//!
+//! # Example
+//! ```
+//! use algos::cs::combinatorial::johnson_trotter;
+//!
+//! let data = vec![1, 2, 3];
+//! let perms = johnson_trotter(&data);
+//! assert_eq!(perms, vec![
+//!     vec![1, 2, 3],
+//!     vec![1, 3, 2],
+//!     vec![3, 1, 2],
+//!     vec![3, 2, 1],
+//!     vec![2, 3, 1],
+//!     vec![2, 1, 3],
+//! ]);
+//! ```
 
-/// Johnson-Trotter algorithm for generating permutations of distinct items.
-/// Returns a vector of permutations in adjacent-swap order.
+/// Generates all permutations of the given items using the Johnson-Trotter algorithm.
 pub fn johnson_trotter<T: Copy + Ord>(items: &[T]) -> Vec<Vec<T>> {
     if items.is_empty() {
         return vec![vec![]];
@@ -45,7 +44,7 @@ pub fn johnson_trotter<T: Copy + Ord>(items: &[T]) -> Vec<Vec<T>> {
             if adj < elements.len() && elements[i] > elements[adj] {
                 // If it's bigger than the adjacent, it's mobile.
                 // Track the largest such element.
-                if mobile_value.map_or(true, |val| elements[i] > val) {
+                if mobile_value.is_none_or(|val| elements[i] > val) {
                     mobile_index = Some(i);
                     mobile_value = Some(elements[i]);
                 }
