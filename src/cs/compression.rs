@@ -60,6 +60,13 @@ pub use arithmetic::{
 pub mod deflate;
 pub use deflate::algorithm::{deflate_compress, deflate_decompress, Token as DeflateToken};
 
+pub mod bwt;
+pub use bwt::{
+    bwt_transform, bwt_inverse, bwt_transform_suffix_array, 
+    bzip2_compress, bzip2_decompress,
+    move_to_front_transform, move_to_front_inverse,
+    run_length_encode, run_length_decode,
+};
+
 // Re-export specific implementations as they are added
 // pub mod rle;
-// pub mod bwt;
