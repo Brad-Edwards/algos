@@ -1,5 +1,6 @@
 pub mod approx;
 pub mod combinatorial;
+pub mod compression;
 pub mod dynamic;
 pub mod error;
 pub mod graph;

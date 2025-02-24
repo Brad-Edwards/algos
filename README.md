@@ -230,6 +230,19 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Hamiltonian Cycle Backtracking  
 ✅ Subset Generation (binary representation)  
 
+## Data Compression
+
+1. Huffman Coding  
+2. LZ77  
+3. LZ78  
+4. LZW  
+5. Arithmetic Coding  
+6. DEFLATE  
+7. Burrows–Wheeler Transform (bzip2)  
+8. PPM (Prediction by Partial Matching)  
+9. LZMA  
+10. RANS Coding  
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
