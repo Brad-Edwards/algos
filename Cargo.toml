@@ -24,14 +24,14 @@ num-bigint-dig = { version = "0.8.4", features = ["prime", "rand", "u64_digit"] 
 num-prime = { version = "0.4.4", features = ["big-int"] }
 approx = "0.5.1"
 ndarray = "0.16.1"
-rand = "0.8.5"
+rand = "0.9.0"
 rand_core = "0.9.1"
 rand_distr = "0.4.3"
 log = "0.4.25"
 
 [dev-dependencies]
 criterion = "0.5.1"
-rand = "0.8.5"
+rand = "0.9.0"
 cargo-tarpaulin = "0.32.0"
 
 [[bench]]
