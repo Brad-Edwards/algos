@@ -44,10 +44,12 @@ pub use huffman::{
 };
 
 pub mod lz77;
-pub use lz77::{compress, decompress, Token};
+pub use lz77::{compress as lz77_compress, decompress as lz77_decompress, Token as Lz77Token};
+
+pub mod lz78;
+pub use lz78::{compress as lz78_compress, decompress as lz78_decompress, Token as Lz78Token};
 
 // Re-export specific implementations as they are added
-// pub mod lz78;
 // pub mod lzw;
 // pub mod rle;
 // pub mod arithmetic;
