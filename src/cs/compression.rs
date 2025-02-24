@@ -43,8 +43,10 @@ pub use huffman::{
     huffman_encode, HuffmanNode,
 };
 
+pub mod lz77;
+pub use lz77::{compress, decompress, Token};
+
 // Re-export specific implementations as they are added
-// pub mod lz77;
 // pub mod lz78;
 // pub mod lzw;
 // pub mod rle;
