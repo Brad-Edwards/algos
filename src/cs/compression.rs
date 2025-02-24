@@ -58,7 +58,7 @@ pub use arithmetic::{
 };
 
 pub mod deflate;
-pub use deflate::deflate::{deflate_compress, deflate_decompress, Token as DeflateToken};
+pub use deflate::algorithm::{deflate_compress, deflate_decompress, Token as DeflateToken};
 
 // Re-export specific implementations as they are added
 // pub mod rle;
