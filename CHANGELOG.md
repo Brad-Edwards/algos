@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.8] - 2025-02-23
+
+### Added
+
+- Combinatorial algorithms:
+  - Subset Generation
+  - Zassenhaus Algorithm (group factorization)
+  - Dancing Links (Algorithm X)
+  - Gray Code Generation
+  - Johnson-Trotter Algorithm
+  - Backtracking for Permutations/Combinations
+- Graph algorithms:
+  - Edmonds' Blossom Algorithm (maximum matching)
+  - Hamiltonian Cycle implementation
+
+### Changed
+
+- Moved Held-Karp algorithm from combinatorial to graph module
+
 ## [0.6.7] - 2025-02-17
 
 ### Added

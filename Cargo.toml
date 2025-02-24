@@ -1,6 +1,6 @@
 [package]
 name = "algos"
-version = "0.6.7"
+version = "0.6.8"
 authors = ["Brad-Edwards <j.bradley.edwards@gmail.com>"]
 description = "A collection of algorithms in Rust"
 repository = "https://github.com/Brad-Edwards/algos"
