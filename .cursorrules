@@ -34,6 +34,7 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 - When debugging, especially for tests, keep track of problems and solutions in the scratchpad so you do not make the same mistake again or go in circles
 - When testing stochastic optimization algorithms (like simulated annealing), use multiple trials and statistical success criteria (e.g., success rate) instead of single deterministic tests
 - When using optimization solvers that handle objective transformation (e.g., minimization to maximization), be careful not to transform the objective multiple times. Let the solver handle the transformation.
+- In algorithms like Held-Karp where indices are used for both array access and bit manipulation, range-based loops can be clearer and more correct than iterator-based approaches. It's acceptable to keep range loops in such cases and suppress the clippy warning.
 
 ## Benders Implementation Lessons
 
@@ -44,6 +45,63 @@ The goal is to help you maintain a big picture as well as the progress of the ta
 - Objective function must be properly set in both master and subproblems
 
 # Scratchpad
+
+## Current Task: Algorithm Categorization
+
+### Combinatorial Algorithms (cs/combinatorial)
+
+[X] Backtracking (Permutations/Combinations)
+[X] Johnson-Trotter (permutation generation)
+[X] Gray Code Generation
+[X] Dancing Links (Algorithm X)
+[X] Zassenhaus Algorithm
+
+### Graph Algorithms (cs/graph)
+
+[X] Held-Karp (TSP)
+[X] Hamiltonian Cycle Backtracking
+[X] Edmonds' Blossom Algorithm (max matching)
+[X] Bellman-Ford
+[X] Bron-Kerbosch
+[X] Dijkstra
+[X] Dinic
+[X] Edmond-Karp
+[X] Floyd Cycle Detection
+[X] Floyd-Warshall
+[X] Ford-Fulkerson
+[X] Hierholzer
+[X] Hopcroft-Karp
+[X] Hungarian
+[X] Johnson
+[X] Johnson Cycle Detection
+[X] Karger
+[X] Kosaraju
+[X] Kruskal
+[X] Prim
+[X] Randomized Delaunay
+[X] Randomized Kruskal
+[X] Randomized Prim
+[X] Tarjan
+[X] Topological Sort
+[X] Warshall
+
+### Progress
+
+[X] Reviewed current implementations
+[X] Identified algorithms to be moved
+[X] Moved Held-Karp to graph module
+[X] Implement Hamiltonian Cycle
+[X] Implement Edmonds' Blossom in graph module
+[ ] Implement Subset Generation
+
+### Notes
+
+- Held-Karp successfully moved to graph module
+- Hamiltonian Cycle implementation complete and tested
+- Edmonds' Blossom implementation complete and tested
+- Subset Generation still needs implementation
+- All other algorithms are in their correct modules
+- All tests passing after reorganization
 
 ## Current Task: Debug Branch and Price Test Failures
 
