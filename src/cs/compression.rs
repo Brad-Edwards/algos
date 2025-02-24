@@ -57,6 +57,9 @@ pub use arithmetic::{
     arithmetic_decode, arithmetic_encode, FrequencyModel, ALPHABET_SIZE as ARITHMETIC_ALPHABET_SIZE,
 };
 
+pub mod deflate;
+pub use deflate::deflate::{deflate_compress, deflate_decompress, Token as DeflateToken};
+
 // Re-export specific implementations as they are added
 // pub mod rle;
 // pub mod bwt;

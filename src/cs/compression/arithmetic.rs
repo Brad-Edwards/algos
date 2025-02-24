@@ -81,7 +81,7 @@ impl BitWriter {
     /// Write a single bit (0 or 1).
     fn write_bit(&mut self, bit: u8) {
         // Shift left by 1 and add new bit
-        self.current_byte = ((self.current_byte as u16) << 1 | (bit & 1) as u16) as u8;
+        self.current_byte = (((self.current_byte as u16) << 1) | (bit & 1) as u16) as u8;
         self.bits_filled += 1;
         if self.bits_filled == 8 {
             self.buffer.push(self.current_byte);
@@ -174,7 +174,7 @@ pub fn arithmetic_encode(input: &[u8], model: &FrequencyModel) -> Vec<u8> {
         let cum_high = model.cum_freq[sym + 1];
 
         high = low + (range * cum_high) / total - 1;
-        low = low + (range * cum_low) / total;
+        low += (range * cum_low) / total;
 
         loop {
             if high < HALF {
