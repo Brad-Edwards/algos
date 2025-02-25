@@ -1,7 +1,7 @@
 //! Compression algorithms implementation.
 //!
 //! This module provides implementations of various data compression algorithms:
-//! - Lossless compression (Huffman, LZ77, LZ78, LZW)
+//! - Lossless compression (Huffman, LZ77, LZ78, LZW, LZMA)
 //! - Dictionary-based compression
 //! - Run-length encoding
 //! - Delta encoding
@@ -17,6 +17,7 @@
 //! - LZ77 (Lempel-Ziv 77)
 //! - LZ78 (Lempel-Ziv 78)
 //! - LZW (Lempel-Ziv-Welch)
+//! - LZMA (Lempel-Ziv-Markov chain Algorithm)
 //! - Burrows-Wheeler Transform (BWT)
 //! - Run-Length Encoding (RLE)
 //! - Move-to-Front Transform
@@ -65,6 +66,9 @@ pub use lz78::{compress as lz78_compress, decompress as lz78_decompress, Token a
 
 pub mod lzw;
 pub use lzw::{compress as lzw_compress, decompress as lzw_decompress};
+
+pub mod lzma;
+pub use lzma::{lzma_compress, lzma_decompress};
 
 pub mod arithmetic;
 pub use arithmetic::{
