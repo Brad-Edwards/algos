@@ -88,32 +88,33 @@ pub mod algorithm {
             if count == 0 {
                 return;
             }
-            
+
             // Work with a copy of the bits
             let mut bits_remaining = count;
             let value = bits;
-            
+
             while bits_remaining > 0 {
                 // How many bits can we fit in the current byte?
                 let bits_available = 8 - self.bits_filled;
                 let bits_to_write = bits_available.min(bits_remaining);
-                
+
                 // Extract only the bits we need from the value
                 // We want the top bits_to_write bits from value
                 let mask = (1u32.wrapping_shl(bits_to_write as u32)).wrapping_sub(1);
                 let extract_shift = bits_remaining.wrapping_sub(bits_to_write);
-                
+
                 // This safely extracts the bits without overflow
                 let mut extracted_bits = 0u8;
-                if extract_shift < 32 {  // Guard against large shifts
+                if extract_shift < 32 {
+                    // Guard against large shifts
                     extracted_bits = ((value >> extract_shift) & mask) as u8;
                 }
-                
+
                 // Position these bits correctly in the current byte
                 // We need to place them at position (8 - self.bits_filled - bits_to_write)
                 // but we'll use masks instead of shifts to avoid overflow
                 let position = bits_available - bits_to_write;
-                
+
                 // Create a mask and place the bits
                 if position == 0 {
                     // Bits go at the lowest position, no shift needed
@@ -132,11 +133,11 @@ pub mod algorithm {
                     };
                     self.current_byte |= positioned_bits;
                 }
-                
+
                 // Update counters
                 self.bits_filled += bits_to_write;
                 bits_remaining -= bits_to_write;
-                
+
                 // Flush the byte if it's full
                 if self.bits_filled == 8 {
                     self.buffer.push(self.current_byte);
@@ -198,15 +199,15 @@ pub mod algorithm {
                 }
                 let to_take = remaining.min(self.bits_left);
                 let shift = self.bits_left - to_take;
-                
+
                 // Use wider type and wrapping operations for the mask
                 let mask = (1u16.wrapping_shl(to_take as u32)).wrapping_sub(1) as u8;
                 let bits = (self.current_byte >> shift) & mask;
-                
+
                 result = (result << to_take) | bits as u32;
                 self.bits_left -= to_take;
                 remaining -= to_take;
-                
+
                 // Use the same approach for clearing remaining bits
                 if self.bits_left > 0 {
                     let mask = (1u16.wrapping_shl(self.bits_left as u32)).wrapping_sub(1) as u8;
@@ -318,7 +319,9 @@ pub mod algorithm {
             // Verify that generate_tokens produces at least one length token when repetition exists.
             let input = b"aaabbb";
             let tokens = generate_tokens(input);
-            let has_match = tokens.iter().any(|t| matches!(t, Token::LengthDistance { .. }));
+            let has_match = tokens
+                .iter()
+                .any(|t| matches!(t, Token::LengthDistance { .. }));
             assert!(has_match || tokens.len() == input.len() + 1);
         }
     }

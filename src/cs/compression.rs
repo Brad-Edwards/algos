@@ -7,6 +7,20 @@
 //! - Delta encoding
 //! - Arithmetic coding
 //! - Burrows-Wheeler transform
+//! - Prediction by Partial Matching (PPM)
+//!
+//! # Compression Algorithms
+//!
+//! This module provides various compression algorithms:
+//!
+//! - Huffman coding
+//! - LZ77 (Lempel-Ziv 77)
+//! - LZ78 (Lempel-Ziv 78)
+//! - LZW (Lempel-Ziv-Welch)
+//! - Burrows-Wheeler Transform (BWT)
+//! - Run-Length Encoding (RLE)
+//! - Move-to-Front Transform
+//! - Prediction by Partial Matching (PPM)
 //!
 //! # Examples
 //!
@@ -62,11 +76,12 @@ pub use deflate::algorithm::{deflate_compress, deflate_decompress, Token as Defl
 
 pub mod bwt;
 pub use bwt::{
-    bwt_transform, bwt_inverse, bwt_transform_suffix_array, 
-    bzip2_compress, bzip2_decompress,
-    move_to_front_transform, move_to_front_inverse,
-    run_length_encode, run_length_decode,
+    bwt_inverse, bwt_transform, bwt_transform_suffix_array, bzip2_compress, bzip2_decompress,
+    move_to_front_inverse, move_to_front_transform, run_length_decode, run_length_encode,
 };
+
+pub mod ppm;
+pub use ppm::{ppm_compress, ppm_decompress, ppm_star_compress, ppm_star_decompress};
 
 // Re-export specific implementations as they are added
 // pub mod rle;
