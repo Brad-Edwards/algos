@@ -245,9 +245,9 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 ## Error Correction & Coding
 
-1. Reed–Solomon Codes  
-2. Hamming Codes  
-3. Convolutional Codes  
+✅ Reed–Solomon Codes  
+✅ Hamming Codes  
+✅ Convolutional Codes  
 4. Viterbi Decoding  
 5. Turbo Codes  
 6. LDPC (Low-Density Parity-Check) Codes  

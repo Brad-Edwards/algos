@@ -2,7 +2,7 @@
 //!
 //! Hamming codes are a family of linear error-correcting codes developed by Richard Hamming in 1950.
 //! They have the ability to detect up to two-bit errors or correct one-bit errors without detection
-//! of uncorrected errors. The most common variant is (7,4) Hamming code, which encodes 4 data bits 
+//! of uncorrected errors. The most common variant is (7,4) Hamming code, which encodes 4 data bits
 //! into 7 bits by adding 3 parity bits.
 //!
 //! This implementation provides:
@@ -11,14 +11,14 @@
 //! - Support for extended Hamming codes with additional parity bit
 //!
 //! # Applications
-//! 
+//!
 //! - Computer memory (ECC RAM)
 //! - Satellite communications
 //! - Digital broadcasting
 //! - Data storage systems
 
-use crate::cs::error::Error;
 use crate::cs::ecc::Result;
+use crate::cs::error::Error;
 use bitvec::prelude::*;
 use bitvec::view::BitView;
 use std::cmp::min;
@@ -48,7 +48,9 @@ impl HammingCode {
     /// A new `HammingCode` instance or an error if invalid parameters
     pub fn new(data_bits: usize, extended: bool) -> Result<Self> {
         if data_bits == 0 {
-            return Err(Error::InvalidInput("Data bits must be positive".to_string()));
+            return Err(Error::InvalidInput(
+                "Data bits must be positive".to_string(),
+            ));
         }
 
         // Determine required number of parity bits, where 2^r - r - 1 >= data_bits
@@ -89,7 +91,7 @@ impl HammingCode {
     /// Gets the number of encoded bytes needed for a given number of input bytes
     pub fn encoded_bytes_needed(&self, input_bytes: usize) -> usize {
         let total_input_bits = input_bytes * 8;
-        let total_blocks = (total_input_bits + self.data_bits - 1) / self.data_bits;
+        let total_blocks = total_input_bits.div_ceil(self.data_bits);
         let total_output_bits = total_blocks * self.total_bits();
         (total_output_bits + 7) / 8 // Round up to bytes
     }
@@ -110,26 +112,26 @@ impl HammingCode {
 
         // Convert input bytes to bits
         let data_bits = data.view_bits::<Msb0>();
-        
+
         // Calculate number of complete data blocks and required output size
-        let data_blocks = (data_bits.len() + self.data_bits - 1) / self.data_bits;
+        let data_blocks = data_bits.len().div_ceil(self.data_bits);
         let out_bits_len = data_blocks * self.total_bits();
-        
+
         // Create output buffer
         let mut encoded = bitvec![u8, Msb0; 0; out_bits_len];
-        
+
         // Process each block
         for block_idx in 0..data_blocks {
             let input_start = block_idx * self.data_bits;
             let output_start = block_idx * self.total_bits();
-            
+
             // Encode one block
             self.encode_block(
                 &data_bits[input_start..min(input_start + self.data_bits, data_bits.len())],
-                &mut encoded[output_start..output_start + self.total_bits()]
+                &mut encoded[output_start..output_start + self.total_bits()],
             );
         }
-        
+
         // Convert back to bytes
         encoded.as_raw_slice().to_vec()
     }
@@ -146,7 +148,7 @@ impl HammingCode {
             if i + 1 > 0 && (i + 1).count_ones() == 1 {
                 continue;
             }
-            
+
             // Copy data bit if available, or use 0
             if data_idx < data_bits.len() {
                 output.set(i, data_bits[data_idx]);
@@ -160,19 +162,19 @@ impl HammingCode {
         for r in 0..self.parity_bits {
             let _parity_pos = (1 << r) - 1; // 0-indexed positions are 0, 1, 3, 7, etc.
             let mut parity = false;
-            
+
             // Check all positions where bit r in the position is 1
             for i in 0..self.total_bits() {
                 if i == _parity_pos {
                     continue;
                 }
-                
+
                 // Check if bit r is set in the position (1-indexed for calculation)
                 if ((i + 1) & (1 << r)) != 0 && output[i] {
                     parity = !parity;
                 }
             }
-            
+
             // Set parity bit
             output.set(_parity_pos, parity);
         }
@@ -206,60 +208,65 @@ impl HammingCode {
         // Check if we have enough data
         let min_bytes_needed = (self.total_bits() + 7) / 8;
         if encoded.len() < min_bytes_needed {
-            return Err(Error::InvalidInput(
-                format!("Encoded data too short, need at least {} bytes", min_bytes_needed)
-            ));
+            return Err(Error::InvalidInput(format!(
+                "Encoded data too short, need at least {} bytes",
+                min_bytes_needed
+            )));
         }
 
         // Convert input bytes to bits
         let encoded_bits = encoded.view_bits::<Msb0>();
-        
+
         // Calculate number of complete blocks and required output size
         let blocks = encoded_bits.len() / self.total_bits();
         let out_bits_len = blocks * self.data_bits;
-        
+
         // Create output buffer
         let mut decoded = bitvec![u8, Msb0; 0; out_bits_len];
-        
+
         // Process each block
         for block_idx in 0..blocks {
             let input_start = block_idx * self.total_bits();
             let output_start = block_idx * self.data_bits;
-            
+
             // Decode one block
             self.decode_block(
                 &encoded_bits[input_start..input_start + self.total_bits()],
-                &mut decoded[output_start..output_start + self.data_bits]
+                &mut decoded[output_start..output_start + self.data_bits],
             )?;
         }
-        
+
         // Convert back to bytes
         Ok(decoded.as_raw_slice().to_vec())
     }
 
     /// Decodes a single block of encoded bits
-    fn decode_block(&self, encoded: &BitSlice<u8, Msb0>, output: &mut BitSlice<u8, Msb0>) -> Result<()> {
+    fn decode_block(
+        &self,
+        encoded: &BitSlice<u8, Msb0>,
+        output: &mut BitSlice<u8, Msb0>,
+    ) -> Result<()> {
         // Calculate syndrome to detect errors
         let mut syndrome = 0;
-        
+
         // Check each parity bit
         for r in 0..self.parity_bits {
             let _parity_pos = (1 << r) - 1;
             let mut parity = false;
-            
+
             // Calculate parity across all bits covered by this parity bit
             for i in 0..encoded.len() {
                 if ((i + 1) & (1 << r)) != 0 && encoded[i] {
                     parity = !parity;
                 }
             }
-            
+
             // If parity doesn't match, record in syndrome
             if parity {
                 syndrome |= 1 << r;
             }
         }
-        
+
         // Handle error correction
         if syndrome != 0 {
             // For extended code, check overall parity
@@ -270,26 +277,26 @@ impl HammingCode {
                         overall_parity = !overall_parity;
                     }
                 }
-                
+
                 let expected_parity = encoded[encoded.len() - 1];
-                
+
                 // If overall parity matches but syndrome is non-zero, we have more than 1 error
                 if overall_parity == expected_parity {
                     return Err(Error::InvalidInput(
-                        "Detected more than one bit error in extended Hamming code".to_string()
+                        "Detected more than one bit error in extended Hamming code".to_string(),
                     ));
                 }
             }
-            
+
             // For regular code, if syndrome is valid position, correct it
             if syndrome <= encoded.len() {
                 // Create a corrected copy of the encoded data
                 let mut corrected = encoded.to_bitvec();
-                
+
                 // Flip the bit at the error position
                 let error_pos = syndrome - 1; // Convert to 0-indexed
                 corrected.set(error_pos, !encoded[error_pos]);
-                
+
                 // Extract data bits to output
                 let mut data_idx = 0;
                 for i in 0..corrected.len() {
@@ -297,21 +304,22 @@ impl HammingCode {
                     if i + 1 > 0 && (i + 1).count_ones() == 1 {
                         continue;
                     }
-                    
+
                     // Skip overall parity bit for extended code
                     if self.extended && i == corrected.len() - 1 {
                         continue;
                     }
-                    
+
                     if data_idx < output.len() {
                         output.set(data_idx, corrected[i]);
                         data_idx += 1;
                     }
                 }
             } else {
-                return Err(Error::InvalidInput(
-                    format!("Invalid syndrome: {}, suggesting uncorrectable errors", syndrome)
-                ));
+                return Err(Error::InvalidInput(format!(
+                    "Invalid syndrome: {}, suggesting uncorrectable errors",
+                    syndrome
+                )));
             }
         } else {
             // No errors detected, just extract data bits
@@ -321,19 +329,19 @@ impl HammingCode {
                 if i + 1 > 0 && (i + 1).count_ones() == 1 {
                     continue;
                 }
-                
+
                 // Skip overall parity bit for extended code
                 if self.extended && i == encoded.len() - 1 {
                     continue;
                 }
-                
+
                 if data_idx < output.len() {
                     output.set(data_idx, encoded[i]);
                     data_idx += 1;
                 }
             }
         }
-        
+
         Ok(())
     }
 }
@@ -410,18 +418,18 @@ mod tests {
         // Test with standard (7,4) code
         let data = b"Test data for Hamming code";
         let hamming = create_hamming_7_4();
-        
+
         let encoded = hamming.encode(data);
         let decoded = hamming.decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, data);
-        
+
         // Test with extended (8,4) code
         let hamming = create_hamming_8_4();
-        
+
         let encoded = hamming.encode(data);
         let decoded = hamming.decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, data);
     }
 
@@ -430,23 +438,23 @@ mod tests {
         // Test with standard (7,4) code
         let data = b"Test";
         let hamming = create_hamming_7_4();
-        
+
         let mut encoded = hamming.encode(data);
-        
+
         // Introduce a single bit error in the first byte
         encoded[0] ^= 0x40; // Flip the second bit
-        
+
         let decoded = hamming.decode(&encoded).unwrap();
         assert_eq!(decoded, data);
-        
+
         // Test with extended (8,4) code
         let hamming = create_hamming_8_4();
-        
+
         let mut encoded = hamming.encode(data);
-        
+
         // Introduce a single bit error
         encoded[0] ^= 0x40; // Flip the second bit
-        
+
         let decoded = hamming.decode(&encoded).unwrap();
         assert_eq!(decoded, data);
     }
@@ -456,13 +464,13 @@ mod tests {
         // Extended Hamming can detect (but not correct) 2-bit errors
         let data = b"Test";
         let hamming = create_hamming_8_4();
-        
+
         let mut encoded = hamming.encode(data);
-        
+
         // Introduce two bit errors in the first byte
         encoded[0] ^= 0x40; // Flip the second bit
         encoded[0] ^= 0x20; // Flip the third bit
-        
+
         // Should detect the error but not be able to correct it
         let result = hamming.decode(&encoded);
         assert!(result.is_err());
@@ -471,10 +479,10 @@ mod tests {
     #[test]
     fn test_empty_input() {
         let hamming = create_hamming_7_4();
-        
+
         let encoded = hamming.encode(&[]);
         assert!(encoded.is_empty());
-        
+
         let decoded = hamming.decode(&[]).unwrap();
         assert!(decoded.is_empty());
     }
@@ -482,15 +490,15 @@ mod tests {
     #[test]
     fn test_helper_functions() {
         let data = b"Test";
-        
+
         // Test standard Hamming functions
         let encoded = hamming_encode(data);
         let decoded = hamming_decode(&encoded).unwrap();
         assert_eq!(decoded, data);
-        
+
         // Test extended Hamming functions
         let encoded = hamming_extended_encode(data);
         let decoded = hamming_extended_decode(&encoded).unwrap();
         assert_eq!(decoded, data);
     }
-} 
+}

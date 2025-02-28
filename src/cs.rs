@@ -29,8 +29,11 @@ pub use dynamic::{
 };
 
 pub use ecc::{
-    create_reed_solomon, reed_solomon_decode, reed_solomon_encode, ErrorCorrection, GFElement,
-    ReedSolomon,
+    convolutional_decode, convolutional_encode, create_convolutional_code, create_hamming,
+    create_hamming_7_4, create_hamming_8_4, create_nasa_standard_code, create_reed_solomon,
+    hamming_decode, hamming_encode, hamming_extended_decode, hamming_extended_encode,
+    reed_solomon_decode, reed_solomon_encode, ConvolutionalCode, ErrorCorrection, GFElement,
+    HammingCode, ReedSolomon,
 };
 
 pub use graph::{

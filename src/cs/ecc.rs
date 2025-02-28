@@ -16,6 +16,7 @@
 //! Currently implemented:
 //! - Reed-Solomon codes
 //! - Hamming codes
+//! - Convolutional codes
 //!
 //! # Examples
 //!
@@ -46,7 +47,14 @@ pub use reed_solomon::{
 /// Hamming error correction codes
 pub mod hamming;
 pub use hamming::{
-    create_hamming, create_hamming_7_4, create_hamming_8_4, 
-    hamming_encode, hamming_decode, hamming_extended_encode, hamming_extended_decode,
-    HammingCode,
+    create_hamming, create_hamming_7_4, create_hamming_8_4, hamming_decode, hamming_encode,
+    hamming_extended_decode, hamming_extended_encode, HammingCode,
+};
+
+/// Convolutional error correction codes
+pub mod convolutional;
+pub use convolutional::{
+    convolutional_decode, convolutional_encode, create_convolutional_code,
+    create_nasa_standard_code, create_rate_third_code, create_rate_two_thirds_code,
+    ConvolutionalCode,
 };
