@@ -28,6 +28,7 @@ rand = "0.8.5"
 rand_core = "0.9.1"
 rand_distr = "0.4.3"
 log = "0.4.25"
+bitvec = "1.0.1"
 
 [dev-dependencies]
 criterion = "0.5.1"

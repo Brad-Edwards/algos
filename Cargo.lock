@@ -37,6 +37,7 @@ name = "algos"
 version = "0.6.8"
 dependencies = [
  "approx",
+ "bitvec",
  "cargo-tarpaulin",
  "criterion",
  "hex",

@@ -15,6 +15,7 @@
 //!
 //! Currently implemented:
 //! - Reed-Solomon codes
+//! - Hamming codes
 //!
 //! # Examples
 //!
@@ -40,4 +41,12 @@ pub trait ErrorCorrection {
 pub mod reed_solomon;
 pub use reed_solomon::{
     create_reed_solomon, reed_solomon_decode, reed_solomon_encode, GFElement, ReedSolomon,
+};
+
+/// Hamming error correction codes
+pub mod hamming;
+pub use hamming::{
+    create_hamming, create_hamming_7_4, create_hamming_8_4, 
+    hamming_encode, hamming_decode, hamming_extended_encode, hamming_extended_decode,
+    HammingCode,
 };
