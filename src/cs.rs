@@ -2,6 +2,7 @@ pub mod approx;
 pub mod combinatorial;
 pub mod compression;
 pub mod dynamic;
+pub mod ecc;
 pub mod error;
 pub mod graph;
 pub mod hashing;
@@ -25,6 +26,11 @@ pub use dynamic::{
     max_weighted_schedule, min_coins_for_change, min_merge_cost_knuth,
     optimal_matrix_chain_multiplication, reconstruct_optimal_merge, value_iteration,
     MarkovDecisionProcess, WeightedInterval,
+};
+
+pub use ecc::{
+    create_reed_solomon, reed_solomon_decode, reed_solomon_encode, ErrorCorrection, GFElement,
+    ReedSolomon,
 };
 
 pub use graph::{
