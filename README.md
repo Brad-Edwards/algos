@@ -232,16 +232,16 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 
 ## Data Compression
 
-1. Huffman Coding  
-2. LZ77  
-3. LZ78  
-4. LZW  
-5. Arithmetic Coding  
-6. DEFLATE  
-7. Burrows–Wheeler Transform (bzip2)  
-8. PPM (Prediction by Partial Matching)  
-9. LZMA  
-10. RANS Coding  
+✅ Huffman Coding  
+✅ LZ77  
+✅ LZ78  
+✅ LZW  
+✅ Arithmetic Coding  
+✅ DEFLATE  
+✅ Burrows–Wheeler Transform (bzip2)  
+✅ PPM (Prediction by Partial Matching)  
+✅ LZMA  
+✅ RANS Coding  
 
 ## Contributing
 

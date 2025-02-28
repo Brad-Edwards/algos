@@ -8,6 +8,7 @@
 //! - Arithmetic coding
 //! - Burrows-Wheeler transform
 //! - Prediction by Partial Matching (PPM)
+//! - Range Asymmetric Numeral Systems (RANS)
 //!
 //! # Compression Algorithms
 //!
@@ -22,6 +23,7 @@
 //! - Run-Length Encoding (RLE)
 //! - Move-to-Front Transform
 //! - Prediction by Partial Matching (PPM)
+//! - Range Asymmetric Numeral Systems (RANS)
 //!
 //! # Examples
 //!
@@ -86,6 +88,11 @@ pub use bwt::{
 
 pub mod ppm;
 pub use ppm::{ppm_compress, ppm_decompress, ppm_star_compress, ppm_star_decompress};
+
+pub mod rans;
+pub use rans::{
+    rans_decode, rans_encode, FrequencyModel as RansFrequencyModel, RansDecoder, RansEncoder,
+};
 
 // Re-export specific implementations as they are added
 // pub mod rle;
