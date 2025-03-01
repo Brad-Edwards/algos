@@ -249,11 +249,11 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Hamming Codes  
 ✅ Convolutional Codes and Viterbi Decoding  
 ✅ Turbo Codes  
-2. LDPC (Low-Density Parity-Check) Codes  
-3. CRC (Cyclic Redundancy Check)  
-4. BCH Codes  
-5. Polar Codes  
-10. Fountain / Raptor Codes  
+✅ LDPC (Low-Density Parity-Check) Codes  
+2. CRC (Cyclic Redundancy Check)  
+3. BCH Codes  
+4. Polar Codes  
+5. Fountain / Raptor Codes  
 
 ## Contributing
 

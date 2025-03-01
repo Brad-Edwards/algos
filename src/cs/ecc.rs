@@ -18,6 +18,7 @@
 //! - Hamming codes
 //! - Convolutional codes
 //! - Turbo codes
+//! - LDPC (Low-Density Parity-Check) codes
 //!
 //! # Examples
 //!
@@ -66,4 +67,11 @@ pub mod turbo;
 pub use turbo::{
     create_custom_turbo_code, create_turbo_code, turbo_decode, turbo_encode, InterleaverType,
     TurboCode, TurboResult,
+};
+
+/// LDPC (Low-Density Parity-Check) error correction codes
+pub mod ldpc;
+pub use ldpc::{
+    create_ldpc_code, create_optimized_ldpc_code, create_wifi_ldpc_code, ldpc_decode, ldpc_encode,
+    LDPCCode, LDPCResult,
 };
