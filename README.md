@@ -250,8 +250,8 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ Convolutional Codes and Viterbi Decoding  
 ✅ Turbo Codes  
 ✅ LDPC (Low-Density Parity-Check) Codes  
-2. CRC (Cyclic Redundancy Check)  
-3. BCH Codes  
+✅ CRC (Cyclic Redundancy Check)  
+✅ BCH Codes  
 4. Polar Codes  
 5. Fountain / Raptor Codes  
 

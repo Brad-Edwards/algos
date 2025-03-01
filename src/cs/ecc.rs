@@ -7,6 +7,7 @@
 //! - Turbo codes
 //! - LDPC codes
 //! - CRC (Cyclic Redundancy Check)
+//! - BCH (Bose-Chaudhuri-Hocquenghem) codes
 //! - Fountain codes
 //!
 //! # Error Correction Algorithms
@@ -21,6 +22,7 @@
 //! - Turbo codes
 //! - LDPC (Low-Density Parity-Check) codes
 //! - CRC (Cyclic Redundancy Check)
+//! - BCH (Bose-Chaudhuri-Hocquenghem) codes
 //!
 //! # Examples
 //!
@@ -81,3 +83,10 @@ pub use ldpc::{
 /// CRC (Cyclic Redundancy Check) codes
 pub mod crc;
 pub use crc::{calculate_crc16, calculate_crc32, calculate_crc8, Crc16, Crc32, Crc8, CrcAlgorithm};
+
+/// BCH (Bose-Chaudhuri-Hocquenghem) error correction codes
+pub mod bch;
+pub use bch::{
+    bch_decode, bch_encode, create_bch_15_7_2, create_bch_31_16_3, create_bch_63_45_3,
+    create_bch_code, BchCode,
+};
