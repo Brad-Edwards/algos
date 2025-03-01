@@ -29,11 +29,12 @@ pub use dynamic::{
 };
 
 pub use ecc::{
-    convolutional_decode, convolutional_encode, create_convolutional_code, create_hamming,
-    create_hamming_7_4, create_hamming_8_4, create_nasa_standard_code, create_reed_solomon,
-    hamming_decode, hamming_encode, hamming_extended_decode, hamming_extended_encode,
-    reed_solomon_decode, reed_solomon_encode, ConvolutionalCode, ErrorCorrection, GFElement,
-    HammingCode, ReedSolomon,
+    convolutional_decode, convolutional_encode, create_convolutional_code,
+    create_custom_turbo_code, create_hamming, create_hamming_7_4, create_hamming_8_4,
+    create_nasa_standard_code, create_reed_solomon, create_turbo_code, hamming_decode,
+    hamming_encode, hamming_extended_decode, hamming_extended_encode, reed_solomon_decode,
+    reed_solomon_encode, turbo_decode, turbo_encode, ConvolutionalCode, ErrorCorrection, GFElement,
+    HammingCode, InterleaverType, ReedSolomon, TurboCode, TurboResult,
 };
 
 pub use graph::{

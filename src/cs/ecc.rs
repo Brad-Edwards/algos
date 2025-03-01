@@ -17,6 +17,7 @@
 //! - Reed-Solomon codes
 //! - Hamming codes
 //! - Convolutional codes
+//! - Turbo codes
 //!
 //! # Examples
 //!
@@ -58,4 +59,11 @@ pub use convolutional::{
     create_nasa_standard_code, create_rate_third_code, create_rate_two_thirds_code,
     create_standard_viterbi_decoder, create_viterbi_decoder, viterbi_decode, ConvolutionalCode,
     ViterbiDecoder, ViterbiResult,
+};
+
+/// Turbo error correction codes
+pub mod turbo;
+pub use turbo::{
+    create_custom_turbo_code, create_turbo_code, turbo_decode, turbo_encode, InterleaverType,
+    TurboCode, TurboResult,
 };
