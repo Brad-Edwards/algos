@@ -6,6 +6,7 @@
 //! - Convolutional codes
 //! - Turbo codes
 //! - LDPC codes
+//! - CRC (Cyclic Redundancy Check)
 //! - Fountain codes
 //!
 //! # Error Correction Algorithms
@@ -19,6 +20,7 @@
 //! - Convolutional codes
 //! - Turbo codes
 //! - LDPC (Low-Density Parity-Check) codes
+//! - CRC (Cyclic Redundancy Check)
 //!
 //! # Examples
 //!
@@ -75,3 +77,7 @@ pub use ldpc::{
     create_ldpc_code, create_optimized_ldpc_code, create_wifi_ldpc_code, ldpc_decode, ldpc_encode,
     LDPCCode, LDPCResult,
 };
+
+/// CRC (Cyclic Redundancy Check) codes
+pub mod crc;
+pub use crc::{calculate_crc16, calculate_crc32, calculate_crc8, Crc16, Crc32, Crc8, CrcAlgorithm};
