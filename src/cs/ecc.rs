@@ -8,6 +8,7 @@
 //! - LDPC codes
 //! - CRC (Cyclic Redundancy Check)
 //! - BCH (Bose-Chaudhuri-Hocquenghem) codes
+//! - Polar codes
 //! - Fountain codes
 //!
 //! # Error Correction Algorithms
@@ -23,6 +24,7 @@
 //! - LDPC (Low-Density Parity-Check) codes
 //! - CRC (Cyclic Redundancy Check)
 //! - BCH (Bose-Chaudhuri-Hocquenghem) codes
+//! - Polar codes
 //!
 //! # Examples
 //!
@@ -89,4 +91,11 @@ pub mod bch;
 pub use bch::{
     bch_decode, bch_encode, create_bch_15_7_2, create_bch_31_16_3, create_bch_63_45_3,
     create_bch_code, BchCode,
+};
+
+/// Polar error correction codes
+pub mod polar;
+pub use polar::{
+    create_5g_polar_code, create_polar_code, create_polar_code_for_snr, polar_decode, polar_encode,
+    PolarCode,
 };

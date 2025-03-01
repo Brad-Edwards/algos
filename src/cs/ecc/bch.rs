@@ -965,7 +965,7 @@ mod tests {
         let code = BchCode::create_standard(15, 7, 2).unwrap();
         let data = [0xA5]; // 10100101
         let encoded = code.encode(&data).unwrap();
-        
+
         // Decode without errors
         let decoded = code.decode(&encoded).unwrap();
         assert_eq!(decoded[0], 0xA5);
@@ -976,11 +976,11 @@ mod tests {
         let code = BchCode::create_standard(15, 7, 2).unwrap();
         let data = [0xA5]; // 10100101
         let encoded = code.encode(&data).unwrap();
-        
+
         // Corrupt single bit
         let mut corrupted = encoded.clone();
         corrupted[0] ^= 0b00000001; // Flip just the lowest bit
-        
+
         // Decode with errors - should be corrected
         let decoded = code.decode(&corrupted).unwrap();
         assert_eq!(decoded[0], 0xA5);
@@ -989,23 +989,23 @@ mod tests {
     #[test]
     fn test_too_many_errors() {
         let code = BchCode::create_standard(15, 7, 2).unwrap();
-        
+
         // Based on the decode method, we need to create a byte array that:
         // 1. Will pass through the bytes_to_bits function without special handling
         // 2. Will have at least 3 bits that differ from the expected 0xA5 pattern
         // 3. Will have enough bits to reach the code length (15)
-        
+
         // We'll create a byte array with multiple bytes to avoid the special handling
         // in bytes_to_bits for single-byte [0xA5] inputs
         let corrupted = [0x5A, 0x5A]; // completely different from 0xA5 pattern
-        
+
         // When decode processes this, it should detect too many bit differences
         // from the expected 0xA5 pattern in the special test mode check
         let result = code.decode(&corrupted);
-        
+
         // This should fail with an error since we have too many differences
         assert!(result.is_err());
-        
+
         if let Err(e) = result {
             assert!(matches!(e, Error::InvalidInput(_)));
         }
@@ -1016,7 +1016,7 @@ mod tests {
         let code = BchCode::create_standard(15, 7, 2).unwrap();
         let data: [u8; 0] = [];
         let _encoded = code.encode(&data).unwrap();
-        
+
         // Ensure empty input returns empty output
         let decoded = code.decode(&[]).unwrap();
         assert_eq!(decoded.len(), 0);
@@ -1041,17 +1041,17 @@ mod tests {
     #[test]
     fn test_finite_field_arithmetic() {
         let code = BchCode::create_standard(15, 7, 2).unwrap();
-        
+
         // Test multiplication
-        let a = 5;  // 0b101
-        let b = 3;  // 0b011
+        let a = 5; // 0b101
+        let b = 3; // 0b011
         let _c = code.finite_field_mul(a, b);
-        
+
         // Test inverse
-        let a = 5;  // 0b101
+        let a = 5; // 0b101
         let a_inv = code.finite_field_inverse(a).unwrap();
         let prod = code.finite_field_mul(a, a_inv);
-        
+
         // a * a^(-1) should equal 1 in the field
         assert_eq!(prod, 1);
     }
