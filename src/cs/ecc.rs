@@ -56,5 +56,6 @@ pub mod convolutional;
 pub use convolutional::{
     convolutional_decode, convolutional_encode, create_convolutional_code,
     create_nasa_standard_code, create_rate_third_code, create_rate_two_thirds_code,
-    ConvolutionalCode,
+    create_standard_viterbi_decoder, create_viterbi_decoder, viterbi_decode, ConvolutionalCode,
+    ViterbiDecoder, ViterbiResult,
 };
