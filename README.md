@@ -252,8 +252,8 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ LDPC (Low-Density Parity-Check) Codes  
 ✅ CRC (Cyclic Redundancy Check)  
 ✅ BCH Codes  
-4. Polar Codes  
-5. Fountain / Raptor Codes  
+✅ Polar Codes  
+✅ Fountain / Raptor Codes  
 
 ## Contributing
 

@@ -9,7 +9,7 @@
 //! - CRC (Cyclic Redundancy Check)
 //! - BCH (Bose-Chaudhuri-Hocquenghem) codes
 //! - Polar codes
-//! - Fountain codes
+//! - Fountain/Raptor codes
 //!
 //! # Error Correction Algorithms
 //!
@@ -25,6 +25,8 @@
 //! - CRC (Cyclic Redundancy Check)
 //! - BCH (Bose-Chaudhuri-Hocquenghem) codes
 //! - Polar codes
+//! - Fountain codes (LT codes)
+//! - Raptor codes (LT codes with pre-coding)
 //!
 //! # Examples
 //!
@@ -98,4 +100,12 @@ pub mod polar;
 pub use polar::{
     create_5g_polar_code, create_polar_code, create_polar_code_for_snr, polar_decode, polar_encode,
     PolarCode,
+};
+
+/// Fountain and Raptor error correction codes
+pub mod fountain;
+pub use fountain::{
+    create_custom_lt_code, create_custom_raptor_code, create_lt_code, create_raptor_code,
+    lt_decode, lt_encode, raptor_decode, raptor_encode, EncodedBlock, LTCode, LTParameters,
+    RaptorCode, RaptorParameters,
 };
