@@ -2,6 +2,7 @@ pub mod approx;
 pub mod combinatorial;
 pub mod compression;
 pub mod dynamic;
+pub mod ecc;
 pub mod error;
 pub mod graph;
 pub mod hashing;
@@ -25,6 +26,15 @@ pub use dynamic::{
     max_weighted_schedule, min_coins_for_change, min_merge_cost_knuth,
     optimal_matrix_chain_multiplication, reconstruct_optimal_merge, value_iteration,
     MarkovDecisionProcess, WeightedInterval,
+};
+
+pub use ecc::{
+    convolutional_decode, convolutional_encode, create_convolutional_code,
+    create_custom_turbo_code, create_hamming, create_hamming_7_4, create_hamming_8_4,
+    create_nasa_standard_code, create_reed_solomon, create_turbo_code, hamming_decode,
+    hamming_encode, hamming_extended_decode, hamming_extended_encode, reed_solomon_decode,
+    reed_solomon_encode, turbo_decode, turbo_encode, ConvolutionalCode, ErrorCorrection, GFElement,
+    HammingCode, InterleaverType, ReedSolomon, TurboCode, TurboResult,
 };
 
 pub use graph::{

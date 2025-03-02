@@ -25,9 +25,11 @@ num-prime = { version = "0.4.4", features = ["big-int"] }
 approx = "0.5.1"
 ndarray = "0.16.1"
 rand = "0.8.5"
-rand_core = "0.9.1"
+rand_core = "0.6.4"
 rand_distr = "0.4.3"
+rand_chacha = { version = "0.3.1", default-features = false }
 log = "0.4.25"
+bitvec = "1.0.1"
 
 [dev-dependencies]
 criterion = "0.5.1"

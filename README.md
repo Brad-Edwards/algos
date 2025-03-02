@@ -243,6 +243,18 @@ A Rust library implementing a wide range of algorithms, from fundamental compute
 ✅ LZMA  
 ✅ RANS Coding  
 
+## Error Correction & Coding
+
+✅ Reed–Solomon Codes  
+✅ Hamming Codes  
+✅ Convolutional Codes and Viterbi Decoding  
+✅ Turbo Codes  
+✅ LDPC (Low-Density Parity-Check) Codes  
+✅ CRC (Cyclic Redundancy Check)  
+✅ BCH Codes  
+✅ Polar Codes  
+✅ Fountain / Raptor Codes  
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
