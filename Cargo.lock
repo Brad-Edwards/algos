@@ -237,9 +237,9 @@ dependencies = [
 
 [[package]]
 name = "cargo-tarpaulin"
-version = "0.32.0"
+version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7496e93017a031a60aefb09d2c055556ae87b6360f703336a7ac82ed8f0eefe"
+checksum = "263d3e65f60179d7effe4cfea982ac4e50aee84c2d13de01738de0b7db74aad3"
 dependencies = [
  "cargo_metadata",
  "cfg-if",
@@ -1151,9 +1151,9 @@ checksum = "884e2677b40cc8c339eaefcb701c32ef1fd2493d71118dc0ca4b6a736c93bd67"
 
 [[package]]
 name = "libc"
-version = "0.2.169"
+version = "0.2.170"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5aba8db14291edd000dfcc4d620c7ebfb122c613afb886ca8803fa4e128a20a"
+checksum = "875b3680cb2f8f71bdcf9a30f38d48282f5d3c95cbf9b3fa57269bb5d5c06828"
 
 [[package]]
 name = "libgit2-sys"
