@@ -14,7 +14,7 @@ edition = "2021"
 
 
 [dependencies]
-thiserror = "2.0.11"
+thiserror = "2.0.12"
 num-traits = "0.2.17"
 rayon = "1.8.1"
 hex = "0.4.3"
