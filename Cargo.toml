@@ -34,7 +34,7 @@ bitvec = "1.0.1"
 [dev-dependencies]
 criterion = "0.5.1"
 rand = "0.8.5"
-cargo-tarpaulin = "0.32.1"
+cargo-tarpaulin = "0.32.2"
 
 [[bench]]
 name = "suffix_array"
