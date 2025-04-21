@@ -24,7 +24,7 @@ num-bigint-dig = { version = "0.8.4", features = ["prime", "rand", "u64_digit"] 
 num-prime = { version = "0.4.4", features = ["big-int"] }
 approx = "0.5.1"
 ndarray = "0.16.1"
-rand = "0.8.5"
+rand = "0.9.1"
 rand_core = "0.9.3"
 rand_distr = "0.4.3"
 rand_chacha = { version = "0.3.1", default-features = false }
@@ -33,7 +33,7 @@ bitvec = "1.0.1"
 
 [dev-dependencies]
 criterion = "0.5.1"
-rand = "0.8.5"
+rand = "0.9.1"
 cargo-tarpaulin = "0.32.2"
 
 [[bench]]
