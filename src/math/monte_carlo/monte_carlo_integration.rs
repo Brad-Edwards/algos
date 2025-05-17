@@ -1,6 +1,10 @@
 use rand::Rng;
 
-/// Performs Monte Carlo integration of the function `f` over the interval [a, b] using the specified number of samples.
+/// Performs Monte Carlo integration of the function `f` over the interval [a, b]
+/// using the specified number of samples.
+///
+/// Random samples are drawn from the half-open interval `[a, b)`, which is
+/// equivalent for continuous integrands.
 pub fn monte_carlo_integration<F>(f: F, a: f64, b: f64, samples: usize) -> f64
 where
     F: Fn(f64) -> f64,
