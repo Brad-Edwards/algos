@@ -1,65 +1,25 @@
 [package]
 name = "algos"
-version = "0.6.8"
+version = "0.7.0"
 authors = ["Brad-Edwards <j.bradley.edwards@gmail.com>"]
-description = "A collection of algorithms in Rust"
+description = "Reinforcement learning algorithms in Rust — tabular, deep, and planning methods with composable trait interfaces"
 repository = "https://github.com/Brad-Edwards/algos"
 homepage = "https://crates.io/crates/algos"
 documentation = "https://docs.rs/algos"
 license-file = "LICENSE"
 readme = "README.md"
-keywords = ["algorithm", "sort", "search", "graph", "string"]
-exclude = ["/.travis.yml", "/.github/*"]
+keywords = ["reinforcement-learning", "rl", "machine-learning", "algorithm", "ai"]
+categories = ["algorithms", "science"]
+exclude = ["/.github/*"]
 edition = "2021"
-
 
 [dependencies]
 thiserror = "2.0.12"
-num-traits = "0.2.17"
-rayon = "1.8.1"
-hex = "0.4.3"
-num-bigint = { version = "0.4.6", features = ["rand"] }
-num-integer = "0.1.46"
-num-bigint-dig = { version = "0.8.4", features = ["prime", "rand", "u64_digit"] }
-num-prime = { version = "0.4.4", features = ["big-int"] }
-approx = "0.5.1"
 ndarray = "0.16.1"
 rand = "0.8.5"
-rand_core = "0.9.3"
-rand_distr = "0.4.3"
-rand_chacha = { version = "0.3.1", default-features = false }
-log = "0.4.26"
-bitvec = "1.0.1"
 
 [dev-dependencies]
-criterion = "0.5.1"
 rand = "0.8.5"
-cargo-tarpaulin = "0.32.2"
-
-[[bench]]
-name = "suffix_array"
-path = "benches/cs/string/suffix_array.rs"
-harness = false
-
-[[bench]]
-name = "heapsort"
-path = "benches/cs/sort/heapsort_benchmarks.rs"
-harness = false
-
-[[bench]]
-name = "quicksort"
-path = "benches/cs/sort/quicksort_benchmarks.rs"
-harness = false
-
-[[bench]]
-name = "sorting"
-path = "benches/cs/sort/sorting_benchmarks.rs"
-harness = false
-
-[[bench]]
-name = "std_sort"
-path = "benches/cs/sort/std_sort_benchmarks.rs"
-harness = false
 
 [profile.release]
 opt-level = 3
@@ -70,8 +30,3 @@ panic = 'abort'
 [profile.dev]
 opt-level = 0
 debug = true
-
-[features]
-default = []
-parallel = []
-simd = []

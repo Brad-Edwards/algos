@@ -1,264 +1,82 @@
-# Algos
+# algos
 
-[![Crates.io](https://img.shields.io/crates/v/algos.svg)](https://crates.io/crates/algos)
-[![Documentation](https://docs.rs/algos/badge.svg)](https://docs.rs/algos)
-[![CI](https://github.com/Brad-Edwards/algos/actions/workflows/ci.yml/badge.svg)](https://github.com/Brad-Edwards/algos/actions/workflows/ci.yml)
-[![GitHub license](https://img.shields.io/github/license/Brad-Edwards/algos.svg)](https://github.com/Brad-Edwards/algos/blob/master/LICENSE)
+Reinforcement learning algorithms in Rust.
 
-## 🚧 Work in Progress 🚧
+## What this is
 
-This crate is undergoing significant development. It aims to be a comprehensive collection of algorithms implemented in Rust, serving both as a learning resource and a practical library.
+A focused RL library providing composable, tested implementations of
+core RL algorithms — from tabular methods to deep policy gradient and
+planning algorithms. Designed for Rust-native environments: game AI,
+systems optimization, robotics simulation, and latency-sensitive control.
 
-## Recent Changes
+## Algorithms
 
-**Jan 16, 2025 - ADVISORY**: This crate has changed hands and will be maintained by [@Brad-Edwards](https://github.com/Brad-Edwards). The repository has been moved to [a new location](https://github.com/Brad-Edwards/algos).
+### Tabular
+- **Q-Learning** — off-policy TD control
+- **SARSA** — on-policy TD control
+- **Double Q-Learning** — bias-reduced Q-learning with dual tables
+- **Monte Carlo ES** — first-visit Monte Carlo with exploring starts
 
-## Overview
+### Value-Based (Deep)
+- **DQN** — Deep Q-Network with experience replay and target network
 
-A Rust library implementing a wide range of algorithms, from fundamental computer science concepts to advanced machine learning techniques.
+### Policy Gradient
+- **REINFORCE** — Monte Carlo policy gradient with value baseline
+- **PPO** — Proximal Policy Optimization with clipped surrogate objective
+- **TRPO** — Trust Region Policy Optimization with conjugate gradient
 
-## Implementation Status
+### Actor-Critic
+- **Actor-Critic** — online actor-critic with TD(0) advantage
 
-### ✅ Currently Implemented
+### Planning
+- **AlphaZero MCTS** — Monte Carlo Tree Search with dual-head network
 
-#### Sorting Algorithms
+## Architecture
 
-✅ QuickSort  
-✅ MergeSort  
-✅ HeapSort  
-✅ BubbleSort  
-✅ InsertionSort  
-✅ SelectionSort  
-✅ ShellSort  
-✅ CountingSort  
-✅ RadixSort  
-✅ Randomized QuickSelect
-✅ Randomized QuickSort
-✅ BucketSort  
+The library owns the algorithm layer. Users provide:
+1. An **Environment** (`step`, `reset`, observation/action spaces)
+2. Optionally, custom **function approximators** via `Policy` and `ValueFunction` traits
 
-#### Searching Algorithms
+Default ndarray-based approximators are built into each algorithm.
 
-✅ Linear Search  
-✅ Binary Search  
-✅ Ternary Search  
-✅ Interpolation Search  
-✅ Jump Search  
-✅ Exponential Search  
-✅ Fibonacci Search  
-✅ Sublist Search  
-✅ Depth-First Search  
-✅ Breadth-First Search  
+```
+User: Environment  →  Library: Algorithm  →  User: Function Approximator
+```
 
-#### String Algorithms
+See [docs/architecture.md](docs/architecture.md) for details.
 
-✅ Knuth-Morris-Pratt (KMP)  
-✅ Rabin-Karp  
-✅ Boyer-Moore  
-✅ Z-Algorithm  
-✅ Aho-Corasick  
-✅ Suffix Array Construction  
-✅ Suffix Automaton  
-✅ Suffix Tree  
-✅ Rolling Hash  
-✅ Manacher's Algorithm  
+## Infrastructure
 
-#### Graph Algorithms (Part 1)
+- **Replay buffer** — uniform sampling for off-policy methods
+- **Rollout buffer** — sequential storage for on-policy methods
+- **Epsilon-greedy** — configurable exploration with decay
 
-✅ Dijkstra's Algorithm  
-✅ Bellman-Ford Algorithm  
-✅ Floyd-Warshall Algorithm  
-✅ Prim's Algorithm  
-✅ Kruskal's Algorithm  
-✅ Tarjan's Algorithm (SCC)  
-✅ Kosaraju's Algorithm  
-✅ Johnson's Algorithm  
-✅ Warshall's Algorithm  
-✅ Topological Sort  
+## Usage
 
-#### Graph Algorithms (Part 2)
+```toml
+[dependencies]
+algos = "0.7"
+```
 
-✅ Edmond–Karp (max flow)  
-✅ Dinic's Algorithm (max flow)  
-✅ Ford–Fulkerson (max flow)  
-✅ Hungarian Algorithm (assignment)  
-✅ Hopcroft–Karp (bipartite matching)  
-✅ Edmonds' Blossom Algorithm (max matching)  
-✅ Bron–Kerbosch (maximal clique)  
-✅ Johnson's Cycle Detection  
-✅ Floyd's Cycle Detection (Tortoise and Hare)  
-✅ Euler Tour / Euler Circuit Algorithm  
-✅ Hierholzer's Algorithm (Euler paths/circuits)  
-✅ Karger's Min Cut  
-✅ Randomized Delaunay Triangulation  
-✅ Randomized Kruskal's MST  
-✅ Randomized Prim's MST  
+```rust
+use algos::rl::tabular::QLearning;
 
-#### Dynamic Programming
+let mut agent = QLearning::new(
+    0.1,   // learning rate
+    0.99,  // discount factor
+    0.1,   // epsilon
+    4,     // number of actions
+);
 
-✅ Kadane's Algorithm  
-✅ Matrix Chain Multiplication  
-✅ Edit Distance  
-✅ Coin Change  
-✅ Longest Common Subsequence  
-✅ Longest Increasing Subsequence  
-✅ Weighted Interval Scheduling  
-✅ Viterbi Algorithm  
-✅ Bellman Equation-based DP  
-✅ Knuth Optimization  
+let action = agent.select_action(state);
+agent.update(state, action, reward, next_state, done);
+```
 
-#### Hashing
+## Roadmap
 
-✅ Perfect Hashing  
-✅ Universal Hashing  
-✅ Cuckoo Hashing  
-✅ Separate Chaining  
-✅ Open Addressing (linear/quadratic probing, double hashing)  
-✅ Polynomial Rolling Hash  
-✅ FNV (Fowler–Noll–Vo) Hash  
-✅ CRC32  
-✅ Jenkins Hash  
-✅ MurmurHash  
-
-#### Classic Machine Learning
-
-✅ k-Means Clustering  
-✅ k-Nearest Neighbors (k-NN)  
-✅ Linear Regression (OLS)  
-✅ Logistic Regression  
-✅ Decision Tree Learning (ID3, C4.5)  
-✅ Random Forest  
-✅ Support Vector Machine (SVM)  
-✅ Naive Bayes  
-✅ Gradient Boosting (GBM family)  
-✅ XGBoost  
-
-#### ***DO NOT USE*** Cryptography and Security ***DO NOT USE***
-
-✅ RSA  
-✅ Diffie–Hellman Key Exchange  
-✅ ElGamal Encryption  
-✅ AES (Rijndael)  
-✅ Blowfish  
-✅ Twofish  
-✅ SHA-256  
-✅ MD5 (legacy)  
-✅ Elliptic Curve Cryptography (ECC)  
-✅ DSA (Digital Signature Algorithm)  
-
-#### Deep Learning & Neural Network Training
-
-✅ Backpropagation  
-✅ Stochastic Gradient Descent (SGD)  
-✅ Adam Optimizer  
-✅ RMSProp  
-✅ AdaGrad  
-✅ RProp (resilient propagation)  
-✅ Dropout (regularization)  
-✅ Batch Normalization  
-✅ Convolution (core of CNNs)  
-✅ BPTT (Backprop Through Time, RNNs/LSTMs)  
-
-#### Reinforcement Learning
-
-✅ Q-Learning  
-✅ SARSA  
-✅ Double Q-Learning  
-✅ Deep Q-Network (DQN)  
-✅ Monte Carlo Exploring Starts  
-✅ Policy Gradients (REINFORCE)  
-✅ Actor–Critic Methods  
-✅ Proximal Policy Optimization (PPO)  
-✅ Trust Region Policy Optimization (TRPO)  
-✅ AlphaZero-Style MCTS + RL  
-
-#### Approximation Algorithms
-
-✅ Greedy Set Cover  
-✅ 2-Approximation for Vertex Cover  
-✅ PTAS for Knapsack  
-✅ Christofides' Algorithm (TSP)  
-✅ Johnson's Algorithm for MAX-SAT  
-✅ FPTAS for Subset Sum  
-✅ Local-Ratio Theorem  
-✅ Primal–Dual Approximation (for covering problems)  
-✅ LP Rounding (generic approach)  
-✅ Goemans–Williamson (Max-Cut)  
-
-#### Linear & Nonlinear Optimization
-
-✅ Gradient Descent  
-✅ Newton's Method  
-✅ Conjugate Gradient  
-✅ BFGS  
-✅ L-BFGS  
-✅ Simplex Method (linear programming)  
-✅ Interior Point Method (LP/NLP)  
-✅ Nelder–Mead  
-✅ Genetic Algorithm  
-✅ Simulated Annealing  
-
-#### Integer Linear Programming Methods
-
-✅ Branch and Bound  
-✅ Branch and Cut  
-✅ Branch and Price  
-✅ Gomory Cutting Planes  
-✅ Dantzig–Wolfe Decomposition  
-✅ Benders Decomposition  
-✅ Mixed Integer Rounding Cuts  
-✅ Lift-and-Project Cuts  
-✅ Branch & Reduce  
-✅ Column Generation  
-
-#### Randomized Algorithms
-
-✅ Randomized BFS 2-SAT  
-✅ Reservoir Sampling  
-✅ Skip List  
-
-#### Monte Carlo Methods
-
-✅ Monte Carlo Integration  
-
-#### Combinatorial & Backtracking
-
-✅ Backtracking for Permutations/Combinations  
-✅ Johnson–Trotter (permutation generation)  
-✅ Gray Code Generation  
-✅ Knuth's Dancing Links (Algorithm X)  
-✅ Zassenhaus Algorithm (group factorization)  
-✅ Hamiltonian Cycle Backtracking  
-✅ Subset Generation (binary representation)  
-
-## Data Compression
-
-✅ Huffman Coding  
-✅ LZ77  
-✅ LZ78  
-✅ LZW  
-✅ Arithmetic Coding  
-✅ DEFLATE  
-✅ Burrows–Wheeler Transform (bzip2)  
-✅ PPM (Prediction by Partial Matching)  
-✅ LZMA  
-✅ RANS Coding  
-
-## Error Correction & Coding
-
-✅ Reed–Solomon Codes  
-✅ Hamming Codes  
-✅ Convolutional Codes and Viterbi Decoding  
-✅ Turbo Codes  
-✅ LDPC (Low-Density Parity-Check) Codes  
-✅ CRC (Cyclic Redundancy Check)  
-✅ BCH Codes  
-✅ Polar Codes  
-✅ Fountain / Raptor Codes  
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+- **Wave 2**: SAC, TD3, A2C, IQN, IQL, PER, HER, RND
+- **Wave 3**: GRPO, PPO-RLHF, DPO, REINFORCE++
 
 ## License
 
-This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for details.
+BSD 3-Clause. See [LICENSE](LICENSE).

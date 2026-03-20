@@ -1,37 +1,28 @@
-//! Error types for the algos library.
-//! This module re-exports the unified error types from cs/error.rs for backward
-//! compatibility.
+use thiserror::Error;
 
-pub use crate::cs::error::{Error, Result};
+/// Errors that can occur during RL operations.
+#[derive(Debug, Error)]
+pub enum Error {
+    /// Invalid configuration parameter.
+    #[error("invalid configuration: {0}")]
+    InvalidConfig(String),
 
-// Type aliases for backward compatibility
-pub type SortError = Error;
-pub type SearchError = Error;
-pub type StringError = Error;
-pub type GraphError = Error;
+    /// Dimension mismatch between expected and actual sizes.
+    #[error("dimension mismatch: expected {expected}, got {actual}")]
+    DimensionMismatch { expected: usize, actual: usize },
 
-pub type SortResult<T> = Result<T>;
-pub type SearchResult<T> = Result<T>;
-pub type StringResult<T> = Result<T>;
-pub type GraphResult<T> = Result<T>;
+    /// Buffer does not have enough samples.
+    #[error("insufficient samples: need {needed}, have {available}")]
+    InsufficientSamples { needed: usize, available: usize },
 
-// Module-specific re-exports for backward compatibility
-pub mod sort {
-    pub use super::Error as SortError;
-    pub type Result<T> = super::Result<T>;
+    /// Environment returned an unexpected state.
+    #[error("environment error: {0}")]
+    Environment(String),
+
+    /// Numerical computation failed (NaN, overflow, etc.).
+    #[error("numerical error: {0}")]
+    Numerical(String),
 }
 
-pub mod search {
-    pub use super::Error as SearchError;
-    pub type Result<T> = super::Result<T>;
-}
-
-pub mod string {
-    pub use super::Error as StringError;
-    pub type Result<T> = super::Result<T>;
-}
-
-pub mod graph {
-    pub use super::Error as GraphError;
-    pub type Result<T> = super::Result<T>;
-}
+/// Result type for RL operations.
+pub type Result<T> = std::result::Result<T, Error>;
