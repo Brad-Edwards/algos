@@ -231,9 +231,9 @@ dependencies = [
 
 [[package]]
 name = "cargo-tarpaulin"
-version = "0.32.2"
+version = "0.32.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "904926c76da0b8f8b0f3d33b83e6aad9be35d40438e6f04e2fe8dd5926bd4d96"
+checksum = "b762f08a27eae3871e32260ebf6ba3d3310b0337cc3e61c260db019ff80a7976"
 dependencies = [
  "cargo_metadata",
  "cfg-if",
@@ -1142,9 +1142,9 @@ checksum = "884e2677b40cc8c339eaefcb701c32ef1fd2493d71118dc0ca4b6a736c93bd67"
 
 [[package]]
 name = "libc"
-version = "0.2.170"
+version = "0.2.172"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "875b3680cb2f8f71bdcf9a30f38d48282f5d3c95cbf9b3fa57269bb5d5c06828"
+checksum = "d750af042f7ef4f724306de029d18836c26c1765a54a6a3f094cbd23a7267ffa"
 
 [[package]]
 name = "libgit2-sys"
@@ -1206,9 +1206,9 @@ checksum = "4ee93343901ab17bd981295f2cf0026d4ad018c7c31ba84549a4ddbb47a45104"
 
 [[package]]
 name = "llvm_profparser"
-version = "0.7.1"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0a154508b6dd69753d85b1b506fa80b9358bb3864a65f90b7516613f803f209"
+checksum = "709c1026b4902051c7cff758799defada26e18e41eb390648177e2e142c59fd9"
 dependencies = [
  "anyhow",
  "flate2",
@@ -1344,9 +1344,9 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.29.0"
+version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71e2746dc3a24dd78b3cfcb7be93368c6de9963d30f43a6a73998a9cf4b17b46"
+checksum = "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6"
 dependencies = [
  "bitflags",
  "cfg-if",
