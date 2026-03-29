@@ -20,7 +20,7 @@ rayon = "1.8.1"
 hex = "0.4.3"
 num-bigint = { version = "0.4.6", features = ["rand"] }
 num-integer = "0.1.46"
-num-bigint-dig = { version = "0.8.4", features = ["prime", "rand", "u64_digit"] }
+num-bigint-dig = { version = "0.8.5", features = ["prime", "rand", "u64_digit"] }
 num-prime = { version = "0.4.4", features = ["big-int"] }
 approx = "0.5.1"
 ndarray = "0.16.1"
