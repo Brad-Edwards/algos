@@ -171,7 +171,13 @@ where
         if self.directed {
             self.edges.values().map(|edges| edges.len()).sum()
         } else {
-            self.edges.values().map(|edges| edges.len()).sum::<usize>() / 2
+            let total: usize = self.edges.values().map(|edges| edges.len()).sum();
+            let loops: usize = self
+                .edges
+                .iter()
+                .map(|(v, edges)| edges.iter().filter(|(u, _)| u == v).count())
+                .sum();
+            (total + loops) / 2
         }
     }
 
@@ -370,5 +376,13 @@ mod tests {
         graph.add_edge(2, 3, 1.0);
         graph.add_edge(3, 1, 1.0); // Add cycle to make it strongly connected
         assert!(graph.is_connected());
+    }
+
+    #[test]
+    fn test_self_loop_edge_count() {
+        let mut graph: Graph<i32, f64> = Graph::new_undirected();
+        graph.add_edge(1, 1, 1.0);
+        assert_eq!(graph.edge_count(), 1);
+        assert!(graph.has_edge(&1, &1));
     }
 }
