@@ -1,0 +1,61 @@
+name: Maintainer Gate
+
+# A pull request merges only when the maintainer wrote it or approved it.
+# The maintainer's own pull requests need no approval, so they can merge or enter the
+# merge queue. Anyone else's pull request stays blocked, even when it is green, until the
+# maintainer approves it. The job reads only the GitHub API and checks out no code.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  pull-requests: read
+
+concurrency:
+  group: maintainer-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  maintainer-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Event values reach the shell through the environment, never through expression
+      # text in the script.
+      - name: Require the maintainer as author or approver
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAINTAINER: Brad-Edwards
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          QUEUE_REF: ${{ github.event.merge_group.head_ref }}
+        run: |
+          set -euo pipefail
+          number="$PR_NUMBER"
+          if [ -z "$number" ]; then
+            # A merge group names its pull request in the queue ref.
+            if [[ "$QUEUE_REF" =~ ^refs/heads/gh-readonly-queue/.+/pr-([1-9][0-9]*)-[0-9a-f]{40}$ ]]; then
+              number="${BASH_REMATCH[1]}"
+            else
+              echo "Cannot identify the pull request of this event." >&2
+              exit 1
+            fi
+          fi
+          author="$(gh api "repos/$REPOSITORY/pulls/$number" --jq '.user.login')"
+          if [ "$author" = "$MAINTAINER" ]; then
+            echo "PR #$number is by $MAINTAINER."
+            exit 0
+          fi
+          # The maintainer's latest review state decides; a later dismissal or change request undoes an approval.
+          state="$(gh api --paginate --slurp "repos/$REPOSITORY/pulls/$number/reviews?per_page=100" \
+            | jq -r --arg who "$MAINTAINER" '[.[][] | select(.user.login == $who and .state != "COMMENTED")] | last | .state // "NONE"')"
+          if [ "$state" = "APPROVED" ]; then
+            echo "PR #$number by $author is approved by $MAINTAINER."
+            exit 0
+          fi
+          echo "PR #$number by $author needs approval from $MAINTAINER (latest review state: $state)." >&2
+          exit 1
